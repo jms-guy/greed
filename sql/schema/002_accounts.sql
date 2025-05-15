@@ -5,8 +5,8 @@ CREATE TABLE accounts (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     balance NUMERIC (10, 2),
     goal NUMERIC (10, 2),
-    currency TEXT CHECK (currency IN ('CAD')),
-    user_id UUID NOT NULL REFERENCES users(id)
+    currency TEXT NOT NULL,
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id)
     ON DELETE CASCADE
 );
 

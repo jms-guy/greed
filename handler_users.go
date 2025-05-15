@@ -11,6 +11,7 @@ import (
 	"github.com/jms-guy/greed/internal/database"
 )
 
+//Structure for user JSON response
 type User struct{
 	ID				uuid.UUID `json:"id"`
 	Name			string `json:"name"`
@@ -18,7 +19,10 @@ type User struct{
 	UpdatedAt		time.Time `json:"updated_at"`	
 }
 
+//Function will create a new user in database
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
+
+	//Parameters that should be present in JSON request
 	type parameters struct {
 		Name		string `json:"name"`
 	}
@@ -31,6 +35,7 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	//Creates new user in database
 	newUser, err := cfg.db.CreateUser(context.Background(), database.CreateUserParams{
 		Name: params.Name,
 		ID: uuid.New(),
@@ -40,6 +45,7 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, 400, "Could not create user", err)
 	}
 
+	//Creates return structure
 	user := User{
 		ID: newUser.ID,
 		Name: newUser.Name,
@@ -49,6 +55,8 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 	respondWithJSON(w, 201, user)
 }
 
+
+//Function to reset database for dev testing -> users/accounts tables
 func (cfg *apiConfig) handlerDatabaseReset(w http.ResponseWriter, r *http.Request) {
 	err := cfg.db.ResetUsers(context.Background())
 	if err != nil {

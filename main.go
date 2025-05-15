@@ -40,9 +40,9 @@ func main() {
 		Addr: addr,
 	}
 
-	mux.HandleFunc("POST /api/users", cfg.handlerUsersCreate)
+	mux.HandleFunc("POST /api/usercreation", cfg.handlerUsersCreate)
 
-	mux.HandleFunc("POST /api/account", cfg.handlerAccountCreate)
+	mux.HandleFunc("POST /api/accountcreation", cfg.handlerAccountCreate)
 
 	mux.HandleFunc("POST /admin/reset", cfg.handlerDatabaseReset)
 

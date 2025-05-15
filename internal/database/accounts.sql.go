@@ -30,7 +30,7 @@ type CreateAccountParams struct {
 	ID       uuid.UUID
 	Balance  sql.NullString
 	Goal     sql.NullString
-	Currency sql.NullString
+	Currency string
 	UserID   uuid.UUID
 }
 

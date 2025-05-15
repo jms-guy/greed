@@ -17,8 +17,14 @@ type Account struct {
 	UpdatedAt time.Time
 	Balance   sql.NullString
 	Goal      sql.NullString
-	Currency  sql.NullString
+	Currency  string
 	UserID    uuid.UUID
+}
+
+type SupportedCurrency struct {
+	Code   string
+	Name   string
+	Active bool
 }
 
 type User struct {
