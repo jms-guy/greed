@@ -11,6 +11,80 @@ import (
 	"github.com/jms-guy/greed/internal/utils"
 )
 
+func (cfg *apiConfig) handlerGetTransactions(w http.ResponseWriter, r *http.Request) {
+	//Get account ID
+	accID := r.PathValue("accountid")
+
+	id, err := uuid.Parse(accID)
+	if err != nil {
+		respondWithError(w, 400, "Error parsing account ID", err)
+		return
+	}
+
+	//Get transaction records
+	results, err := cfg.db.GetTransactions(context.Background(), id)
+	if err != nil {
+		respondWithError(w, 500, "Error retrieving transaction data", err)
+		return
+	}
+
+	//Create return slice of structs
+	transactions := []Transaction{}
+	//Populate the return slice
+	for _, result := range results {
+		t := Transaction{
+			ID: result.ID,
+			CreatedAt: result.CreatedAt,
+			UpdatedAt: result.UpdatedAt,
+			Amount: result.Amount,
+			Category: result.Category,
+			Description: result.Description.String,
+			TransactionDate: result.TransactionDate,
+			TransactionType: result.TransactionType,
+			CurrencyCode: result.CurrencyCode,
+			AccountID: result.AccountID,
+		}
+		transactions = append(transactions, t)
+	}
+
+	respondWithJSON(w, 200, transactions)
+}
+
+//Function will return a transaction result from database
+func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http.Request) {
+	//Get transaction ID
+	transID := r.PathValue("transactionid")
+
+	id, err := uuid.Parse(transID)
+	if err != nil {
+		respondWithError(w, 400, "Error parsing transaction ID", err)
+		return
+	}
+
+	//Get transaction record from database
+	result, err := cfg.db.GetSingleTransaction(context.Background(), id)
+	if err != nil {
+		respondWithError(w, 500, "Error retrieving transaction data", err)
+		return
+	}
+
+	//Create response structure
+	transaction := Transaction{
+		ID: result.ID,
+		CreatedAt: result.CreatedAt,
+		UpdatedAt: result.UpdatedAt,
+		Amount: result.Amount,
+		Category: result.Category,
+		Description: result.Description.String,
+		TransactionDate: result.TransactionDate,
+		TransactionType: result.TransactionType,
+		CurrencyCode: result.CurrencyCode,
+		AccountID: result.AccountID,
+	}
+
+	respondWithJSON(w, 200, transaction)
+}
+
 //Function will update the category of a transaction record in database
 func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r *http.Request) {
 	//Parameters needed from request

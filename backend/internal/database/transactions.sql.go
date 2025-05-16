@@ -78,6 +78,137 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	return i, err
 }
 
+const getExpensesForMonth = `-- name: GetExpensesForMonth :one
+SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_expenses
+FROM transactions
+WHERE
+    transaction_type = 'debit'  
+    AND transaction_date >= make_date($1, $2, 1)
+    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+    AND account_id = $3
+`
+
+type GetExpensesForMonthParams struct {
+	Year      int32
+	Month     int32
+	AccountID uuid.UUID
+}
+
+func (q *Queries) GetExpensesForMonth(ctx context.Context, arg GetExpensesForMonthParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, getExpensesForMonth, arg.Year, arg.Month, arg.AccountID)
+	var monthly_expenses string
+	err := row.Scan(&monthly_expenses)
+	return monthly_expenses, err
+}
+
+const getIncomeForMonth = `-- name: GetIncomeForMonth :one
+SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_income
+FROM transactions
+WHERE
+    transaction_type = 'credit'
+    AND transaction_date >= make_date($1, $2, 1)
+    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+    AND account_id = $3
+`
+
+type GetIncomeForMonthParams struct {
+	Year      int32
+	Month     int32
+	AccountID uuid.UUID
+}
+
+func (q *Queries) GetIncomeForMonth(ctx context.Context, arg GetIncomeForMonthParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, getIncomeForMonth, arg.Year, arg.Month, arg.AccountID)
+	var monthly_income string
+	err := row.Scan(&monthly_income)
+	return monthly_income, err
+}
+
+const getNetIncomeForMonth = `-- name: GetNetIncomeForMonth :one
+SELECT CAST(SUM(amount) as NUMERIC(16,2)) net_income
+FROM transactions
+WHERE
+    transaction_type != 'transfer'
+    AND transaction_date >= make_date($1, $2, 1)
+    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+    AND account_id = $3
+`
+
+type GetNetIncomeForMonthParams struct {
+	Year      int32
+	Month     int32
+	AccountID uuid.UUID
+}
+
+func (q *Queries) GetNetIncomeForMonth(ctx context.Context, arg GetNetIncomeForMonthParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, getNetIncomeForMonth, arg.Year, arg.Month, arg.AccountID)
+	var net_income string
+	err := row.Scan(&net_income)
+	return net_income, err
+}
+
+const getSingleTransaction = `-- name: GetSingleTransaction :one
+SELECT id, created_at, updated_at, amount, category, description, transaction_date, transaction_type, currency_code, account_id FROM transactions
+WHERE id = $1
+`
+
+func (q *Queries) GetSingleTransaction(ctx context.Context, id uuid.UUID) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, getSingleTransaction, id)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Amount,
+		&i.Category,
+		&i.Description,
+		&i.TransactionDate,
+		&i.TransactionType,
+		&i.CurrencyCode,
+		&i.AccountID,
+	)
+	return i, err
+}
+
+const getTransactions = `-- name: GetTransactions :many
+SELECT id, created_at, updated_at, amount, category, description, transaction_date, transaction_type, currency_code, account_id FROM transactions
+WHERE account_id = $1
+`
+
+func (q *Queries) GetTransactions(ctx context.Context, accountID uuid.UUID) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactions, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transaction
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Amount,
+			&i.Category,
+			&i.Description,
+			&i.TransactionDate,
+			&i.TransactionType,
+			&i.CurrencyCode,
+			&i.AccountID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateTransactionCategory = `-- name: UpdateTransactionCategory :exec
 UPDATE transactions
 SET category = $1, updated_at = now()

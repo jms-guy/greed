@@ -38,3 +38,9 @@ type Transaction struct {
 	AccountID		uuid.UUID `json:"account_id"`
 }
 
+//Income structure - used for income/expenses
+type Income struct {
+	Amount			string `json:"amount"`
+	Year			int `json:"year"`
+	Month			int `json:"month"`
+}
