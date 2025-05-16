@@ -27,6 +27,19 @@ type SupportedCurrency struct {
 	Active bool
 }
 
+type Transaction struct {
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Amount          string
+	Category        string
+	Description     sql.NullString
+	TransactionDate time.Time
+	TransactionType string
+	CurrencyCode    string
+	AccountID       uuid.UUID
+}
+
 type User struct {
 	ID        uuid.UUID
 	Name      string

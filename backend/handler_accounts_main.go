@@ -88,12 +88,12 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 
 	//Validation on the balance and goal parameters, making sure they are in 
 	//proper format, and either null or not null
-	balanceSQL, err := utils.CreateNullString(params.Balance)
+	balanceSQL, err := utils.CreateMoneyNullString(params.Balance)
 	if err != nil {
 		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
 	}
 
-	goalSQL, err := utils.CreateNullString(params.Balance)
+	goalSQL, err := utils.CreateMoneyNullString(params.Balance)
 	if err != nil {
 		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
 	}

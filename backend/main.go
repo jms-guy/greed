@@ -61,6 +61,12 @@ func main() {
 	mux.HandleFunc("PUT /api/accounts/{accountid}/currency", cfg.handlerUpdateCurrency)
 
 
+	//Transaction handler functions
+	mux.HandleFunc("POST /api/transactions/{accountid}", cfg.handlerCreateTransaction)
+
+	mux.HandleFunc("PUT /api/transactions/{transactionid}/description", cfg.handlerUpdateTransactionDescription)
+	mux.HandleFunc("PUT /api/transactions/{transactionid}/category", cfg.handlerUpdateTransactionCategory)
+
 	//Dev testing handlers
 	mux.HandleFunc("POST /admin/reset", cfg.handlerResetDatabase)
 

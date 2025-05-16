@@ -84,7 +84,7 @@ func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Turn goal string into type NullString for database
-	goalSQL, err := utils.CreateNullString(params.Goal)
+	goalSQL, err := utils.CreateMoneyNullString(params.Goal)
 	if err != nil {
 		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", err)
 		return
@@ -129,7 +129,7 @@ func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Turn request balance string into type NullString
-	balanceSQL, err := utils.CreateNullString(params.Balance)
+	balanceSQL, err := utils.CreateMoneyNullString(params.Balance)
 	if err != nil {
 		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
 		return
