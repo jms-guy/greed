@@ -44,3 +44,9 @@ type Income struct {
 	Year			int `json:"year"`
 	Month			int `json:"month"`
 }
+
+type Expenses struct {
+	Amount			string `json:"amount"`
+	Year			int `json:"year"`
+	Month			int `json:"month"`
+}

@@ -57,21 +57,33 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 
 const deleteAccount = `-- name: DeleteAccount :exec
 DELETE FROM accounts
-WHERE user_id = $1
+WHERE id = $1
+AND user_id = $2
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteAccount, userID)
+type DeleteAccountParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAccount, arg.ID, arg.UserID)
 	return err
 }
 
 const getAccount = `-- name: GetAccount :one
 SELECT id, created_at, updated_at, balance, goal, currency, user_id FROM accounts
-WHERE user_id = $1
+WHERE id = $1
+AND user_id = $2
 `
 
-func (q *Queries) GetAccount(ctx context.Context, userID uuid.UUID) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccount, userID)
+type GetAccountParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, arg.ID, arg.UserID)
 	var i Account
 	err := row.Scan(
 		&i.ID,
@@ -83,6 +95,42 @@ func (q *Queries) GetAccount(ctx context.Context, userID uuid.UUID) (Account, er
 		&i.UserID,
 	)
 	return i, err
+}
+
+const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
+SELECT id, created_at, updated_at, balance, goal, currency, user_id FROM accounts
+WHERE user_id = $1
+`
+
+func (q *Queries) GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAccountsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Balance,
+			&i.Goal,
+			&i.Currency,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const resetAccounts = `-- name: ResetAccounts :exec

@@ -9,8 +9,8 @@ import (
 	"github.com/jms-guy/greed/internal/database"
 )
 
-//Function will retrieve all accounts attached to the given userID
-func (cfg *apiConfig) handlerGetAccount(w http.ResponseWriter, r *http.Request) {
+//Function will get all accounts for user
+func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.Request) {
 	//Get user ID
 	userId := r.PathValue("userid")
 
@@ -20,8 +20,61 @@ func (cfg *apiConfig) handlerGetAccount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	//Get accounts for user from database
+	accs, err := cfg.db.GetAllAccountsForUser(context.Background(), id)
+	if err != nil {
+		respondWithError(w, 500, "Error retrieving accounts for user", err)
+		return
+	}
+
+	//If no accounts found
+	if len(accs) == 0 {
+		respondWithError(w, 400, "No accounts found for user", nil)
+		return
+	}
+
+	//Return slice of account structs
+	var accounts []Account
+	for _, account := range accs {
+		result := Account{
+			ID: account.ID,
+			CreatedAt: account.CreatedAt,
+			UpdatedAt: account.UpdatedAt,
+			Balance: account.Balance.String,
+			Goal: account.Goal.String,
+			Currency: account.Currency,
+		}
+		accounts = append(accounts, result)
+	}
+
+	respondWithJSON(w, 200, accounts)
+}
+
+//Function will retrieve single account attached to the given userID and accountID
+func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Request) {
+	//Get user ID
+	userId := r.PathValue("userid")
+
+	id, err := uuid.Parse(userId)
+	if err != nil {
+		respondWithError(w, 400, "Error parsing user ID", err)
+		return
+	}
+
+	//Get account ID
+	accId := r.PathValue("accountid")
+
+	accountId, err := uuid.Parse(accId)
+	if err != nil {
+		respondWithError(w, 400, "Error parsing account ID", err)
+		return
+	}
+
 	//Get account data from database based on user ID
-	account, err := cfg.db.GetAccount(context.Background(), id)
+	account, err := cfg.db.GetAccount(context.Background(), database.GetAccountParams{
+		ID: accountId,
+		UserID: id,
+	})
 	if err != nil {
 		respondWithError(w, 500, "Could not retrieve accounts for user", err)
 		return
@@ -57,14 +110,26 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	//Get account ID
+	accId := r.PathValue("accountid")
+
+	accountId, err := uuid.Parse(accId)
+	if err != nil {
+		respondWithError(w, 400, "Error parsing Account ID", err)
+		return
+	}
+
 	//Delete account from database based on user ID given
-	err = cfg.db.DeleteAccount(context.Background(), id)
+	err = cfg.db.DeleteAccount(context.Background(), database.DeleteAccountParams{
+		ID: accountId,
+		UserID: id,
+	})
 	if err != nil {
 		respondWithError(w, 500, "Error deleting account from database", err)
 		return
 	}
 
-	respondWithJSON(w, 204, nil)
+	respondWithJSON(w, 200, "Account deleted successfully")
 }
 
 //Function will create a new account in the database

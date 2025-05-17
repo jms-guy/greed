@@ -9,6 +9,25 @@ import (
 	"github.com/jms-guy/greed/internal/database"
 )
 
+//Function will delete a user record from database
+func (cfg *apiConfig) handlerDeleteUser (w http.ResponseWriter, r *http.Request) {
+	userId := r.PathValue("userid")
+
+	id, err := uuid.Parse(userId)
+	if err != nil {
+		respondWithError(w, 400, "Error parsing user ID", err)
+		return
+	}
+
+	err = cfg.db.DeleteUser(context.Background(), id)
+	if err != nil {
+		respondWithError(w, 500, "Error deleting user from database", err)
+		return
+	}
+
+	respondWithJSON(w, 200, "User deleted successfully")
+}
+
 //Function will create a new user in database
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 
@@ -46,20 +65,3 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 }
 
 
-//Function to reset database for dev testing -> users/accounts tables
-func (cfg *apiConfig) handlerResetDatabase(w http.ResponseWriter, r *http.Request) {
-	err := cfg.db.ResetUsers(context.Background())
-	if err != nil {
-		log.Printf("Error clearing users table")
-		respondWithError(w, 500, "Could not reset users table", err)
-		return
-	}
-
-	err = cfg.db.ResetAccounts(context.Background())
-	if err != nil {
-		log.Printf("Error clearing account_financials table")
-		respondWithError(w, 500, "Could not reset account_financials table", err)
-		return
-	}
-	respondWithJSON(w, 200, nil)
-}

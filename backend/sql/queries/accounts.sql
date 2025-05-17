@@ -16,11 +16,17 @@ DELETE FROM accounts;
 
 -- name: GetAccount :one
 SELECT * FROM accounts
+WHERE id = $1
+AND user_id = $2;
+
+-- name: GetAllAccountsForUser :many
+SELECT * FROM accounts
 WHERE user_id = $1;
 
 -- name: DeleteAccount :exec
 DELETE FROM accounts
-WHERE user_id = $1;
+WHERE id = $1
+AND user_id = $2;
 
 -- name: UpdateBalance :exec
 UPDATE accounts

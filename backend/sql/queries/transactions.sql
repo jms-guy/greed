@@ -42,29 +42,33 @@ WHERE id = $1;
 SELECT * FROM transactions
 WHERE account_id = $1;
 
--- name: GetIncomeForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_income
-FROM transactions
-WHERE
-    transaction_type = 'credit'
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3;
+-- name: GetTransactionsOfType :many
+SELECT * FROM transactions
+WHERE account_id = $1
+AND transaction_type = $2;
 
--- name: GetExpensesForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_expenses
-FROM transactions
-WHERE
-    transaction_type = 'debit'  
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3;
+-- name: GetTransactionsOfCategory :many
+SELECT * FROM transactions
+WHERE account_id = $1
+AND category = $2;
 
--- name: GetNetIncomeForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) net_income
-FROM transactions
-WHERE
-    transaction_type != 'transfer'
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3;
+-- name: ClearTransactionsTable :exec
+DELETE FROM transactions;
+
+-- name: DeleteTransaction :exec
+DELETE FROM transactions
+WHERE id = $1;
+
+-- name: DeleteTransactionsForAccount :exec
+DELETE FROM transactions
+WHERE account_id = $1;
+
+-- name: DeleteTransactionsOfType :exec
+DELETE FROM transactions
+WHERE account_id = $1
+AND transaction_type = $2;
+
+-- name: DeleteTransactionsOfCategory :exec
+DELETE FROM transactions
+WHERE account_id = $1
+AND category = $2;

@@ -13,6 +13,15 @@ import (
 	"github.com/google/uuid"
 )
 
+const clearTransactionsTable = `-- name: ClearTransactionsTable :exec
+DELETE FROM transactions
+`
+
+func (q *Queries) ClearTransactionsTable(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, clearTransactionsTable)
+	return err
+}
+
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO transactions (
     id, 
@@ -78,73 +87,56 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	return i, err
 }
 
-const getExpensesForMonth = `-- name: GetExpensesForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_expenses
-FROM transactions
-WHERE
-    transaction_type = 'debit'  
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3
+const deleteTransaction = `-- name: DeleteTransaction :exec
+DELETE FROM transactions
+WHERE id = $1
 `
 
-type GetExpensesForMonthParams struct {
-	Year      int32
-	Month     int32
-	AccountID uuid.UUID
+func (q *Queries) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteTransaction, id)
+	return err
 }
 
-func (q *Queries) GetExpensesForMonth(ctx context.Context, arg GetExpensesForMonthParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getExpensesForMonth, arg.Year, arg.Month, arg.AccountID)
-	var monthly_expenses string
-	err := row.Scan(&monthly_expenses)
-	return monthly_expenses, err
-}
-
-const getIncomeForMonth = `-- name: GetIncomeForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_income
-FROM transactions
-WHERE
-    transaction_type = 'credit'
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3
+const deleteTransactionsForAccount = `-- name: DeleteTransactionsForAccount :exec
+DELETE FROM transactions
+WHERE account_id = $1
 `
 
-type GetIncomeForMonthParams struct {
-	Year      int32
-	Month     int32
-	AccountID uuid.UUID
+func (q *Queries) DeleteTransactionsForAccount(ctx context.Context, accountID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteTransactionsForAccount, accountID)
+	return err
 }
 
-func (q *Queries) GetIncomeForMonth(ctx context.Context, arg GetIncomeForMonthParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getIncomeForMonth, arg.Year, arg.Month, arg.AccountID)
-	var monthly_income string
-	err := row.Scan(&monthly_income)
-	return monthly_income, err
-}
-
-const getNetIncomeForMonth = `-- name: GetNetIncomeForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) net_income
-FROM transactions
-WHERE
-    transaction_type != 'transfer'
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3
+const deleteTransactionsOfCategory = `-- name: DeleteTransactionsOfCategory :exec
+DELETE FROM transactions
+WHERE account_id = $1
+AND category = $2
 `
 
-type GetNetIncomeForMonthParams struct {
-	Year      int32
-	Month     int32
+type DeleteTransactionsOfCategoryParams struct {
 	AccountID uuid.UUID
+	Category  string
 }
 
-func (q *Queries) GetNetIncomeForMonth(ctx context.Context, arg GetNetIncomeForMonthParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getNetIncomeForMonth, arg.Year, arg.Month, arg.AccountID)
-	var net_income string
-	err := row.Scan(&net_income)
-	return net_income, err
+func (q *Queries) DeleteTransactionsOfCategory(ctx context.Context, arg DeleteTransactionsOfCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, deleteTransactionsOfCategory, arg.AccountID, arg.Category)
+	return err
+}
+
+const deleteTransactionsOfType = `-- name: DeleteTransactionsOfType :exec
+DELETE FROM transactions
+WHERE account_id = $1
+AND transaction_type = $2
+`
+
+type DeleteTransactionsOfTypeParams struct {
+	AccountID       uuid.UUID
+	TransactionType string
+}
+
+func (q *Queries) DeleteTransactionsOfType(ctx context.Context, arg DeleteTransactionsOfTypeParams) error {
+	_, err := q.db.ExecContext(ctx, deleteTransactionsOfType, arg.AccountID, arg.TransactionType)
+	return err
 }
 
 const getSingleTransaction = `-- name: GetSingleTransaction :one
@@ -177,6 +169,96 @@ WHERE account_id = $1
 
 func (q *Queries) GetTransactions(ctx context.Context, accountID uuid.UUID) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, getTransactions, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transaction
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Amount,
+			&i.Category,
+			&i.Description,
+			&i.TransactionDate,
+			&i.TransactionType,
+			&i.CurrencyCode,
+			&i.AccountID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTransactionsOfCategory = `-- name: GetTransactionsOfCategory :many
+SELECT id, created_at, updated_at, amount, category, description, transaction_date, transaction_type, currency_code, account_id FROM transactions
+WHERE account_id = $1
+AND category = $2
+`
+
+type GetTransactionsOfCategoryParams struct {
+	AccountID uuid.UUID
+	Category  string
+}
+
+func (q *Queries) GetTransactionsOfCategory(ctx context.Context, arg GetTransactionsOfCategoryParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionsOfCategory, arg.AccountID, arg.Category)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transaction
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Amount,
+			&i.Category,
+			&i.Description,
+			&i.TransactionDate,
+			&i.TransactionType,
+			&i.CurrencyCode,
+			&i.AccountID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTransactionsOfType = `-- name: GetTransactionsOfType :many
+SELECT id, created_at, updated_at, amount, category, description, transaction_date, transaction_type, currency_code, account_id FROM transactions
+WHERE account_id = $1
+AND transaction_type = $2
+`
+
+type GetTransactionsOfTypeParams struct {
+	AccountID       uuid.UUID
+	TransactionType string
+}
+
+func (q *Queries) GetTransactionsOfType(ctx context.Context, arg GetTransactionsOfTypeParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionsOfType, arg.AccountID, arg.TransactionType)
 	if err != nil {
 		return nil, err
 	}

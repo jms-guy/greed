@@ -10,10 +10,12 @@ import (
 	_"github.com/lib/pq"
 )
 
-/*
-	Db query/netincome function tentatively works based on the assumption that credit amounts (+) and
-	debit amounts (-). Keep in mind for future, may have to alter.
-	Refactor calculation endpoints, they're messy.
+/* Notes & To-Do
+	-Db query/netincome function tentatively works based on the assumption that credit amounts are (+) and
+	debit amounts are (-). Keep in mind for future, may have to alter.
+	-Authentication & authorization
+	-Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
+	-Enhance handlerGetTransactions to parse query (return transactions on optional fields of amount, or date)
 */
 
 type apiConfig struct{
@@ -52,37 +54,53 @@ func main() {
 		Addr: addr,
 	}
 
+	///////////////Handler Functions///////////////
+
 	//User handler functions
 	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)	//Creates user in db
+	mux.HandleFunc("DELETE /api/users/{userid}", cfg.handlerDeleteUser) //Deletes a user record from database
 
 	//Main account handler functions
-	mux.HandleFunc("POST /api/accounts", cfg.handlerCreateAccount)	//Creates account in db
-	mux.HandleFunc("GET /api/accounts/{userid}", cfg.handlerGetAccount)	//Get a single account
-	mux.HandleFunc("DELETE /api/accounts/{userid}", cfg.handlerDeleteAccount)	//Delete account from db
+	mux.HandleFunc("POST /api/users/{userid}/accounts", cfg.handlerCreateAccount)	//Creates account in db
+	mux.HandleFunc("GET /api/users/{userid}/accounts", cfg.handlerGetAccountsForUser)	//Gets all accounts for a user (currently not useful)
+	mux.HandleFunc("GET /api/users/{userid}/accounts/{accountid}", cfg.handlerGetSingleAccount)	//Get a single account
+	mux.HandleFunc("DELETE /api/users/{userid}/accounts/{accountid}", cfg.handlerDeleteAccount)	//Delete account from db
 
 	//Secondary account handler functions
 	mux.HandleFunc("PUT /api/accounts/{accountid}/balance", cfg.handlerUpdateBalance)	//Update an account's balance field
 	mux.HandleFunc("PUT /api/accounts/{accountid}/goal", cfg.handlerUpdateGoal)			//Update an account's goal field
 	mux.HandleFunc("PUT /api/accounts/{accountid}/currency", cfg.handlerUpdateCurrency) //Update an account's set currency
 
-	//Transaction handler functions
-	mux.HandleFunc("POST /api/transactions/{accountid}", cfg.handlerCreateTransaction) //Create a transaction record in db
-	mux.HandleFunc("GET /api/transactions/{accountid}", cfg.handlerGetTransactions)		//Get list of transactions for an account
-	mux.HandleFunc("GET /api/transactions/{transactionid}", cfg.handlerGetSingleTransaction)	//Get a single transaction record
+	//Main transaction handler functions
+	mux.HandleFunc("POST /api/accounts/{accountid}/transactions", cfg.handlerCreateTransaction) //Create a transaction record in db
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions", cfg.handlerGetTransactions)		//Get list of transactions for an account
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/{transactionid}", cfg.handlerGetSingleTransaction)	//Get a single transaction record
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/type/{transactiontype}", cfg.handlerGetTransactionsofType) //Gets all transactions for an account of certain type
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/category/{category}", cfg.handlerGetTransactionsOfCategory) //Gets all transactions for an account of certain category
 
-	mux.HandleFunc("PUT /api/transactions/{transactionid}/description", cfg.handlerUpdateTransactionDescription) //Update a transaction's description field
-	mux.HandleFunc("PUT /api/transactions/{transactionid}/category", cfg.handlerUpdateTransactionCategory)	//Update a transaction's category field
+	//Secondary transaction handler functions
+	mux.HandleFunc("PUT /api/accounts/{accountid}/transactions/{transactionid}/description", cfg.handlerUpdateTransactionDescription) //Update a transaction's description field
+	mux.HandleFunc("PUT /api/accounts/{accountid}/transactions/{transactionid}/category", cfg.handlerUpdateTransactionCategory)	//Update a transaction's category field
+
+	//Transaction handler delete functions
+	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions/{transactionid}", cfg.handlerDeleteTransactionRecord) //Deletes a transaction record from database
+	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions", cfg.handlerDeleteTransactionsForAccount) //Deletes all transaction records for an account
+	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions/type/{transactiontype}", cfg.handlerDeleteTransactionsOfType) //Deletes all transactions for an account based on transaction_type
+	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions/category/{category}", cfg.handlerDeleteTransactionsOfCategory) //Deletes all transactions of a specified category
 
 	//Financial calculation handler functions
-	mux.HandleFunc("GET /api/transactions/{accountid}/monthlyincome", cfg.handlerGetIncomeForMonth) //Calculate an account's income for a month
-	mux.HandleFunc("GET /api/transactions/{accountid}/monthlyexpenses", cfg.handlerGetExpensesForMonth) //Calculate an account's expenses for a month
-	mux.HandleFunc("GET /api/transactions/{accountid}/monthlynetincome", cfg.handlerGetNetIncomeForMonth) //Calculate an account's net income for a month
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/income/{year}/{month}", cfg.handlerGetIncomeForMonth) //Calculate an account's income for a month
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/expenses/{year}/{month}", cfg.handlerGetExpensesForMonth) //Calculate an account's expenses for a month
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/netincome/{year}/{month}", cfg.handlerGetNetIncomeForMonth) //Calculate an account's net income for a month
 
 	//Dev testing handlers
-	mux.HandleFunc("POST /admin/reset", cfg.handlerResetDatabase)	//Reset database's users / accounts tables
+	mux.HandleFunc("POST /admin/reset", cfg.handlerResetUsersAndAccounts)	//Reset database's users / accounts tables
+	mux.HandleFunc("POST /admin/reset", cfg.handlerResetTransactions) //Reset the database's transactions table
 
 
-	//Start server
+
+	/////Start server/////
+
 	log.Printf("Server running at: %s", server.Addr)
 	err = server.ListenAndServe()
 	if err != nil {
