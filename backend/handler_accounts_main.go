@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"github.com/jms-guy/greed/internal/utils"
+	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
 )
 
 //Function will get all accounts for user
@@ -34,9 +35,9 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	}
 
 	//Return slice of account structs
-	var accounts []Account
+	var accounts []models.Account
 	for _, account := range accs {
-		result := Account{
+		result := models.Account{
 			ID: account.ID,
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
@@ -87,7 +88,7 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 	}
 
 	//Structure returned database data into return JSON account struct
-	response := Account{
+	response := models.Account{
 		ID: account.ID,
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
@@ -115,7 +116,7 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 
 	accountId, err := uuid.Parse(accId)
 	if err != nil {
-		respondWithError(w, 400, "Error parsing Account ID", err)
+		respondWithError(w, 400, "Error parsing models.Account ID", err)
 		return
 	}
 
@@ -129,22 +130,14 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	respondWithJSON(w, 200, "Account deleted successfully")
+	respondWithJSON(w, 200, "models.Account deleted successfully")
 }
 
 //Function will create a new account in the database
 func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Request) {
 	
-	//Parameters that should be present in the received JSON data
-	type parameters struct {
-		Balance		string `json:"balance,omitempty"`
-		Goal		string `json:"goal,omitempty"`
-		Currency	string `json:"currency"`
-		UserID		uuid.UUID `json:"user_id"`
-	}
-
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.CreateAccount{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Couldn't decode parameters", err)
@@ -194,7 +187,7 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Creates the return JSON struct to send back
-	account := Account{
+	account := models.Account{
 		ID: newAccount.ID,
 		CreatedAt: newAccount.CreatedAt,
 		UpdatedAt: newAccount.UpdatedAt,

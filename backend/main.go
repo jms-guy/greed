@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"github.com/jms-guy/greed/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/joho/godotenv"
 	_"github.com/lib/pq"
 )
@@ -16,6 +16,8 @@ import (
 	-Authentication & authorization
 	-Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
 	-Enhance handlerGetTransactions to parse query (return transactions on optional fields of amount, or date)
+	-More calculation functions, such as (avg income/expenses per month)
+	-Don't like that handler functions are all methods on apiConfig, change later
 */
 
 type apiConfig struct{
@@ -94,8 +96,9 @@ func main() {
 	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/netincome/{year}/{month}", cfg.handlerGetNetIncomeForMonth) //Calculate an account's net income for a month
 
 	//Dev testing handlers
-	mux.HandleFunc("POST /admin/reset", cfg.handlerResetUsersAndAccounts)	//Reset database's users / accounts tables
-	mux.HandleFunc("POST /admin/reset", cfg.handlerResetTransactions) //Reset the database's transactions table
+	mux.HandleFunc("POST /admin/reset/users", cfg.handlerResetUsers)	//Reset database's users tables
+	mux.HandleFunc("POST /admin/reset/accounts", cfg.handlerResetAccounts) //Reset database's accounts table
+	mux.HandleFunc("POST /admin/reset/transactions", cfg.handlerResetTransactions) //Reset the database's transactions table
 
 
 

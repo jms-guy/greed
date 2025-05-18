@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
 )
 
 //Function deletes all transaction records for an account of a given category

@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
-	"github.com/jms-guy/greed/internal/utils"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/utils"
+	"github.com/jms-guy/greed/models"
 )
 
 //Function will return all transactions for an account based on a category specified
@@ -39,10 +39,10 @@ func (cfg *apiConfig) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 	}
 
 	//Create return slice of structs
-	transactions := []Transaction{}
+	transactions := []models.Transaction{}
 	//Populate the return slice
 	for _, result := range results {
-		t := Transaction{
+		t := models.Transaction{
 			ID: result.ID,
 			CreatedAt: result.CreatedAt,
 			UpdatedAt: result.UpdatedAt,
@@ -89,10 +89,10 @@ func (cfg *apiConfig) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 	}
 
 	//Create return slice of structs
-	transactions := []Transaction{}
+	transactions := []models.Transaction{}
 	//Populate the return slice
 	for _, result := range results {
-		t := Transaction{
+		t := models.Transaction{
 			ID: result.ID,
 			CreatedAt: result.CreatedAt,
 			UpdatedAt: result.UpdatedAt,
@@ -129,10 +129,10 @@ func (cfg *apiConfig) handlerGetTransactions(w http.ResponseWriter, r *http.Requ
 	}
 
 	//Create return slice of structs
-	transactions := []Transaction{}
+	transactions := []models.Transaction{}
 	//Populate the return slice
 	for _, result := range results {
-		t := Transaction{
+		t := models.Transaction{
 			ID: result.ID,
 			CreatedAt: result.CreatedAt,
 			UpdatedAt: result.UpdatedAt,
@@ -169,7 +169,7 @@ func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 	}
 
 	//Create response structure
-	transaction := Transaction{
+	transaction := models.Transaction{
 		ID: result.ID,
 		CreatedAt: result.CreatedAt,
 		UpdatedAt: result.UpdatedAt,
@@ -188,17 +188,6 @@ func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 
 //Function to create a transaction record in database
 func (cfg *apiConfig) handlerCreateTransaction(w http.ResponseWriter, r *http.Request) {
-	//Parameters needed from request
-	type parameters struct {
-		Amount			string 	  `json:"amount"`
-		Category		string	  `json:"category"`
-		Description		string	  `json:"description"`
-		TransactionDate time.Time `json:"transaction_date"`
-		TransactionType string	  `json:"transaction_type"`
-		CurrencyCode	string	  `json:"currency_code"`
-		AccountID		uuid.UUID `json:"account_id"`
-	}
-
 	//Get account id
 	accountId := r.PathValue("accountId")
 
@@ -210,7 +199,7 @@ func (cfg *apiConfig) handlerCreateTransaction(w http.ResponseWriter, r *http.Re
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.CreateTransaction{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Error decoding request parameters", err)

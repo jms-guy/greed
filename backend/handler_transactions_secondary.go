@@ -5,18 +5,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
-	"github.com/jms-guy/greed/internal/utils"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/utils"
+	"github.com/jms-guy/greed/models"
 )
 
 
 //Function will update the category of a transaction record in database
 func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r *http.Request) {
-	//Parameters needed from request
-	type parameters struct {
-		Category		string `json:"category"`
-	}
-
 	//Get transaction ID
 	transID := r.PathValue("transactionid")
 
@@ -28,7 +24,7 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.UpdateCategory{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Error decoding request parameters", err)
@@ -45,16 +41,11 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 		return
 	}
 
-	respondWithJSON(w, 200, Transaction{Category: params.Category})
+	respondWithJSON(w, 200, models.Transaction{Category: params.Category})
 }
 
 //Function to update the description of a transaction based on transaction ID
 func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter, r *http.Request) {
-	//Parameters needed from request
-	type parameters struct {
-		Description		string `json:"description"`
-	}
-
 	//Get transaction ID
 	transID := r.PathValue("transactionid")
 
@@ -66,7 +57,7 @@ func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter,
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.UpdateDescription{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Error decoding request parameters", err)
@@ -83,5 +74,5 @@ func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter,
 		return
 	}
 
-	respondWithJSON(w, 200, Transaction{Description: params.Description})
+	respondWithJSON(w, 200, models.Transaction{Description: params.Description})
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-//Structure for account JSON response 
+//Structure for account JSON request
 type Account struct {
 	ID				uuid.UUID `json:"id"`
 	CreatedAt		time.Time `json:"created_at"`
@@ -16,7 +16,7 @@ type Account struct {
 	UserID			uuid.UUID `json:"user_id"`
 }
 
-//Structure for user JSON response
+//Structure for user JSON request
 type User struct{
 	ID				uuid.UUID `json:"id"`
 	Name			string `json:"name"`
@@ -24,7 +24,7 @@ type User struct{
 	UpdatedAt		time.Time `json:"updated_at"`	
 }
 
-//Structure for transaction JSON response
+//Structure for transaction JSON request
 type Transaction struct {
 	ID				uuid.UUID `json:"id"`
 	CreatedAt		time.Time `json:"created_at"`
@@ -38,13 +38,14 @@ type Transaction struct {
 	AccountID		uuid.UUID `json:"account_id"`
 }
 
-//Income structure - used for income/expenses
+//Income structure
 type Income struct {
 	Amount			string `json:"amount"`
 	Year			int `json:"year"`
 	Month			int `json:"month"`
 }
 
+//Expenses structure
 type Expenses struct {
 	Amount			string `json:"amount"`
 	Year			int `json:"year"`

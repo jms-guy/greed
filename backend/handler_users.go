@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
 )
 
 //Function will delete a user record from database
@@ -30,14 +32,8 @@ func (cfg *apiConfig) handlerDeleteUser (w http.ResponseWriter, r *http.Request)
 
 //Function will create a new user in database
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-
-	//Parameters that should be present in JSON request
-	type parameters struct {
-		Name		string `json:"name"`
-	}
-
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.CreateUser{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Couldn't decode parameters", err)
@@ -55,7 +51,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Creates return structure
-	user := User{
+	user := models.User{
 		ID: newUser.ID,
 		Name: newUser.Name,
 		CreatedAt: newUser.CreatedAt,

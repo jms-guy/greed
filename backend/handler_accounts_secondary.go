@@ -4,18 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"github.com/jms-guy/greed/internal/utils"
+	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
 )
 
 //Function will update an account's currency field in the database, based on given account ID
 func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Request) {
-	//Request parameters needed
-	type parameters struct {
-		Currency		string `json:"currency"`
-	}
-
 	//Get account ID
 	accountId := r.PathValue("accountid")
 
@@ -27,7 +23,7 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.UpdateCurrency{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Couldn't decode JSON parameters", err)
@@ -55,16 +51,11 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	respondWithJSON(w, 200, Account{Currency: params.Currency})
+	respondWithJSON(w, 200, models.Account{Currency: params.Currency})
 }
 
 //Function will update an account's goal field in the database based on a given account ID
 func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) {
-	//Request parameters needed
-	type parameters struct {
-		Goal		string `json:"goal"`
-	}
-
 	//Get account ID
 	accountId := r.PathValue("accountid")
 
@@ -76,7 +67,7 @@ func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) 
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.UpdateGoal{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Coudln't decode JSON parameters", err)
@@ -101,15 +92,10 @@ func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Respond with Goal data
-	respondWithJSON(w, 200, Account{Goal: params.Goal})
+	respondWithJSON(w, 200, models.Account{Goal: params.Goal})
 }
 
 func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Request) {
-	//Request parameters needed
-	type parameters struct {
-		Balance		string`json:"balance"`
-	}
-
 	//Get account ID 
 	accountId := r.PathValue("accountid")
 	
@@ -121,7 +107,7 @@ func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Reques
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
+	params := models.UpdateBalance{}
 	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Coudln't decode JSON parameters", err)
@@ -146,5 +132,5 @@ func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Respond with Balance data
-	respondWithJSON(w, 200, Account{Balance: params.Balance})
+	respondWithJSON(w, 200, models.Account{Balance: params.Balance})
 }

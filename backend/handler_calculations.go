@@ -6,7 +6,8 @@ import (
 	"strconv"
 	"time"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
 )
 
 func (cfg *apiConfig) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +47,7 @@ func (cfg *apiConfig) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
 	}
 
 	//Make return struct
-	netIncome := Income{
+	netIncome := models.Income{
 		Amount: incAmount,
 		Year: y,
 		Month: m,
@@ -94,7 +95,7 @@ func (cfg *apiConfig) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
     }
     
     // Make return struct
-    expenses := Expenses{  
+    expenses := models.Expenses{  
         Amount: expAmount,
         Year: y,
         Month: m,
@@ -142,7 +143,7 @@ func (cfg *apiConfig) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Re
 	}
 
 	//Make return struct
-	income := Income{
+	income := models.Income{
 		Amount: incAmount,
 		Year: y,
 		Month: m,
