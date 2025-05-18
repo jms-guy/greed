@@ -23,7 +23,7 @@ func init() {
 			description: "Creates a user in the database",
 			syntax: "{create-user} {name}",	
 			callback: commandCreateUser,
-		},
+		},/*
 		"delete-user":	{
 			name: "delete-user",
 			description: "Deletes a user from the database",
@@ -78,17 +78,11 @@ func init() {
 			syntax: "{help}",
 			callback: commandHelp,
 		},
-		"syntax": {
-			name: "syntax",
-			description: "Provides a list of commands and their required syntax",
-			syntax: "{syntax}",
-			callback: commandSyntax,
-		},
 		"reset":	{
 			name: "reset",
 			description: "Admin testing tool, resets database tables",
 			syntax: "{reset} {table}",
 			callback: commandReset,
-		},
+		},*/
 	}
 }

@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"log"
 	"os"
-
 	"github.com/joho/godotenv"
 )
 
@@ -24,34 +22,20 @@ func main() {
 		Client: *NewClient(addr),
 	}
 
+	//Get user input arguments
+	args := os.Args
+	//args[0] = program name, args[1] = command name, args[2:] = arguments
+ 	command := args[1]
 
-	//Create stdin text scanner
-	scanner := bufio.NewScanner(os.Stdin)
+	//Check if input command is in command registry
+	cmd, ok := commandRegistry[command]
+	if !ok {
+		log.Println("Command not found")
+	}
 
-	//Start up the client
-	log.Println("Starting Client...")
-	for {
-		log.Printf("Greed > ")
-
-		//Wait for text input, when received, clean the input
-		scanner.Scan()
-		userInput := cleanInput(scanner.Text())
-		if len(userInput) == 0 {
-			continue
-		}
-
-		//Search command registry for command given
-		command, ok := commandRegistry[userInput[0]]
-		if !ok {
-			log.Println("Unknown command")
-			continue
-		}
-
-		//Execute command callback
-		err := command.callback(&cfg, userInput)
-		if err != nil {
-			log.Printf("Returned error: %s", err)
-			continue
-		}
+	//Execute command callback function
+	err = cmd.callback(&cfg, args[2:])
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
