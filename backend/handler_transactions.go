@@ -189,7 +189,7 @@ func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 //Function to create a transaction record in database
 func (cfg *apiConfig) handlerCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	//Get account id
-	accountId := r.PathValue("accountId")
+	accountId := r.PathValue("accountid")
 
 	id, err := uuid.Parse(accountId)
 	if err != nil {

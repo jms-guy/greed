@@ -15,9 +15,9 @@ import (
 	debit amounts are (-). Keep in mind for future, may have to alter.
 	-Authentication & authorization
 	-Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
-	-Enhance handlerGetTransactions to parse query (return transactions on optional fields of amount, or date)
+	-Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
 	-More calculation functions, such as (avg income/expenses per month)
-	-Don't like that handler functions are all methods on apiConfig, change later
+	-Don't like that handler functions are all methods on apiConfig, refine later
 */
 
 type apiConfig struct{
@@ -60,11 +60,13 @@ func main() {
 
 	//User handler functions
 	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)	//Creates user in db
+	mux.HandleFunc("GET /api/users", cfg.handlerGetUser) //Returns a single user, will be used for logging in
 	mux.HandleFunc("DELETE /api/users/{userid}", cfg.handlerDeleteUser) //Deletes a user record from database
+	mux.HandleFunc("GET /api/users/all", cfg.handlerGetListOfUsers) //Returns a list of users in database
 
 	//Main account handler functions
 	mux.HandleFunc("POST /api/users/{userid}/accounts", cfg.handlerCreateAccount)	//Creates account in db
-	mux.HandleFunc("GET /api/users/{userid}/accounts", cfg.handlerGetAccountsForUser)	//Gets all accounts for a user (currently not useful)
+	mux.HandleFunc("GET /api/users/{userid}/accounts/all", cfg.handlerGetAccountsForUser)	//Gets all accounts for a user (currently not useful)
 	mux.HandleFunc("GET /api/users/{userid}/accounts/{accountid}", cfg.handlerGetSingleAccount)	//Get a single account
 	mux.HandleFunc("DELETE /api/users/{userid}/accounts/{accountid}", cfg.handlerDeleteAccount)	//Delete account from db
 
@@ -75,7 +77,7 @@ func main() {
 
 	//Main transaction handler functions
 	mux.HandleFunc("POST /api/accounts/{accountid}/transactions", cfg.handlerCreateTransaction) //Create a transaction record in db
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions", cfg.handlerGetTransactions)		//Get list of transactions for an account
+	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/all", cfg.handlerGetTransactions)		//Get list of transactions for an account
 	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/{transactionid}", cfg.handlerGetSingleTransaction)	//Get a single transaction record
 	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/type/{transactiontype}", cfg.handlerGetTransactionsofType) //Gets all transactions for an account of certain type
 	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/category/{category}", cfg.handlerGetTransactionsOfCategory) //Gets all transactions for an account of certain category

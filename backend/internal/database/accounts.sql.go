@@ -142,10 +142,11 @@ func (q *Queries) ResetAccounts(ctx context.Context) error {
 	return err
 }
 
-const updateBalance = `-- name: UpdateBalance :exec
+const updateBalance = `-- name: UpdateBalance :one
 UPDATE accounts
 SET balance = $1, updated_at = now()
 WHERE id = $2
+RETURNING id, created_at, updated_at, balance, goal, currency, user_id
 `
 
 type UpdateBalanceParams struct {
@@ -153,15 +154,26 @@ type UpdateBalanceParams struct {
 	ID      uuid.UUID
 }
 
-func (q *Queries) UpdateBalance(ctx context.Context, arg UpdateBalanceParams) error {
-	_, err := q.db.ExecContext(ctx, updateBalance, arg.Balance, arg.ID)
-	return err
+func (q *Queries) UpdateBalance(ctx context.Context, arg UpdateBalanceParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, updateBalance, arg.Balance, arg.ID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Balance,
+		&i.Goal,
+		&i.Currency,
+		&i.UserID,
+	)
+	return i, err
 }
 
-const updateCurrency = `-- name: UpdateCurrency :exec
+const updateCurrency = `-- name: UpdateCurrency :one
 UPDATE accounts
 SET currency = $1, updated_at = now()
 WHERE id = $2
+RETURNING id, created_at, updated_at, balance, goal, currency, user_id
 `
 
 type UpdateCurrencyParams struct {
@@ -169,15 +181,26 @@ type UpdateCurrencyParams struct {
 	ID       uuid.UUID
 }
 
-func (q *Queries) UpdateCurrency(ctx context.Context, arg UpdateCurrencyParams) error {
-	_, err := q.db.ExecContext(ctx, updateCurrency, arg.Currency, arg.ID)
-	return err
+func (q *Queries) UpdateCurrency(ctx context.Context, arg UpdateCurrencyParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, updateCurrency, arg.Currency, arg.ID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Balance,
+		&i.Goal,
+		&i.Currency,
+		&i.UserID,
+	)
+	return i, err
 }
 
-const updateGoal = `-- name: UpdateGoal :exec
+const updateGoal = `-- name: UpdateGoal :one
 UPDATE accounts
 SET goal = $1, updated_at = now()
 WHERE id = $2
+RETURNING id, created_at, updated_at, balance, goal, currency, user_id
 `
 
 type UpdateGoalParams struct {
@@ -185,7 +208,17 @@ type UpdateGoalParams struct {
 	ID   uuid.UUID
 }
 
-func (q *Queries) UpdateGoal(ctx context.Context, arg UpdateGoalParams) error {
-	_, err := q.db.ExecContext(ctx, updateGoal, arg.Goal, arg.ID)
-	return err
+func (q *Queries) UpdateGoal(ctx context.Context, arg UpdateGoalParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, updateGoal, arg.Goal, arg.ID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Balance,
+		&i.Goal,
+		&i.Currency,
+		&i.UserID,
+	)
+	return i, err
 }

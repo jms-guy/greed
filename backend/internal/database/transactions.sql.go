@@ -291,10 +291,11 @@ func (q *Queries) GetTransactionsOfType(ctx context.Context, arg GetTransactions
 	return items, nil
 }
 
-const updateTransactionCategory = `-- name: UpdateTransactionCategory :exec
+const updateTransactionCategory = `-- name: UpdateTransactionCategory :one
 UPDATE transactions
 SET category = $1, updated_at = now()
 WHERE id = $2
+RETURNING id, created_at, updated_at, amount, category, description, transaction_date, transaction_type, currency_code, account_id
 `
 
 type UpdateTransactionCategoryParams struct {
@@ -302,15 +303,29 @@ type UpdateTransactionCategoryParams struct {
 	ID       uuid.UUID
 }
 
-func (q *Queries) UpdateTransactionCategory(ctx context.Context, arg UpdateTransactionCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, updateTransactionCategory, arg.Category, arg.ID)
-	return err
+func (q *Queries) UpdateTransactionCategory(ctx context.Context, arg UpdateTransactionCategoryParams) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, updateTransactionCategory, arg.Category, arg.ID)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Amount,
+		&i.Category,
+		&i.Description,
+		&i.TransactionDate,
+		&i.TransactionType,
+		&i.CurrencyCode,
+		&i.AccountID,
+	)
+	return i, err
 }
 
-const updateTransactionDescription = `-- name: UpdateTransactionDescription :exec
+const updateTransactionDescription = `-- name: UpdateTransactionDescription :one
 UPDATE transactions
 SET description = $1, updated_at = now()
 WHERE id = $2
+RETURNING id, created_at, updated_at, amount, category, description, transaction_date, transaction_type, currency_code, account_id
 `
 
 type UpdateTransactionDescriptionParams struct {
@@ -318,7 +333,20 @@ type UpdateTransactionDescriptionParams struct {
 	ID          uuid.UUID
 }
 
-func (q *Queries) UpdateTransactionDescription(ctx context.Context, arg UpdateTransactionDescriptionParams) error {
-	_, err := q.db.ExecContext(ctx, updateTransactionDescription, arg.Description, arg.ID)
-	return err
+func (q *Queries) UpdateTransactionDescription(ctx context.Context, arg UpdateTransactionDescriptionParams) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, updateTransactionDescription, arg.Description, arg.ID)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Amount,
+		&i.Category,
+		&i.Description,
+		&i.TransactionDate,
+		&i.TransactionType,
+		&i.CurrencyCode,
+		&i.AccountID,
+	)
+	return i, err
 }

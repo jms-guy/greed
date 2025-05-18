@@ -32,7 +32,7 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 	}
 
 	//Update transaction category in database
-	err = cfg.db.UpdateTransactionCategory(context.Background(), database.UpdateTransactionCategoryParams{
+	result, err := cfg.db.UpdateTransactionCategory(context.Background(), database.UpdateTransactionCategoryParams{
 		Category: params.Category,
 		ID: id,
 	})
@@ -41,7 +41,20 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 		return
 	}
 
-	respondWithJSON(w, 200, models.Transaction{Category: params.Category})
+	transaction := models.Transaction{
+		ID: result.ID,
+		CreatedAt: result.CreatedAt,
+		UpdatedAt: result.UpdatedAt,
+		Amount: result.Amount,
+		Category: result.Category,
+		Description: result.Description.String,
+		TransactionDate: result.TransactionDate,
+		TransactionType: result.TransactionType,
+		CurrencyCode: result.CurrencyCode,
+		AccountID: result.AccountID,
+	}
+
+	respondWithJSON(w, 200, transaction)
 }
 
 //Function to update the description of a transaction based on transaction ID
@@ -65,7 +78,7 @@ func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter,
 	}
 
 	//Update transaction record in database
-	err = cfg.db.UpdateTransactionDescription(context.Background(), database.UpdateTransactionDescriptionParams{
+	result, err := cfg.db.UpdateTransactionDescription(context.Background(), database.UpdateTransactionDescriptionParams{
 		Description: utils.CreateTextNullString(params.Description),
 		ID: id,
 	})
@@ -74,5 +87,18 @@ func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter,
 		return
 	}
 
-	respondWithJSON(w, 200, models.Transaction{Description: params.Description})
+	transaction := models.Transaction{
+		ID: result.ID,
+		CreatedAt: result.CreatedAt,
+		UpdatedAt: result.UpdatedAt,
+		Amount: result.Amount,
+		Category: result.Category,
+		Description: result.Description.String,
+		TransactionDate: result.TransactionDate,
+		TransactionType: result.TransactionType,
+		CurrencyCode: result.CurrencyCode,
+		AccountID: result.AccountID,
+	}
+
+	respondWithJSON(w, 200, transaction)
 }

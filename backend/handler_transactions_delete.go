@@ -100,6 +100,13 @@ func (cfg *apiConfig) handlerDeleteTransactionRecord(w http.ResponseWriter, r *h
 		return
 	}
 
+	//Check if transaction exists
+	_, err = cfg.db.GetSingleTransaction(context.Background(), id)
+	if err != nil {
+		respondWithError(w, 400, "No transaction record of that ID found", nil)
+		return
+	}
+
 	//Delete transaction record from database
 	err = cfg.db.DeleteTransaction(context.Background(), id)
 	if err != nil {

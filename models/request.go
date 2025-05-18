@@ -5,9 +5,10 @@ import (
 	"github.com/google/uuid"
 )
 
-//Request parameters for creating a user
-type CreateUser struct {
-	Name			string `json:"name"`	
+//Request parameters for users
+type UserDetails struct {
+	Name			string `json:"name"`
+	Password		string `json:"password"`	
 }
 
 //Request parameters for creating an account

@@ -12,13 +12,17 @@ import (
 )
 
 const getExpensesForMonth = `-- name: GetExpensesForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_expenses
+SELECT CAST(
+    CASE 
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE SUM(amount) 
+    END as NUMERIC(16,2)
+) as monthly_expenses
 FROM transactions
-WHERE
-    transaction_type = 'debit'  
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3
+WHERE transaction_type = 'debit'
+  AND transaction_date >= make_date($1, $2, 1)
+  AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+  AND account_id = $3
 `
 
 type GetExpensesForMonthParams struct {
@@ -35,13 +39,17 @@ func (q *Queries) GetExpensesForMonth(ctx context.Context, arg GetExpensesForMon
 }
 
 const getIncomeForMonth = `-- name: GetIncomeForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) monthly_income
+SELECT CAST(
+    CASE 
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE SUM(amount) 
+    END as NUMERIC(16,2)
+) as monthly_income
 FROM transactions
-WHERE
-    transaction_type = 'credit'
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3
+WHERE transaction_type = 'credit'
+  AND transaction_date >= make_date($1, $2, 1)
+  AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+  AND account_id = $3
 `
 
 type GetIncomeForMonthParams struct {
@@ -58,13 +66,17 @@ func (q *Queries) GetIncomeForMonth(ctx context.Context, arg GetIncomeForMonthPa
 }
 
 const getNetIncomeForMonth = `-- name: GetNetIncomeForMonth :one
-SELECT CAST(SUM(amount) as NUMERIC(16,2)) net_income
+SELECT CAST(
+    CASE 
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE SUM(amount) 
+    END as NUMERIC(16,2)
+) as net_income
 FROM transactions
-WHERE
-    transaction_type != 'transfer'
-    AND transaction_date >= make_date($1, $2, 1)
-    AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-    AND account_id = $3
+WHERE transaction_type != 'transfer'
+  AND transaction_date >= make_date($1, $2, 1)
+  AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+  AND account_id = $3
 `
 
 type GetNetIncomeForMonthParams struct {

@@ -24,15 +24,17 @@ VALUES (
 )
 RETURNING *;
 
--- name: UpdateTransactionDescription :exec
+-- name: UpdateTransactionDescription :one
 UPDATE transactions
 SET description = $1, updated_at = now()
-WHERE id = $2;
+WHERE id = $2
+RETURNING *;
 
--- name: UpdateTransactionCategory :exec
+-- name: UpdateTransactionCategory :one
 UPDATE transactions
 SET category = $1, updated_at = now()
-WHERE id = $2;
+WHERE id = $2
+RETURNING *;
 
 -- name: GetSingleTransaction :one
 SELECT * FROM transactions

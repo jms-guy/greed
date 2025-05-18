@@ -42,7 +42,7 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 	}
 
 	//Update the database
-	err = cfg.db.UpdateCurrency(context.Background(), database.UpdateCurrencyParams{
+	account, err := cfg.db.UpdateCurrency(context.Background(), database.UpdateCurrencyParams{
 		Currency: params.Currency,
 		ID: id,
 	})
@@ -51,7 +51,16 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	respondWithJSON(w, 200, models.Account{Currency: params.Currency})
+	response := models.Account{
+		ID: account.ID,
+		CreatedAt: account.CreatedAt,
+		UpdatedAt: account.UpdatedAt,
+		Balance: account.Balance.String,
+		Goal: account.Goal.String,
+		Currency: account.Currency,
+	}
+
+	respondWithJSON(w, 200, response)
 }
 
 //Function will update an account's goal field in the database based on a given account ID
@@ -82,7 +91,7 @@ func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Update database
-	err = cfg.db.UpdateGoal(context.Background(), database.UpdateGoalParams{
+	account, err := cfg.db.UpdateGoal(context.Background(), database.UpdateGoalParams{
 		Goal: goalSQL,
 		ID: id,
 	})
@@ -91,8 +100,16 @@ func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	//Respond with Goal data
-	respondWithJSON(w, 200, models.Account{Goal: params.Goal})
+	response := models.Account{
+		ID: account.ID,
+		CreatedAt: account.CreatedAt,
+		UpdatedAt: account.UpdatedAt,
+		Balance: account.Balance.String,
+		Goal: account.Goal.String,
+		Currency: account.Currency,
+	}
+
+	respondWithJSON(w, 200, response)
 }
 
 func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +139,7 @@ func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Update database
-	err = cfg.db.UpdateBalance(context.Background(), database.UpdateBalanceParams{
+	account, err := cfg.db.UpdateBalance(context.Background(), database.UpdateBalanceParams{
 		Balance: balanceSQL,
 		ID: id,
 	})
@@ -131,6 +148,14 @@ func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	//Respond with Balance data
-	respondWithJSON(w, 200, models.Account{Balance: params.Balance})
+	response := models.Account{
+		ID: account.ID,
+		CreatedAt: account.CreatedAt,
+		UpdatedAt: account.UpdatedAt,
+		Balance: account.Balance.String,
+		Goal: account.Goal.String,
+		Currency: account.Currency,
+	}
+
+	respondWithJSON(w, 200, response)
 }

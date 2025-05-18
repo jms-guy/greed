@@ -130,7 +130,7 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	respondWithJSON(w, 200, "models.Account deleted successfully")
+	respondWithJSON(w, 200, "Account deleted successfully")
 }
 
 //Function will create a new account in the database
@@ -151,7 +151,7 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
 	}
 
-	goalSQL, err := utils.CreateMoneyNullString(params.Balance)
+	goalSQL, err := utils.CreateMoneyNullString(params.Goal)
 	if err != nil {
 		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
 	}

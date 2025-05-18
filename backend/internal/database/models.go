@@ -41,8 +41,9 @@ type Transaction struct {
 }
 
 type User struct {
-	ID        uuid.UUID
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID             uuid.UUID
+	Name           string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	HashedPassword string
 }

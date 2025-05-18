@@ -28,17 +28,20 @@ DELETE FROM accounts
 WHERE id = $1
 AND user_id = $2;
 
--- name: UpdateBalance :exec
+-- name: UpdateBalance :one
 UPDATE accounts
 SET balance = $1, updated_at = now()
-WHERE id = $2;
+WHERE id = $2
+RETURNING *;
 
--- name: UpdateGoal :exec
+-- name: UpdateGoal :one
 UPDATE accounts
 SET goal = $1, updated_at = now()
-WHERE id = $2;
+WHERE id = $2
+RETURNING *;
 
--- name: UpdateCurrency :exec
+-- name: UpdateCurrency :one
 UPDATE accounts
 SET currency = $1, updated_at = now()
-WHERE id = $2;
+WHERE id = $2
+RETURNING *;
