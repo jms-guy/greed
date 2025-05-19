@@ -18,7 +18,10 @@ func main() {
 
 	//Create config struct
 	cfg := Config{
-		CurrentUserName: "",
+		FileData: FileData{},
+		EnvData: EnvData{
+			Address: addr,
+		},
 		Client: *NewClient(addr),
 	}
 
@@ -36,6 +39,6 @@ func main() {
 	//Execute command callback function
 	err = cmd.callback(&cfg, args[2:])
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("\r%s\n", err)
 	}
 }

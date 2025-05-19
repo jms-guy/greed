@@ -11,7 +11,7 @@ type cliCommand struct {
 	name			string
 	description		string
 	syntax			string
-	callback		func(c *Config, args []string) (error)
+	callback		func(c *Config, args []string) error
 }
 
 var commandRegistry map[string]cliCommand
@@ -23,6 +23,18 @@ func init() {
 			description: "Creates a user in the database",
 			syntax: "{create-user} {name}",	
 			callback: commandCreateUser,
+		},
+		"user-login":	{
+			name: "login",
+			description: "Login as specified user",
+			syntax: "{user-login} {name}",
+			callback: commandUserLogin,
+		},
+		"user-logout":	{
+			name: "logout",
+			description: "Logs out of user credentials",
+			syntax: "{user-logout} {name}",
+			callback: commandUserLogout,
 		},/*
 		"delete-user":	{
 			name: "delete-user",
@@ -41,18 +53,6 @@ func init() {
 			description: "Deletes an account attached to user",
 			syntax: "{delete-account} {name}",
 			callback: commandDeleteAccount,
-		},
-		"user-login":	{
-			name: "login",
-			description: "Login as specified user",
-			syntax: "{user-login} {name}",
-			callback: commandUserLogin,
-		},
-		"user-logout":	{
-			name: "logout",
-			description: "Logs out of user credentials",
-			syntax: "{user-logout} {name}",
-			callback: commandUserLogout,
 		},
 		"account-login":	{
 			name: "account-login",
