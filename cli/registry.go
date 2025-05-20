@@ -66,23 +66,11 @@ func init() {
 			syntax: "{account-logout} {name}",
 			callback: commandAccountLogout,
 		},
-		"exit":	{
-			name: "exit",
-			description: "Exits the program",
-			syntax: "{exit}",
-			callback: commandExit,
-		},
 		"help": {
 			name: "help",
 			description: "Prints list of commands and their descriptions",
 			syntax: "{help}",
 			callback: commandHelp,
-		},
-		"reset":	{
-			name: "reset",
-			description: "Admin testing tool, resets database tables",
-			syntax: "{reset} {table}",
-			callback: commandReset,
 		},*/
 	}
 }

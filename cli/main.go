@@ -25,6 +25,11 @@ func main() {
 		Client: *NewClient(addr),
 	}
 
+	err = cfg.LoadCurrentSession()
+	if err != nil {
+		log.Fatalf("Error loading current session: %s", err)
+	}
+
 	//Get user input arguments
 	args := os.Args
 	//args[0] = program name, args[1] = command name, args[2:] = arguments
