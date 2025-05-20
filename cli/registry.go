@@ -1,7 +1,7 @@
 package main
 
 import (
-	
+	"github.com/jms-guy/greed/cli/internal/config"
 )
 
 //A resgistry struct, that holds all of the commands that the CLI supports, as
@@ -11,7 +11,7 @@ type cliCommand struct {
 	name			string
 	description		string
 	syntax			string
-	callback		func(c *Config, args []string) error
+	callback		func(c *config.Config, args []string) error
 }
 
 var commandRegistry map[string]cliCommand
@@ -35,13 +35,19 @@ func init() {
 			description: "Logs out of user credentials",
 			syntax: "{user-logout} {name}",
 			callback: commandUserLogout,
-		},/*
+		},
 		"delete-user":	{
 			name: "delete-user",
 			description: "Deletes a user from the database",
 			syntax: "{delete-user} {name}",
 			callback: commandDeleteUser,
 		},
+		"users":	{
+			name: "users",
+			description: "Gets a list of local users",
+			syntax: "{get-users}",
+			callback: commandGetUsers,
+			},/*
 		"create-account":	{
 			name: "create-account",
 			description: "Creates an account for current user",

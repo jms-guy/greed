@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"net/http"
@@ -6,16 +6,16 @@ import (
 )
 
 type Client struct {
-	httpClient		*http.Client
-	baseURL			string
+	HttpClient		*http.Client
+	BaseURL			string
 }
 
 //Initializes a new Client struct
 func NewClient(address string) *Client {
 	return &Client{
-		httpClient: &http.Client{
+		HttpClient: &http.Client{
 			Timeout: time.Minute,
 		},
-		baseURL: address,
+		BaseURL: address,
 	}
 }

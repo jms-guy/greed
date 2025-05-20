@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"github.com/joho/godotenv"
+	"github.com/jms-guy/greed/cli/internal/config"
 )
 
 func main() {
@@ -17,12 +18,12 @@ func main() {
 	addr := os.Getenv("ADDRESS")
 
 	//Create config struct
-	cfg := Config{
-		FileData: FileData{},
-		EnvData: EnvData{
+	cfg := config.Config{
+		FileData: config.FileData{},
+		EnvData: config.EnvData{
 			Address: addr,
 		},
-		Client: *NewClient(addr),
+		Client: *config.NewClient(addr),
 	}
 
 	err = cfg.LoadCurrentSession()
@@ -38,12 +39,12 @@ func main() {
 	//Check if input command is in command registry
 	cmd, ok := commandRegistry[command]
 	if !ok {
-		log.Println("Command not found")
+		log.Fatalf("Command not found")
 	}
 
 	//Execute command callback function
 	err = cmd.callback(&cfg, args[2:])
 	if err != nil {
-		log.Fatalf("\r%s\n", err)
+		log.Fatalf("%s\n", err)
 	}
 }

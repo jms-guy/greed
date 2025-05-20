@@ -1,49 +1,24 @@
-package main
+package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"github.com/jms-guy/greed/models"
 )
-
-//CLI config struct
-type Config struct {
-	FileData			FileData
-	EnvData				EnvData
-	Client				Client
-}
-
-//Struct containing .env file data
-type EnvData struct {
-	Address				string
-}
-
-//Struct containing .config file data
-type FileData struct {
-	User			models.User
-}
 
 //Function moves user config file from .config directory to a current_session directory
 //in order to manage currently logged in user
 func (c *Config) SetCurrentSession(username string) error {
-	//Get home directory
-	homeDir, err := os.UserHomeDir()
+	//Get base config path
+	configPath, err := getBaseConfigPath()
 	if err != nil {
-		return fmt.Errorf("error finding home directory: %w", err)
-	}
-
-	//Get .env config file path
-	configPath := os.Getenv("CONFIGFILEPATH")
-	if configPath == "" {
-		configPath = ".config/greed" //Default
+		return err
 	}
 
 	//Make full current session directory path
-	sessionDir := filepath.Join(homeDir, configPath, "currentsession")
+	sessionDir := filepath.Join(configPath, "currentsession")
 
 	if err := os.MkdirAll(sessionDir, 0755); err != nil {
         return fmt.Errorf("error creating config directory: %w", err)
@@ -81,21 +56,15 @@ func (c *Config) SetCurrentSession(username string) error {
 func (c *Config) EndCurrentSession() error {
 	user := c.FileData.User.Name
 
-	//Get home directory
-	homeDir, err := os.UserHomeDir()
+	//Get base config path
+	configPath, err := getBaseConfigPath()
 	if err != nil {
-		return fmt.Errorf("error finding home directory: %w", err)
-	}
-
-	//Get .env config file path
-	configPath := os.Getenv("CONFIGFILEPATH")
-	if configPath == "" {
-		configPath = ".config/greed" //Default
+		return err
 	}
 
 	//Make full current session directory path
-	sessionDir := filepath.Join(homeDir, configPath, "currentsession")
-	configDir := filepath.Join(homeDir, configPath, "users")
+	sessionDir := filepath.Join(configPath, "currentsession")
+	configDir := filepath.Join(configPath, "users")
 
 	currFilePath := filepath.Join(sessionDir, user+".json")
 	newFilePath := filepath.Join(configDir, user+".json")
@@ -121,20 +90,14 @@ func (c *Config) EndCurrentSession() error {
 
 //Loads the user config file located in the currentsession config directory into the Config struct
 func (c *Config) LoadCurrentSession() error {
-	//Get home directory
-	homeDir, err := os.UserHomeDir()
+	//Get base config path
+	configPath, err := getBaseConfigPath()
 	if err != nil {
-		return fmt.Errorf("error finding home directory: %w", err)
-	}
-
-	//Get .env config path path
-	configPath := os.Getenv("CONFIGFILEPATH")
-	if configPath == "" {
-		configPath = ".greed/config" //Default path
+		return err
 	}
 
 	//Make full path
-	sessionDir := filepath.Join(homeDir, configPath, "currentsession")
+	sessionDir := filepath.Join(configPath, "currentsession")
 
 	//Read all files in current session directory
 	files, err := os.ReadDir(sessionDir)
@@ -180,65 +143,4 @@ func (c *Config) LoadCurrentSession() error {
 	c.FileData = data
 
 	return nil
-}
-
-//Function creates a user config file in .config directory
-func (c *Config) CreateUser(user models.User) error {
-	//Create filedata struct to marshal into a config file
-	fileData := FileData{User: user}
-
-	//Find the config file for user (or create if new user)
-	jsonFile, err := getConfigFilePath(user.Name)
-	if err != nil {
-		return fmt.Errorf("error getting config file path: %w", err)
-	}
-
-	//Marshal user into json data
-	jsonData, err := json.Marshal(fileData)
-	if err != nil {
-		return fmt.Errorf("error marshalling json data: %w", err)
-	}
-
-	//Write the marshalled data into the config json file
-	err = os.WriteFile(jsonFile, jsonData, 0600)
-	if err != nil {
-		return fmt.Errorf("error writing json file: %w", err)
-	}
-
-	return nil
-}
-
-
-//Get file path for config file, creates if does not already exist
-func getConfigFilePath(username string) (string, error) {
-	//Get home directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("error finding home directory: %w", err)
-	}
-
-	//Get .env config file path
-	configPath := os.Getenv("CONFIGFILEPATH")
-	if configPath == "" {
-		configPath = ".config/greed" //Default
-	}
-
-	//Create config directory path
-	configDir := filepath.Join(homeDir, configPath, "users")
-    if err := os.MkdirAll(configDir, 0755); err != nil {
-        return "", fmt.Errorf("error creating config directory: %w", err)
-    }
-
-	//Create file path
-	filePath := filepath.Join(configDir, username+".json")
-
-	//Check if file exists, creates if not
-	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
-		_, err = os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0600)
-		if err != nil {
-			return "", fmt.Errorf("error creating config file: %w", err)
-		}
-	}
-
-	return filePath, nil
 }

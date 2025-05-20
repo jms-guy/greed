@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ func (c *Config) MakeBasicRequest(method, url string, data any) (*http.Response,
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := c.Client.httpClient.Do(req)
+	res, err := c.Client.HttpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending request: %w", err)
 	}
