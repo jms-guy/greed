@@ -13,7 +13,7 @@ import (
 )
 
 //Creates a user record in the database, as well as a config file for that user
-func commandCreateUser(c *config.Config, args []string) (error) {
+func commandCreateUser(c *config.Config, args []string) error {
 	//Make sure enough arguments present
 	if len(args) < 1 {
 		log.Println("\rMissing argument - type help for details")

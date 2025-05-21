@@ -18,8 +18,8 @@ var commandRegistry map[string]cliCommand
 
 func init() {
 	commandRegistry = map[string]cliCommand{
-		"create-user":	{
-			name: "create-user",
+		"user-create":	{
+			name: "user-create",
 			description: "Creates a user in the database",
 			syntax: "{create-user} {name}",	
 			callback: commandCreateUser,
@@ -36,8 +36,8 @@ func init() {
 			syntax: "{user-logout} {name}",
 			callback: commandUserLogout,
 		},
-		"delete-user":	{
-			name: "delete-user",
+		"user-delete":	{
+			name: "user-delete",
 			description: "Deletes a user from the database",
 			syntax: "{delete-user} {name}",
 			callback: commandDeleteUser,
@@ -47,7 +47,13 @@ func init() {
 			description: "Gets a list of local users",
 			syntax: "{get-users}",
 			callback: commandGetUsers,
-			},/*
+			},
+		"help": {
+			name: "help",
+			description: "Prints list of commands and their descriptions",
+			syntax: "{help}",
+			callback: commandHelp,
+		},/*
 		"create-account":	{
 			name: "create-account",
 			description: "Creates an account for current user",
@@ -71,12 +77,6 @@ func init() {
 			description: "Logs out of a user's specified account",
 			syntax: "{account-logout} {name}",
 			callback: commandAccountLogout,
-		},
-		"help": {
-			name: "help",
-			description: "Prints list of commands and their descriptions",
-			syntax: "{help}",
-			callback: commandHelp,
 		},*/
 	}
 }
