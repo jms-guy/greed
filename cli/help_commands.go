@@ -51,9 +51,9 @@ func helpBase() {
 	log.Println("\r financial data. For specific commands, see below. ")
 	log.Println("\r Do not enter any (), [], or {} characters in commands.")
 	log.Println("\r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	log.Println("\r  -For user commands, enter 		[greed help users]")
-	log.Println("\r  -For account commands, enter 		[greed help accounts]")
-	log.Println("\r  -For transaction commands, enter 	[greed help transactions]")
+	log.Println("\r  -For user commands, enter 		[help users]")
+	log.Println("\r  -For account commands, enter 		[help accounts]")
+	log.Println("\r  -For transaction commands, enter 	[help transactions]")
 	log.Println("\r                                              ")
 }
 
@@ -64,11 +64,11 @@ func helpUsers() {
 	log.Println("\r  Below is a list of user commands.")
 	log.Println("\r  Do not enter any (), [], or {} characters in commands.")
 	log.Println("\r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	log.Println("\r  -To create a new user, enter			[greed user-create {name}]")
-	log.Println("\r  -To delete a user, enter			[greed user-delete {name}]")
-	log.Println("\r  -To obtain a list of local users, enter	[greed users]")
-	log.Println("\r  -To login as a user, enter			[greed user-login {name}]")
-	log.Println("\r  -To logout of a user, enter			[greed user-logout]")
+	log.Println("\r  -To create a new user, enter			[user-create {name}]")
+	log.Println("\r  -To delete a user, enter			[user-delete {name}]")
+	log.Println("\r  -To obtain a list of local users, enter	[users]")
+	log.Println("\r  -To login as a user, enter			[user-login {name}]")
+	log.Println("\r  -To logout of a user, enter			[user-logout]")
 	log.Println("\r                                              ")
 }
 
@@ -78,4 +78,33 @@ func helpAccounts() {
 
 func helpTransactions() {
 
+}
+
+func showCurrencies() {
+	log.Println("\rCurrently supported currencies: ")
+	log.Println("\r [CAD] [USD] [EUR] [GBP]        ")
+}
+
+//A currency enum struct, containing the valid currencies supported in this application
+type Currency int
+
+const (
+	CAD Currency = iota
+	USD
+	EUR
+	GBP
+)
+
+//Mapping currency strings to enum 
+var stringToCurrency = map[string]Currency{
+	"CAD":	CAD,
+	"USD":	USD,
+	"EUR":	EUR,
+	"GBP":	GBP,
+}
+
+//Function for validating a given currency string
+func isValidCurrencyString(s string) bool {
+	_, ok := stringToCurrency[s]
+	return ok
 }

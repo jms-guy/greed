@@ -25,6 +25,7 @@ type EnvData struct {
 //Struct containing .config file data
 type FileData struct {
 	User			models.User
+	Accounts		[]models.Account
 }
 
 //Function creates a user config file in .config directory

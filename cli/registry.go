@@ -54,7 +54,7 @@ func init() {
 			syntax: "{help}",
 			callback: commandHelp,
 		},/*
-		"create-account":	{
+		"account-create":	{
 			name: "create-account",
 			description: "Creates an account for current user",
 			syntax: "{create-account} {name}",

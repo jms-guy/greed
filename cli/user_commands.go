@@ -14,16 +14,13 @@ import (
 
 //Creates a user record in the database, as well as a config file for that user
 func commandCreateUser(c *config.Config, args []string) error {
-	//Make sure enough arguments present
 	if len(args) < 1 {
 		log.Println("\rMissing argument - type help for details")
 		return nil
 	}
 
-	//Username is first argument
 	username := args[0]
 
-	//Check if user already exists, usernames are unique per client
 	users, err := c.GetUsers()
 	if err != nil {
 		return err
@@ -40,7 +37,6 @@ func commandCreateUser(c *config.Config, args []string) error {
 	var password string
 	scanner := bufio.NewScanner(os.Stdin)
 
-	//Starts a scanner loop for password input
 	for {
 		fmt.Print("Please enter a password > ")
 		scanner.Scan()
@@ -68,7 +64,6 @@ func commandCreateUser(c *config.Config, args []string) error {
 		}
 	}
 
-	//Create request struct
 	reqData := models.UserDetails{
 		Name: username,
 		Password: password,
@@ -81,12 +76,10 @@ func commandCreateUser(c *config.Config, args []string) error {
 	}
 	defer res.Body.Close()
 
-	//Check response status code
 	if res.StatusCode >= 400 {
 		return fmt.Errorf("server returned error: %s", res.Status)
 	}
 
-	//Decode response data
 	var user models.User
 	if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
 		return fmt.Errorf("error decoding response data: %w", err)
@@ -105,10 +98,9 @@ func commandCreateUser(c *config.Config, args []string) error {
 //Function will take a username and "log in", moving that user's config file to the current session directory
 //where it will be loaded into the Config struct on each command
 func commandUserLogin(c *config.Config, args []string) error {
-	//Create empty username variable, and set url for request endpoint
+	//Set url for request endpoint
 	loginUrl := c.Client.BaseURL + "/api/users"
 
-	//Too many arguments provided
 	if len(args) > 2 {
 		return fmt.Errorf("too many arguments - type help for details")
 	}
@@ -119,10 +111,8 @@ func commandUserLogin(c *config.Config, args []string) error {
 		return nil
 	}
 
-	//Set username
 	username := args[0]
 
-	//Check config users for list of users, make sure username is present in list
 	users, err := c.GetUsers()
 	if err != nil {
 		return err
@@ -142,7 +132,6 @@ func commandUserLogin(c *config.Config, args []string) error {
 	//New bufio scanner for password input
 	scanner := bufio.NewScanner(os.Stdin)	
 
-	//Starts a scanner loop for password input
 	for attempts < maxRetries{
 		fmt.Print("Please enter password > ")
 		scanner.Scan()
@@ -161,19 +150,16 @@ func commandUserLogin(c *config.Config, args []string) error {
 		}
 		defer res.Body.Close()
 	
-		//If incorrect password was entered, ask for password again
 		if res.StatusCode == 400 {
 			attempts++
 			fmt.Println("Incorrect password")
 			continue
 		}
 
-		//Check response status code for server errors
 		if res.StatusCode >= 500 {
 			return fmt.Errorf("server returned error: %s", res.Status)
 		}
 	
-		//Decode response data
 		if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
 			return fmt.Errorf("error decoding response data: %w", err)
 		}
@@ -181,7 +167,6 @@ func commandUserLogin(c *config.Config, args []string) error {
 		break
 	}
 
-	//If incorrect password maxtries was reached
 	if attempts >= maxRetries {
 		return fmt.Errorf("max password attempts reached")
 	}
