@@ -8,6 +8,31 @@ import (
 	"path/filepath"
 )
 
+//Saves current FileData struct to the current session user config file. 
+func (c *Config) SaveFileData() error {
+	dataToSave := c.FileData
+
+	configPath, err := getBaseConfigPath()
+	if err != nil {
+		return fmt.Errorf("error getting base config path: %w", err)
+	}
+
+	userConfig := c.FileData.User.Name + ".json"
+	sessionFile := filepath.Join(configPath, "currentsession", userConfig)
+
+	data, err := json.Marshal(dataToSave)
+	if err != nil {
+		return fmt.Errorf("error marshalling save data: %w", err)
+	}
+
+	err = os.WriteFile(sessionFile, []byte(data), 0600)
+	if err != nil {
+		return fmt.Errorf("error writing save data to file: %w", err)
+	}
+	
+	return nil
+}
+
 //Function moves user config file from .config directory to a current_session directory
 //in order to manage currently logged in user
 func (c *Config) SetCurrentSession(username string) error {

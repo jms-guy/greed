@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
@@ -41,8 +40,8 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 			ID: account.ID,
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
-			Balance: account.Balance.String,
-			Goal: account.Goal.String,
+			Name: account.Name,
+			InputType: account.InputType,
 			Currency: account.Currency,
 		}
 		accounts = append(accounts, result)
@@ -92,8 +91,8 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 		ID: account.ID,
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
-		Balance: account.Balance.String,
-		Goal: account.Goal.String,
+		Name: account.Name,
+		InputType: account.InputType,
 		Currency: account.Currency,
 	}
 
@@ -144,18 +143,6 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	//Validation on the balance and goal parameters, making sure they are in 
-	//proper format, and either null or not null
-	balanceSQL, err := utils.CreateMoneyNullString(params.Balance)
-	if err != nil {
-		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
-	}
-
-	goalSQL, err := utils.CreateMoneyNullString(params.Goal)
-	if err != nil {
-		respondWithError(w, 400, "Invalid string format, expecting (xxx.xx)", nil)
-	}
-
 	//Validation of the currency given, making sure that the given currency
 	//is supported in the database ('CAD', 'USD', 'EUR', etc.)
 	//If no currency type given for some reason, it's defaulted to CAD
@@ -176,8 +163,8 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 	//Creates the account in the database
 	newAccount, err := cfg.db.CreateAccount(context.Background(), database.CreateAccountParams{
 		ID: uuid.New(),
-		Balance: balanceSQL,
-		Goal: goalSQL,
+		Name: params.Name,
+		InputType: params.InputType,
 		Currency: params.Currency,
 		UserID: params.UserID,
 	})
@@ -191,8 +178,8 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		ID: newAccount.ID,
 		CreatedAt: newAccount.CreatedAt,
 		UpdatedAt: newAccount.UpdatedAt,
-		Balance: newAccount.Balance.String,
-		Goal: newAccount.Goal.String,
+		Name: newAccount.Name,
+		InputType: newAccount.InputType,
 		Currency: newAccount.Currency,
 		UserID: newAccount.UserID,
 	}

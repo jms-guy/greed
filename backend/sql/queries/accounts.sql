@@ -1,5 +1,5 @@
 -- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, balance, goal, currency, user_id)
+INSERT INTO accounts(id, created_at, updated_at, name, input_type, currency, user_id)
 VALUES (
     $1,
     NOW(),
@@ -27,18 +27,6 @@ WHERE user_id = $1;
 DELETE FROM accounts
 WHERE id = $1
 AND user_id = $2;
-
--- name: UpdateBalance :one
-UPDATE accounts
-SET balance = $1, updated_at = now()
-WHERE id = $2
-RETURNING *;
-
--- name: UpdateGoal :one
-UPDATE accounts
-SET goal = $1, updated_at = now()
-WHERE id = $2
-RETURNING *;
 
 -- name: UpdateCurrency :one
 UPDATE accounts

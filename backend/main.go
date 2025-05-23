@@ -71,8 +71,8 @@ func main() {
 	mux.HandleFunc("DELETE /api/users/{userid}/accounts/{accountid}", cfg.handlerDeleteAccount)	//Delete account from db
 
 	//Secondary account handler functions
-	mux.HandleFunc("PUT /api/accounts/{accountid}/balance", cfg.handlerUpdateBalance)	//Update an account's balance field
-	mux.HandleFunc("PUT /api/accounts/{accountid}/goal", cfg.handlerUpdateGoal)			//Update an account's goal field
+	//mux.HandleFunc("PUT /api/accounts/{accountid}/balance", cfg.handlerUpdateBalance)	//Update an account's balance field
+	//mux.HandleFunc("PUT /api/accounts/{accountid}/goal", cfg.handlerUpdateGoal)			//Update an account's goal field
 	mux.HandleFunc("PUT /api/accounts/{accountid}/currency", cfg.handlerUpdateCurrency) //Update an account's set currency
 
 	//Main transaction handler functions

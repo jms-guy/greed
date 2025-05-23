@@ -7,9 +7,11 @@ import (
 	"log"
 	"os"
 	"slices"
+	"syscall"
 
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/models"
+	"golang.org/x/term"
 )
 
 //Creates a user record in the database, as well as a config file for that user
@@ -35,27 +37,38 @@ func commandCreateUser(c *config.Config, args []string) error {
 
 	//Create a bufio scanner for getting password
 	var password string
-	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		fmt.Print("Please enter a password > ")
-		scanner.Scan()
 
-		pw := scanner.Text()
+		pwBytes, err := term.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			return fmt.Errorf("error reading password input: %w", err)
+		}
+
+		pw := string(pwBytes)
+
 		if len(pw) < 8 {
+			fmt.Println(" ")
 			fmt.Println("Password must be greater than 8 characters")
 			continue
 		} else {
 			//Confirm password input
 			for {
+				fmt.Println("")
 				fmt.Print("Confirm password > ")
-				scanner.Scan()
-				confirmPw := scanner.Text()
+				confirmPwBytes, err  := term.ReadPassword(int(syscall.Stdin))
+				if err != nil {
+					return fmt.Errorf("error reading password confimation input: %w", err)
+				}
+
+				confirmPw := string(confirmPwBytes)
 
 				if confirmPw == pw {
 					password = pw
 					break
 				} else {
+					fmt.Println("")
 					fmt.Println("Password does not match")
 					continue
 				}

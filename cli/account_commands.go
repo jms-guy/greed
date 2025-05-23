@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -21,7 +22,8 @@ func commandCreateAccount(c *config.Config, args []string) error {
 
 	for _, account := range c.FileData.Accounts {
 		if account.Name == accountName {
-			log.Printf("User already has an account named %s\n", accountName)
+			log.Printf("\rUser already has an account named %s\n", accountName)
+			return nil
 		}
 	}
 
@@ -30,9 +32,9 @@ func commandCreateAccount(c *config.Config, args []string) error {
 	//Set api endpoint url
 	url := c.Client.BaseURL + "/api/users/" + userId.String() + "/accounts"
 
-	log.Println("\rCreating account:               ")
-	log.Println("\r                             ")
+	log.Println("\r~Creating account:               ")
 	log.Println("\rWill this account be synced to a financial institution, or will the data be manually input? ")
+	log.Printf("\r     [auto]/[manual]     ")
 
 	//Start bufio scanner for additional account fields(InputType and Currency)
 	inputType := ""
@@ -40,7 +42,7 @@ func commandCreateAccount(c *config.Config, args []string) error {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		log.Printf("\r[auto]/[manual] >      ")
+		fmt.Print("\r                    > ")
 		scanner.Scan()
 
 		input := scanner.Text()
@@ -58,12 +60,12 @@ func commandCreateAccount(c *config.Config, args []string) error {
 		break
 	}
 
+	log.Println("\r                             ")
 	log.Println("\rPlease set the base currency for this account. May be changed at later.")
-	log.Println("\rIf no currency enteredm will be defaulted to 'CAD'. For a list of supported currencies, type")
-	log.Println("\r [currencies]                        ")
+	log.Println("\rIf no currency is entered, it will be defaulted to 'CAD'. For a list of supported currencies, type: [currencies]")
 
 	for {
-		log.Printf("\r Currency >      ")
+		fmt.Print("\r                   > ")
 		scanner.Scan()
 
 		currency := scanner.Text()
@@ -82,6 +84,7 @@ func commandCreateAccount(c *config.Config, args []string) error {
 		break
 	}
 
+	//Create account request
 	reqParams := models.CreateAccount{
 		Name: accountName,
 		InputType: inputType,
@@ -99,5 +102,20 @@ func commandCreateAccount(c *config.Config, args []string) error {
 		return fmt.Errorf("error in response data: %s", res.Status)
 	}
 
+	var account models.Account
+	if err := json.NewDecoder(res.Body).Decode(&account); err != nil {
+		return err
+	}
 
+	c.FileData.Accounts = append(c.FileData.Accounts, account)
+
+	//Save updated FileData to the user config file in the currentsession directory
+	err = c.SaveFileData()
+	if err != nil {
+		return fmt.Errorf("error saving file data: %w", err)
+	}
+
+	log.Println("\rAccount created successfully!")
+
+	return nil
 }

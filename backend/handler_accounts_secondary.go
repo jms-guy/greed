@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
@@ -55,14 +54,14 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 		ID: account.ID,
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
-		Balance: account.Balance.String,
-		Goal: account.Goal.String,
+		Name: account.Name,
+		InputType: account.InputType,
 		Currency: account.Currency,
 	}
 
 	respondWithJSON(w, 200, response)
 }
-
+/*
 //Function will update an account's goal field in the database based on a given account ID
 func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) {
 	//Get account ID
@@ -159,3 +158,4 @@ func (cfg *apiConfig) handlerUpdateBalance(w http.ResponseWriter, r *http.Reques
 
 	respondWithJSON(w, 200, response)
 }
+	*/

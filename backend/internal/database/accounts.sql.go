@@ -7,13 +7,12 @@ package database
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, balance, goal, currency, user_id)
+INSERT INTO accounts(id, created_at, updated_at, name, input_type, currency, user_id)
 VALUES (
     $1,
     NOW(),
@@ -23,22 +22,22 @@ VALUES (
     $4,
     $5
 )
-RETURNING id, created_at, updated_at, balance, goal, currency, user_id
+RETURNING id, created_at, updated_at, name, input_type, currency, user_id
 `
 
 type CreateAccountParams struct {
-	ID       uuid.UUID
-	Balance  sql.NullString
-	Goal     sql.NullString
-	Currency string
-	UserID   uuid.UUID
+	ID        uuid.UUID
+	Name      string
+	InputType string
+	Currency  string
+	UserID    uuid.UUID
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
 	row := q.db.QueryRowContext(ctx, createAccount,
 		arg.ID,
-		arg.Balance,
-		arg.Goal,
+		arg.Name,
+		arg.InputType,
 		arg.Currency,
 		arg.UserID,
 	)
@@ -47,8 +46,8 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Balance,
-		&i.Goal,
+		&i.Name,
+		&i.InputType,
 		&i.Currency,
 		&i.UserID,
 	)
@@ -72,7 +71,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) er
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, created_at, updated_at, balance, goal, currency, user_id FROM accounts
+SELECT id, created_at, updated_at, name, input_type, currency, user_id FROM accounts
 WHERE id = $1
 AND user_id = $2
 `
@@ -89,8 +88,8 @@ func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Balance,
-		&i.Goal,
+		&i.Name,
+		&i.InputType,
 		&i.Currency,
 		&i.UserID,
 	)
@@ -98,7 +97,7 @@ func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account
 }
 
 const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
-SELECT id, created_at, updated_at, balance, goal, currency, user_id FROM accounts
+SELECT id, created_at, updated_at, name, input_type, currency, user_id FROM accounts
 WHERE user_id = $1
 `
 
@@ -115,8 +114,8 @@ func (q *Queries) GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) (
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Balance,
-			&i.Goal,
+			&i.Name,
+			&i.InputType,
 			&i.Currency,
 			&i.UserID,
 		); err != nil {
@@ -142,38 +141,11 @@ func (q *Queries) ResetAccounts(ctx context.Context) error {
 	return err
 }
 
-const updateBalance = `-- name: UpdateBalance :one
-UPDATE accounts
-SET balance = $1, updated_at = now()
-WHERE id = $2
-RETURNING id, created_at, updated_at, balance, goal, currency, user_id
-`
-
-type UpdateBalanceParams struct {
-	Balance sql.NullString
-	ID      uuid.UUID
-}
-
-func (q *Queries) UpdateBalance(ctx context.Context, arg UpdateBalanceParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, updateBalance, arg.Balance, arg.ID)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Balance,
-		&i.Goal,
-		&i.Currency,
-		&i.UserID,
-	)
-	return i, err
-}
-
 const updateCurrency = `-- name: UpdateCurrency :one
 UPDATE accounts
 SET currency = $1, updated_at = now()
 WHERE id = $2
-RETURNING id, created_at, updated_at, balance, goal, currency, user_id
+RETURNING id, created_at, updated_at, name, input_type, currency, user_id
 `
 
 type UpdateCurrencyParams struct {
@@ -188,35 +160,8 @@ func (q *Queries) UpdateCurrency(ctx context.Context, arg UpdateCurrencyParams) 
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Balance,
-		&i.Goal,
-		&i.Currency,
-		&i.UserID,
-	)
-	return i, err
-}
-
-const updateGoal = `-- name: UpdateGoal :one
-UPDATE accounts
-SET goal = $1, updated_at = now()
-WHERE id = $2
-RETURNING id, created_at, updated_at, balance, goal, currency, user_id
-`
-
-type UpdateGoalParams struct {
-	Goal sql.NullString
-	ID   uuid.UUID
-}
-
-func (q *Queries) UpdateGoal(ctx context.Context, arg UpdateGoalParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, updateGoal, arg.Goal, arg.ID)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Balance,
-		&i.Goal,
+		&i.Name,
+		&i.InputType,
 		&i.Currency,
 		&i.UserID,
 	)

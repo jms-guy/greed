@@ -15,8 +15,8 @@ type Account struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Balance   sql.NullString
-	Goal      sql.NullString
+	Name      string
+	InputType string
 	Currency  string
 	UserID    uuid.UUID
 }
