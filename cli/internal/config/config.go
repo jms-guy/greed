@@ -89,7 +89,7 @@ func (c *Config) GetUsers() ([]string, error) {
 		if !ok {
 			continue
 		}
-		username := strings.TrimRight(file.Name(), ".json")
+		username := strings.TrimSuffix(file.Name(), ".json")
 		users = append(users, username)
 	}
 

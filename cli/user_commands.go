@@ -7,11 +7,9 @@ import (
 	"log"
 	"os"
 	"slices"
-	"syscall"
-
+	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/models"
-	"golang.org/x/term"
 )
 
 //Creates a user record in the database, as well as a config file for that user
@@ -39,36 +37,28 @@ func commandCreateUser(c *config.Config, args []string) error {
 	var password string
 
 	for {
-		fmt.Print("Please enter a password > ")
-
-		pwBytes, err := term.ReadPassword(int(syscall.Stdin))
+		pw, err := auth.ReadPassword("Please enter a password > ")
 		if err != nil {
-			return fmt.Errorf("error reading password input: %w", err)
+			return fmt.Errorf("error getting password: %w", err)
 		}
-
-		pw := string(pwBytes)
 
 		if len(pw) < 8 {
 			fmt.Println(" ")
 			fmt.Println("Password must be greater than 8 characters")
+			fmt.Println("")
 			continue
 		} else {
 			//Confirm password input
 			for {
-				fmt.Println("")
-				fmt.Print("Confirm password > ")
-				confirmPwBytes, err  := term.ReadPassword(int(syscall.Stdin))
+				confirmPw, err := auth.ReadPassword("Confirm password > ")
 				if err != nil {
-					return fmt.Errorf("error reading password confimation input: %w", err)
+					return fmt.Errorf("error reading confirmed password: %w", err)
 				}
-
-				confirmPw := string(confirmPwBytes)
 
 				if confirmPw == pw {
 					password = pw
 					break
 				} else {
-					fmt.Println("")
 					fmt.Println("Password does not match")
 					continue
 				}
@@ -140,16 +130,13 @@ func commandUserLogin(c *config.Config, args []string) error {
 	var user models.User
 	password := ""
 	maxRetries := 3
-	attempts := 0
-
-	//New bufio scanner for password input
-	scanner := bufio.NewScanner(os.Stdin)	
+	attempts := 0	
 
 	for attempts < maxRetries{
-		fmt.Print("Please enter password > ")
-		scanner.Scan()
-
-		password = scanner.Text()
+		password, err =auth.ReadPassword("Please enter password > ")
+		if err != nil {
+			return fmt.Errorf("error reading password: %w", err)
+		}
 
 		reqData := models.UserDetails{
 			Name: username,
@@ -265,18 +252,16 @@ func commandDeleteUser(c *config.Config, args []string) error {
 	}
 
 	password := ""
+	var err error
 	maxRetries := 3
 	attempts := 0
 
-	//New bufio scanner for password input
-	scanner := bufio.NewScanner(os.Stdin)	
-
 	//Starts a scanner loop for password input
 	for attempts < maxRetries{
-		fmt.Print("Please enter password > ")
-		scanner.Scan()
-
-		password = scanner.Text()
+		password, err = auth.ReadPassword("Please enter password > ")
+		if err != nil {
+			return fmt.Errorf("error getting password: %w", err)
+		}
 
 		reqData := models.UserDetails{
 			Name: username,
@@ -310,6 +295,7 @@ func commandDeleteUser(c *config.Config, args []string) error {
 		return fmt.Errorf("max password attempts reached")
 	}
 
+	scanner := bufio.NewScanner(os.Stdin)
 	//Start another scanner loop for confirmation input
 	for {
 		fmt.Printf("Are you sure you want to delete user: %s? [y, n]\n", username)
@@ -333,7 +319,7 @@ func commandDeleteUser(c *config.Config, args []string) error {
 
 	//Delete local user config file
 	fmt.Println("\rDeleting user's config file...")
-	err := c.DeleteUser(username)
+	err = c.DeleteUser(username)
 	if err != nil {
 		return err
 	}
