@@ -55,7 +55,6 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
 		Name: account.Name,
-		InputType: account.InputType,
 		Currency: account.Currency,
 	}
 

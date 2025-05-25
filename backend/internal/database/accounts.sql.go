@@ -12,32 +12,29 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, name, input_type, currency, user_id)
+INSERT INTO accounts(id, created_at, updated_at, name, currency, user_id)
 VALUES (
     $1,
     NOW(),
     NOW(),
     $2,
     $3,
-    $4,
-    $5
+    $4
 )
-RETURNING id, created_at, updated_at, name, input_type, currency, user_id
+RETURNING id, created_at, updated_at, name, currency, user_id
 `
 
 type CreateAccountParams struct {
-	ID        uuid.UUID
-	Name      string
-	InputType string
-	Currency  string
-	UserID    uuid.UUID
+	ID       uuid.UUID
+	Name     string
+	Currency string
+	UserID   uuid.UUID
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
 	row := q.db.QueryRowContext(ctx, createAccount,
 		arg.ID,
 		arg.Name,
-		arg.InputType,
 		arg.Currency,
 		arg.UserID,
 	)
@@ -47,7 +44,6 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
-		&i.InputType,
 		&i.Currency,
 		&i.UserID,
 	)
@@ -71,7 +67,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) er
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, created_at, updated_at, name, input_type, currency, user_id FROM accounts
+SELECT id, created_at, updated_at, name, currency, user_id FROM accounts
 WHERE id = $1
 AND user_id = $2
 `
@@ -89,7 +85,6 @@ func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
-		&i.InputType,
 		&i.Currency,
 		&i.UserID,
 	)
@@ -97,7 +92,7 @@ func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account
 }
 
 const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
-SELECT id, created_at, updated_at, name, input_type, currency, user_id FROM accounts
+SELECT id, created_at, updated_at, name, currency, user_id FROM accounts
 WHERE user_id = $1
 `
 
@@ -115,7 +110,6 @@ func (q *Queries) GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) (
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Name,
-			&i.InputType,
 			&i.Currency,
 			&i.UserID,
 		); err != nil {
@@ -145,7 +139,7 @@ const updateCurrency = `-- name: UpdateCurrency :one
 UPDATE accounts
 SET currency = $1, updated_at = now()
 WHERE id = $2
-RETURNING id, created_at, updated_at, name, input_type, currency, user_id
+RETURNING id, created_at, updated_at, name, currency, user_id
 `
 
 type UpdateCurrencyParams struct {
@@ -161,7 +155,6 @@ func (q *Queries) UpdateCurrency(ctx context.Context, arg UpdateCurrencyParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
-		&i.InputType,
 		&i.Currency,
 		&i.UserID,
 	)

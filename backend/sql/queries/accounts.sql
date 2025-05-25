@@ -1,13 +1,12 @@
 -- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, name, input_type, currency, user_id)
+INSERT INTO accounts(id, created_at, updated_at, name, currency, user_id)
 VALUES (
     $1,
     NOW(),
     NOW(),
     $2,
     $3,
-    $4,
-    $5
+    $4
 )
 RETURNING *;
 

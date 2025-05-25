@@ -9,8 +9,8 @@ import (
 )
 
 //Saves current FileData struct to the current session user config file. 
-func (c *Config) SaveFileData() error {
-	dataToSave := c.FileData
+func (c *Config) SaveUserFileData() error {
+	dataToSave := c.FileData.User
 
 	configPath, err := getBaseConfigPath()
 	if err != nil {
@@ -18,7 +18,8 @@ func (c *Config) SaveFileData() error {
 	}
 
 	userConfig := c.FileData.User.Name + ".json"
-	sessionFile := filepath.Join(configPath, "currentsession", userConfig)
+	sessionDir := filepath.Join(configPath, "currentsession", c.FileData.User.Name)
+	sessionFile := filepath.Join(sessionDir, userConfig)
 
 	data, err := json.Marshal(dataToSave)
 	if err != nil {
@@ -35,7 +36,7 @@ func (c *Config) SaveFileData() error {
 
 //Function moves user config file from .config directory to a current_session directory
 //in order to manage currently logged in user
-func (c *Config) SetCurrentSession(username string) error {
+func (c *Config) SetCurrentUserSession(username string) error {
 	//Get base config path
 	configPath, err := getBaseConfigPath()
 	if err != nil {
@@ -43,7 +44,7 @@ func (c *Config) SetCurrentSession(username string) error {
 	}
 
 	//Make full current session directory path
-	sessionDir := filepath.Join(configPath, "currentsession")
+	sessionDir := filepath.Join(configPath, "currentsession", username)
 
 	if err := os.MkdirAll(sessionDir, 0755); err != nil {
         return fmt.Errorf("error creating config directory: %w", err)
@@ -78,7 +79,7 @@ func (c *Config) SetCurrentSession(username string) error {
 }
 
 //Function moves a current session user config file back into the passive /users config directory
-func (c *Config) EndCurrentSession() error {
+func (c *Config) EndCurrentUserSession() error {
 	user := c.FileData.User.Name
 
 	//Get base config path
@@ -88,8 +89,8 @@ func (c *Config) EndCurrentSession() error {
 	}
 
 	//Make full current session directory path
-	sessionDir := filepath.Join(configPath, "currentsession")
-	configDir := filepath.Join(configPath, "users")
+	sessionDir := filepath.Join(configPath, "currentsession", user)
+	configDir := filepath.Join(configPath, "users", user)
 
 	currFilePath := filepath.Join(sessionDir, user+".json")
 	newFilePath := filepath.Join(configDir, user+".json")
@@ -110,11 +111,15 @@ func (c *Config) EndCurrentSession() error {
 		return fmt.Errorf("error removing session config file: %w", err)
 	}
 
+	if err := os.Remove(sessionDir); err != nil {
+		return fmt.Errorf("error removing user's current session directory: %w", err)
+	}
+
 	return nil
 }
 
 //Loads the user config file located in the currentsession config directory into the Config struct
-func (c *Config) LoadCurrentSession() error {
+func (c *Config) LoadCurrentUserSession() error {
 	//Get base config path
 	configPath, err := getBaseConfigPath()
 	if err != nil {
@@ -124,8 +129,25 @@ func (c *Config) LoadCurrentSession() error {
 	//Make full path
 	sessionDir := filepath.Join(configPath, "currentsession")
 
+	dirs, err := os.ReadDir(sessionDir)
+	if err != nil {
+		return fmt.Errorf("error getting current session user dir: %w", err)
+	}
+
+	if len(dirs) == 0 {
+		return nil
+	}
+
+	if len(dirs) != 1 {
+		return fmt.Errorf("expecting a single current session user directory: %w", err)
+	}
+
+	user := dirs[0].Name()
+
+	userSessionDir := filepath.Join(sessionDir, user)
+
 	//Read all files in current session directory
-	files, err := os.ReadDir(sessionDir)
+	files, err := os.ReadDir(userSessionDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			//No active session
@@ -144,7 +166,7 @@ func (c *Config) LoadCurrentSession() error {
 	}
 
 	//Get session file name
-	sessionFile := filepath.Join(sessionDir, files[0].Name())
+	sessionFile := filepath.Join(userSessionDir, files[0].Name())
 
 	//Read file
 	file, err := os.Open(sessionFile)

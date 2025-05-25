@@ -93,6 +93,11 @@ func commandCreateUser(c *config.Config, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	err = c.CreateAccountsConfigFilePath(username)
+	if err != nil {
+		return err
+	}
 	
 	log.Println("\rUser created successfully!")
 	return nil
@@ -172,7 +177,7 @@ func commandUserLogin(c *config.Config, args []string) error {
 	}
 
 	//Set current session file to user
-	err = c.SetCurrentSession(username)
+	err = c.SetCurrentUserSession(username)
 	if err != nil {
 		return fmt.Errorf("error setting current session: %w", err)
 	}
@@ -192,13 +197,14 @@ func commandGetUsers(c *config.Config, args []string) error {
 		return err
 	}
 
+	if len(users) == 0 {
+		fmt.Println("\rNo user files currently on this machine.")
+		return nil
+	}
+
 	fmt.Println("\rUsers on this machine: ")
 	for _, user := range users {
 		fmt.Printf(" > %s \n", user)
-	}
-
-	if c.FileData.User.Name != "" {
-		fmt.Printf(" > %s \n", c.FileData.User.Name)
 	}
 
 	return nil
@@ -214,7 +220,7 @@ func commandUserLogout(c *config.Config, args []string) error {
 		return fmt.Errorf("no user is currently logged in")
 	}
 
-	if err := c.EndCurrentSession(); err != nil {
+	if err := c.EndCurrentUserSession(); err != nil {
 		return fmt.Errorf("error ending current session: %w", err)
 	}
 

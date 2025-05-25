@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/models"
@@ -20,11 +21,19 @@ func commandCreateAccount(c *config.Config, args []string) error {
 
 	accountName := args[0]
 
-	for _, account := range c.FileData.Accounts {
-		if account.Name == accountName {
-			log.Printf("\rUser already has an account named %s\n", accountName)
-			return nil
-		}
+	accounts, err := c.GetAccounts()
+	if err != nil {
+		return err
+	}
+
+	if slices.Contains(accounts, accountName) {
+		log.Printf("Account named '%s' already exists for user", accountName)
+		return nil
+	}
+
+	if c.FileData.Account.Name == accountName {
+		log.Printf("Account named '%s' already exists for user", accountName)
+		return nil
 	}
 
 	userId := c.FileData.User.ID
@@ -32,6 +41,8 @@ func commandCreateAccount(c *config.Config, args []string) error {
 	//Set api endpoint url
 	url := c.Client.BaseURL + "/api/users/" + userId.String() + "/accounts"
 
+	//Changed my mind on having manual account's right off the bat, maybe re-add them later
+	/*
 	log.Println("\r~Creating account:               ")
 	log.Println("\rWill this account be synced to a financial institution, or will the data be manually input? ")
 	log.Printf("\r     [auto]/[manual]     ")
@@ -59,6 +70,10 @@ func commandCreateAccount(c *config.Config, args []string) error {
 
 		break
 	}
+		*/
+
+	scanner := bufio.NewScanner(os.Stdin)
+	currencyType := ""
 
 	log.Println("\r                             ")
 	log.Println("\rPlease set the base currency for this account. May be changed at later.")
@@ -87,7 +102,6 @@ func commandCreateAccount(c *config.Config, args []string) error {
 	//Create account request
 	reqParams := models.CreateAccount{
 		Name: accountName,
-		InputType: inputType,
 		Currency: currencyType,
 		UserID: userId,
 	}
@@ -107,15 +121,16 @@ func commandCreateAccount(c *config.Config, args []string) error {
 		return err
 	}
 
-	c.FileData.Accounts = append(c.FileData.Accounts, account)
+	c.FileData.Account = account
 
 	//Save updated FileData to the user config file in the currentsession directory
-	err = c.SaveFileData()
+	err = c.CreateAccount()
 	if err != nil {
 		return fmt.Errorf("error saving file data: %w", err)
 	}
 
 	log.Println("\rAccount created successfully!")
+	log.Println("\r                                            ")
 
 	return nil
 }

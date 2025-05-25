@@ -41,7 +41,6 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
 			Name: account.Name,
-			InputType: account.InputType,
 			Currency: account.Currency,
 		}
 		accounts = append(accounts, result)
@@ -92,7 +91,6 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
 		Name: account.Name,
-		InputType: account.InputType,
 		Currency: account.Currency,
 	}
 
@@ -164,7 +162,6 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 	newAccount, err := cfg.db.CreateAccount(context.Background(), database.CreateAccountParams{
 		ID: uuid.New(),
 		Name: params.Name,
-		InputType: params.InputType,
 		Currency: params.Currency,
 		UserID: params.UserID,
 	})
@@ -179,7 +176,6 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		CreatedAt: newAccount.CreatedAt,
 		UpdatedAt: newAccount.UpdatedAt,
 		Name: newAccount.Name,
-		InputType: newAccount.InputType,
 		Currency: newAccount.Currency,
 		UserID: newAccount.UserID,
 	}

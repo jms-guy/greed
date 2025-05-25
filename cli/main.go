@@ -26,7 +26,7 @@ func main() {
 		Client: *config.NewClient(addr),
 	}
 
-	err = cfg.LoadCurrentSession()
+	err = cfg.LoadCurrentUserSession()
 	if err != nil {
 		log.Fatalf("Error loading current session: %s", err)
 	}

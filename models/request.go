@@ -14,7 +14,6 @@ type UserDetails struct {
 //Request parameters for creating an account
 type CreateAccount struct {
 	Name		string `json:"name"`
-	InputType	string `json:"input_type"`
 	Currency	string `json:"currency"`
 	UserID		uuid.UUID `json:"user_id"`
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -25,7 +24,7 @@ type EnvData struct {
 //Struct containing .config file data
 type FileData struct {
 	User			models.User
-	Accounts		[]models.Account
+	Account			models.Account
 }
 
 //Function creates a user config file in .config directory
@@ -85,12 +84,7 @@ func (c *Config) GetUsers() ([]string, error) {
 
 	//Check each file, if {username.json} get username, add to users
 	for _, file := range files {
-		ok := strings.Contains(file.Name(), ".json")
-		if !ok {
-			continue
-		}
-		username := strings.TrimSuffix(file.Name(), ".json")
-		users = append(users, username)
+		users = append(users, file.Name())
 	}
 
 	return users, nil
@@ -104,11 +98,21 @@ func (c *Config) DeleteUser(username string) error {
 		return err
 	}
 
-	filePath := filepath.Join(configPath, "currentsession", username+".json")
+	filePath := filepath.Join(configPath, "currentsession", username)
+	fullPath := filepath.Join(filePath, username+".json")
+	emptyConfigDir := filepath.Join(configPath, "users", username)
 
 	//Remove user's .config file
-	if err := os.Remove(filePath); err != nil {
+	if err := os.Remove(fullPath); err != nil {
 		return fmt.Errorf("error removing config file: %w", err)
+	}
+
+	if err := os.Remove(filePath); err != nil {
+		return fmt.Errorf("error removing user's config directory: %w", err)
+	}
+
+	if err := os.Remove(emptyConfigDir); err != nil {
+		return fmt.Errorf("error removing user's empty config dir: %w", err)
 	}
 
 	return nil
@@ -124,7 +128,7 @@ func getConfigFilePath(username string) (string, error) {
 	}
 	
 	//Create config directory path
-	configDir := filepath.Join(configPath, "users")
+	configDir := filepath.Join(configPath, "users", username)
     if err := os.MkdirAll(configDir, 0755); err != nil {
         return "", fmt.Errorf("error creating config directory: %w", err)
     }
