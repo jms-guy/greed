@@ -51,16 +51,16 @@ func init() {
 			name: "account-create",
 			description: "Creates an account for current user",
 			callback: commandCreateAccount,
-		},/*
-		"delete-account":	{
-			name: "delete-account",
-			description: "Deletes an account attached to user",
-			callback: commandDeleteAccount,
 		},
 		"account-login":	{
 			name: "account-login",
 			description: "Logs into a user's specified account",
 			callback: commandAccountLogin,
+		},/*
+		"delete-account":	{
+			name: "delete-account",
+			description: "Deletes an account attached to user",
+			callback: commandDeleteAccount,
 		},
 		"account-logout":	{
 			name: "account-logout",

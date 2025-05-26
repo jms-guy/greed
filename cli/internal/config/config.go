@@ -29,9 +29,6 @@ type FileData struct {
 
 //Function creates a user config file in .config directory
 func (c *Config) CreateUser(user models.User) error {
-	//Create filedata struct to marshal into a config file
-	fileData := FileData{User: user}
-
 	//Find the config file for user (or create if new user)
 	jsonFile, err := getConfigFilePath(user.Name)
 	if err != nil {
@@ -39,7 +36,7 @@ func (c *Config) CreateUser(user models.User) error {
 	}
 
 	//Marshal user into json data
-	jsonData, err := json.Marshal(fileData)
+	jsonData, err := json.Marshal(user)
 	if err != nil {
 		return fmt.Errorf("error marshalling json data: %w", err)
 	}
@@ -99,15 +96,10 @@ func (c *Config) DeleteUser(username string) error {
 	}
 
 	filePath := filepath.Join(configPath, "currentsession", username)
-	fullPath := filepath.Join(filePath, username+".json")
 	emptyConfigDir := filepath.Join(configPath, "users", username)
 
 	//Remove user's .config file
-	if err := os.Remove(fullPath); err != nil {
-		return fmt.Errorf("error removing config file: %w", err)
-	}
-
-	if err := os.Remove(filePath); err != nil {
+	if err := os.RemoveAll(filePath); err != nil {
 		return fmt.Errorf("error removing user's config directory: %w", err)
 	}
 
@@ -121,30 +113,29 @@ func (c *Config) DeleteUser(username string) error {
 
 //Get file path for config file, creates if does not already exist
 func getConfigFilePath(username string) (string, error) {
-	//Get base config path
-	configPath, err := getBaseConfigPath()
-	if err != nil {
-		return "", err
-	}
-	
-	//Create config directory path
-	configDir := filepath.Join(configPath, "users", username)
+    configPath, err := getBaseConfigPath()
+    if err != nil {
+        return "", err
+    }
+    
+    // Create config directory path
+    configDir := filepath.Join(configPath, "users", username)
     if err := os.MkdirAll(configDir, 0755); err != nil {
         return "", fmt.Errorf("error creating config directory: %w", err)
     }
 
-	//Create file path
-	filePath := filepath.Join(configDir, username+".json")
+    // Create file path
+    filePath := filepath.Join(configDir, username+".json")
 
-	//Check if file exists, creates if not
-	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
-		_, err = os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0600)
-		if err != nil {
-			return "", fmt.Errorf("error creating config file: %w", err)
-		}
-	}
+    // Check if file exists, creates if not
+    if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
+        _, err = os.OpenFile(filePath, os.O_RDONLY|os.O_CREATE, 0600)
+        if err != nil {
+            return "", fmt.Errorf("error creating config file: %w", err)
+        }
+    }
 
-	return filePath, nil
+    return filePath, nil
 }
 
 //Gets the base "~/.config/greed" file path

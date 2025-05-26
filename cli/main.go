@@ -28,7 +28,12 @@ func main() {
 
 	err = cfg.LoadCurrentUserSession()
 	if err != nil {
-		log.Fatalf("Error loading current session: %s", err)
+		log.Fatalf("\rError loading current session: %s", err)
+	}
+
+	err = cfg.LoadAccountData()
+	if err != nil {
+		log.Fatalf("\rError loading account current session: %s", err)
 	}
 
 	//Get user input arguments

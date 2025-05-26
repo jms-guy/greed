@@ -100,6 +100,8 @@ func commandCreateUser(c *config.Config, args []string) error {
 	}
 	
 	log.Println("\rUser created successfully!")
+	log.Println("\r                                          ")
+
 	return nil
 }
 

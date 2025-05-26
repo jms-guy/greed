@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"github.com/jms-guy/greed/models"
 )
 
 //Saves current FileData struct to the current session user config file. 
@@ -70,6 +71,11 @@ func (c *Config) SetCurrentUserSession(username string) error {
 		return fmt.Errorf("error writing to session file: %w", err)
 	}
 
+	currAccountsDir := filepath.Join(sessionDir, "accounts")
+	if err = os.Mkdir(currAccountsDir, 0755); err != nil {
+		return fmt.Errorf("error creating current accounts directory: %w", err)
+	}
+
 	//Remove .config directory file
 	if err := os.Remove(oldFilePath); err != nil {
 		return fmt.Errorf("error removing original config file: %w", err)
@@ -106,6 +112,8 @@ func (c *Config) EndCurrentUserSession() error {
 		return fmt.Errorf("error writing to users config directory: %w", err)
 	}
 
+	///Check if accounts dir in current session is empty, remove directory. Else move account back as well, then delete
+
 	//Removes old file
 	if err := os.Remove(currFilePath); err != nil {
 		return fmt.Errorf("error removing session config file: %w", err)
@@ -139,7 +147,7 @@ func (c *Config) LoadCurrentUserSession() error {
 	}
 
 	if len(dirs) != 1 {
-		return fmt.Errorf("expecting a single current session user directory: %w", err)
+		return fmt.Errorf("expecting a single current session user directory")
 	}
 
 	user := dirs[0].Name()
@@ -161,12 +169,18 @@ func (c *Config) LoadCurrentUserSession() error {
 		//No active session
 		return nil
 	}
-	if len(files) > 1 {
-		return	fmt.Errorf("multiple files found in current session directory")
+
+	var userFile os.DirEntry
+
+	for _, file := range files {
+		if file.Name() == user+".json"	{
+			userFile = file
+			break
+		}
 	}
 
 	//Get session file name
-	sessionFile := filepath.Join(userSessionDir, files[0].Name())
+	sessionFile := filepath.Join(userSessionDir, userFile.Name())
 
 	//Read file
 	file, err := os.Open(sessionFile)
@@ -182,12 +196,12 @@ func (c *Config) LoadCurrentUserSession() error {
 	}
 
 	//Unmarshal session data
-	var data FileData
+	var data models.User
 	if err := json.Unmarshal(fileBytes, &data); err != nil {
 		return fmt.Errorf("error unmarshalling session data: %w", err)
 	}
 
-	c.FileData = data
+	c.FileData.User = data
 
 	return nil
 }

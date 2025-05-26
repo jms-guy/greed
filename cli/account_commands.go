@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"slices"
-
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/models"
 )
@@ -132,5 +131,30 @@ func commandCreateAccount(c *config.Config, args []string) error {
 	log.Println("\rAccount created successfully!")
 	log.Println("\r                                            ")
 
+	return nil
+}
+
+func commandAccountLogin(c *config.Config, args []string) error {
+	if len(args) != 1 {
+		log.Println("\rCommand syntax issue - type help for more details")
+	}
+
+	accountName := args[0]
+
+	accounts, err := c.GetAccounts()
+	if err != nil {
+		return err
+	}
+
+	if !slices.Contains(accounts, accountName) {
+		log.Println("\rNo account found with that name")
+		return nil 
+	}
+
+	if err = c.MoveAccountToCurrentSession(accountName); err != nil {
+		return err 
+	}
+
+	log.Printf("\rSuccessfully logged into account: %s\n", accountName)
 	return nil
 }
