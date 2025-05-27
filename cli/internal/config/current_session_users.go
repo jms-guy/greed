@@ -113,6 +113,32 @@ func (c *Config) EndCurrentUserSession() error {
 	}
 
 	///Check if accounts dir in current session is empty, remove directory. Else move account back as well, then delete
+	accountsDir := filepath.Join(sessionDir, "accounts")
+	accs, err := os.ReadDir(accountsDir)
+	if err != nil {
+		return fmt.Errorf("error reading accounts directory: %w", err)
+	}
+
+	if len(accs) == 0 {
+		if err = os.Remove(accountsDir); err != nil {
+			return fmt.Errorf("error removing accounts directory: %w", err)
+		}
+	} else if len(accs) > 1 {
+		return fmt.Errorf("more than one account directory found in accounts")
+	} else {
+		account := accs[0]
+		currAccDir := filepath.Join(accountsDir, account.Name())
+		userAccDir := filepath.Join(configDir, "accounts", account.Name())
+
+		err = os.Rename(currAccDir, userAccDir)
+		if err != nil {
+			return fmt.Errorf("error moving account back to users config: %w", err)
+		}
+
+		if err = os.Remove(accountsDir); err != nil {
+			return fmt.Errorf("error removing account's directory")
+		}
+	}
 
 	//Removes old file
 	if err := os.Remove(currFilePath); err != nil {
