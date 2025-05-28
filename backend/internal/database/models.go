@@ -16,7 +16,6 @@ type Account struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      string
-	Currency  string
 	UserID    uuid.UUID
 }
 

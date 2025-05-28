@@ -39,6 +39,11 @@ func commandHelp(c *config.Config, args []string) error {
 		return nil
 	}
 
+	if cmdArg == "all" {
+		helpAll()
+		return nil
+	}
+
 	return nil
 }
 
@@ -51,9 +56,10 @@ func helpBase() {
 	log.Println("\r financial data. For specific commands, see below. ")
 	log.Println("\r Do not enter any (), [], or {} characters in commands.")
 	log.Println("\r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	log.Println("\r  -For user commands, enter 		[help users]")
-	log.Println("\r  -For account commands, enter 		[help accounts]")
-	log.Println("\r  -For transaction commands, enter 	[help transactions]")
+	log.Println("\r  - For user commands, enter 		[help users]")
+	log.Println("\r  - For account commands, enter 	[help accounts]")
+	log.Println("\r  - For transaction commands, enter 	[help transactions]")
+	log.Println("\r  - For a full list of commands, enter	[help all]")
 	log.Println("\r                                              ")
 }
 
@@ -64,22 +70,51 @@ func helpUsers() {
 	log.Println("\r  Below is a list of user commands.")
 	log.Println("\r  Do not enter any (), [], or {} characters in commands.")
 	log.Println("\r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	log.Println("\r  -To create a new user, enter			[user-create {name}]")
-	log.Println("\r  -To delete a user, enter			[user-delete {name}]")
-	log.Println("\r  -To obtain a list of local users, enter	[users]")
-	log.Println("\r  -To login as a user, enter			[user-login {name}]")
-	log.Println("\r  -To logout of a user, enter			[user-logout]")
+	log.Println("\r  - To create a new user, enter			[user-create {name}]")
+	log.Println("\r  - To delete a user, enter			[user-delete {name}]")
+	log.Println("\r  - To obtain a list of local users, enter	[users]")
+	log.Println("\r  - To login as a user, enter			[user-login {name}]")
+	log.Println("\r  - To logout of a user, enter			[user-logout]")
 	log.Println("\r                                              ")
 }
 
 func helpAccounts() {
-
+	log.Println("\r                                              ")
+	log.Println("\r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+	log.Println("\r  Multiple accounts allowed per user. Account names must be unique per user.")
+	log.Println("\r  Below is a list of account commands.")
+	log.Println("\r  Do not enter any (), [], or {} characters in commands.")
+	log.Println("\r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+	log.Println("\r  - To create an account, enter					[account-create {name}]")
+	log.Println("\r  - To delete an account, enter					[account-delete {name}]")
+	log.Println("\r  - To obtain a list of account attached to user, enter 	[accounts]")
+	log.Println("\r  - To get the name of the currently logged in account, enter	[account]")
+	log.Println("\r  - To login to an account, enter				[account-login {name}]")
+	log.Println("\r  - To logout of an account, enter				[account-logout]")
+	log.Println("\r                                              ")
 }
 
 func helpTransactions() {
-
+	
 }
 
+func helpAll() {
+	log.Println("\r                                              ")
+	log.Println("\r  - To create a new user, enter					[user-create {name}]")
+	log.Println("\r  - To delete a user, enter					[user-delete {name}]")
+	log.Println("\r  - To obtain a list of local users, enter			[users]")
+	log.Println("\r  - To login as a user, enter					[user-login {name}]")
+	log.Println("\r  - To logout of a user, enter					[user-logout]")
+	log.Println("\r  - To create an account, enter					[account-create {name}]")
+	log.Println("\r  - To delete an account, enter					[account-delete {name}]")
+	log.Println("\r  - To obtain a list of account attached to user, enter 	[accounts]")
+	log.Println("\r  - To get the name of the currently logged in account, enter	[account]")
+	log.Println("\r  - To login to an account, enter				[account-login {name}]")
+	log.Println("\r  - To logout of an account, enter				[account-logout]")
+	log.Println("\r                                              ")
+}
+
+/*
 func showCurrencies() {
 	log.Println("\rCurrently supported currencies: ")
 	log.Println("\r [CAD] [USD] [EUR] [GBP]        ")
@@ -107,4 +142,4 @@ var stringToCurrency = map[string]Currency{
 func isValidCurrencyString(s string) bool {
 	_, ok := stringToCurrency[s]
 	return ok
-}
+}*/

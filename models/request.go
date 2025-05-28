@@ -12,9 +12,8 @@ type UserDetails struct {
 }
 
 //Request parameters for creating an account
-type CreateAccount struct {
+type AccountDetails struct {
 	Name		string `json:"name"`
-	Currency	string `json:"currency"`
 	UserID		uuid.UUID `json:"user_id"`
 }
 
@@ -39,12 +38,12 @@ type UpdateCategory struct {
 	Category		string `json:"category"`
 }
 
+/*
 //Parameters for updating an account's set currency
 type UpdateCurrency struct {
 	Currency		string `json:"currency"`
 }
 
-/*
 //Parameters for updating an account's goal
 type UpdateGoal struct {
 	Goal		string `json:"goal"`

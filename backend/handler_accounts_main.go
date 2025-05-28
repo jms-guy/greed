@@ -41,7 +41,6 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
 			Name: account.Name,
-			Currency: account.Currency,
 		}
 		accounts = append(accounts, result)
 	}
@@ -91,7 +90,6 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
 		Name: account.Name,
-		Currency: account.Currency,
 	}
 
 	respondWithJSON(w, 200, response)
@@ -134,13 +132,14 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Request) {
 	
 	decoder := json.NewDecoder(r.Body)
-	params := models.CreateAccount{}
+	params := models.AccountDetails{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Couldn't decode parameters", err)
 		return
 	}
 
+	/*
 	//Validation of the currency given, making sure that the given currency
 	//is supported in the database ('CAD', 'USD', 'EUR', etc.)
 	//If no currency type given for some reason, it's defaulted to CAD
@@ -157,12 +156,11 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 	} else {
 		params.Currency = "CAD"
 	}
-
+	*/
 	//Creates the account in the database
 	newAccount, err := cfg.db.CreateAccount(context.Background(), database.CreateAccountParams{
 		ID: uuid.New(),
 		Name: params.Name,
-		Currency: params.Currency,
 		UserID: params.UserID,
 	})
 	if err != nil {
@@ -176,7 +174,6 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		CreatedAt: newAccount.CreatedAt,
 		UpdatedAt: newAccount.UpdatedAt,
 		Name: newAccount.Name,
-		Currency: newAccount.Currency,
 		UserID: newAccount.UserID,
 	}
 	respondWithJSON(w, 201, account)

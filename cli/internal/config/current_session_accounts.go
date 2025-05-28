@@ -210,44 +210,59 @@ func (c *Config) CreateAccountsConfigFilePath(username string) error {
 
 //Moves a specific account directory to current session directory (logging into account)
 func (c *Config) MoveAccountToCurrentSession(accountName string) error {
-	configDir, err := getBaseConfigPath()
-	if err != nil {
-		return err
-	}
+    configDir, err := getBaseConfigPath()
+    if err != nil {
+        return err
+    }
 
-	accountsDir, err := c.getAccountsPath()
-	if err != nil {
-		return err
-	}
+    accountsDir, err := c.getAccountsPath()
+    if err != nil {
+        return err
+    }
 
-	accountPath := filepath.Join(accountsDir, accountName)
-	currentSessionPath := filepath.Join(configDir, "currentsession", c.FileData.User.Name, "accounts", accountName)
+    accountPath := filepath.Join(accountsDir, accountName)
+    currentSessionPath := filepath.Join(configDir, "currentsession", c.FileData.User.Name, "accounts", accountName)
 
-	if err = os.MkdirAll(currentSessionPath, 0755); err != nil {
-		return fmt.Errorf("error making currentsession accounts dir: %w", err)
-	}
+    // Remove the destination if it already exists
+    if _, err := os.Stat(currentSessionPath); err == nil {
+        if err := os.RemoveAll(currentSessionPath); err != nil {
+            return fmt.Errorf("error removing existing current session account dir: %w", err)
+        }
+    }
 
-	return os.Rename(accountPath, currentSessionPath)
+    if err = os.MkdirAll(filepath.Dir(currentSessionPath), 0755); err != nil {
+        return fmt.Errorf("error making currentsession accounts dir: %w", err)
+    }
+
+    return os.Rename(accountPath, currentSessionPath)
 }
 
 //Moves a specific account directory to user's accounts directory (logging out of account)
 func (c *Config) MoveAccountToUsersDir() error {
-	configDir, err := getBaseConfigPath()
-	if err != nil {
-		return err
-	}
+    configDir, err := getBaseConfigPath()
+    if err != nil {
+        return err
+    }
 
-	accountsDir, err := c.getAccountsPath()
-	if err != nil {
-		return err 
-	}
+    accountsDir, err := c.getAccountsPath()
+    if err != nil {
+        return err 
+    }
 
-	currentSessionPath := filepath.Join(configDir, "currentsession", c.FileData.User.Name, "accounts", c.FileData.Account.Name)
-	accountPath := filepath.Join(accountsDir, c.FileData.Account.Name)
+    currentSessionPath := filepath.Join(configDir, "currentsession", c.FileData.User.Name, "accounts", c.FileData.Account.Name)
+    accountPath := filepath.Join(accountsDir, c.FileData.Account.Name)
 
-	if err = os.MkdirAll(accountPath, 0755); err != nil {
-		return fmt.Errorf("error making user's accounts directory: %w", err)
-	}
+    // Remove the destination if it already exists
+    if _, err := os.Stat(accountPath); err == nil {
+        if err := os.RemoveAll(accountPath); err != nil {
+            return fmt.Errorf("error removing existing user's account dir: %w", err)
+        }
+    }
 
-	return os.Rename(currentSessionPath, accountPath)
+    // Ensure parent directory exists
+    if err = os.MkdirAll(filepath.Dir(accountPath), 0755); err != nil {
+        return fmt.Errorf("error making user's accounts directory: %w", err)
+    }
+
+    return os.Rename(currentSessionPath, accountPath)
 }

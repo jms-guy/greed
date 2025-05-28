@@ -206,6 +206,10 @@ func commandGetUsers(c *config.Config, args []string) error {
 
 	fmt.Println("\rUsers on this machine: ")
 	for _, user := range users {
+		if user == c.FileData.User.Name {
+			fmt.Printf(" > %s - logged in \n", user)
+			continue
+		}
 		fmt.Printf(" > %s \n", user)
 	}
 

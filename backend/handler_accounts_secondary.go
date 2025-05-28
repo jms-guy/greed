@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"context"
 	"encoding/json"
@@ -59,7 +60,7 @@ func (cfg *apiConfig) handlerUpdateCurrency(w http.ResponseWriter, r *http.Reque
 	}
 
 	respondWithJSON(w, 200, response)
-}
+}*/
 /*
 //Function will update an account's goal field in the database based on a given account ID
 func (cfg *apiConfig) handlerUpdateGoal(w http.ResponseWriter, r *http.Request) {

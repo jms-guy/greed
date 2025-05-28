@@ -1,12 +1,11 @@
 -- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, name, currency, user_id)
+INSERT INTO accounts(id, created_at, updated_at, name, user_id)
 VALUES (
     $1,
     NOW(),
     NOW(),
     $2,
-    $3,
-    $4
+    $3
 )
 RETURNING *;
 
@@ -26,9 +25,3 @@ WHERE user_id = $1;
 DELETE FROM accounts
 WHERE id = $1
 AND user_id = $2;
-
--- name: UpdateCurrency :one
-UPDATE accounts
-SET currency = $1, updated_at = now()
-WHERE id = $2
-RETURNING *;
