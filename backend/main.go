@@ -22,6 +22,7 @@ import (
 
 type apiConfig struct{
 	db				*database.Queries
+	secret			string
 }
 
 func main() {
@@ -35,6 +36,8 @@ func main() {
 	addr := os.Getenv("ADDRESS")
 	//.env Database URL
 	dbURL := os.Getenv("DB_URL")
+	//.env Token Secret
+	tokenSecret := os.Getenv("TOKEN_SECRET")
 	
 	//Open the database connection
 	db, err := sql.Open("postgres", dbURL)
@@ -47,6 +50,7 @@ func main() {
 	//Initialize the config struct
 	cfg := &apiConfig{
 		db: 		dbQueries,
+		secret: 	tokenSecret,
 	}
 
 	//Initialize servemux and http server
