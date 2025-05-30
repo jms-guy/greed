@@ -5,27 +5,31 @@ import (
 	"github.com/google/uuid"
 )
 
+type RefreshRequest struct {
+	RefreshToken 			string 	`json:"refresh_token"`
+}
+
 //Request parameters for users
 type UserDetails struct {
-	Name			string `json:"name"`
-	Password		string `json:"password"`	
+	Name					string `json:"name"`
+	Password				string `json:"password"`	
 }
 
 //Request parameters for creating an account
 type AccountDetails struct {
-	Name		string `json:"name"`
-	UserID		uuid.UUID `json:"user_id"`
+	Name					string `json:"name"`
+	UserID					uuid.UUID `json:"user_id"`
 }
 
 //Request parameters needed for creating a transaction record
 type CreateTransaction struct {
-	Amount			string 	  `json:"amount"`
-	Category		string	  `json:"category"`
-	Description		string	  `json:"description"`
-	TransactionDate time.Time `json:"transaction_date"`
-	TransactionType string	  `json:"transaction_type"`
-	CurrencyCode	string	  `json:"currency_code"`
-	AccountID		uuid.UUID `json:"account_id"`
+	Amount						string 	  `json:"amount"`
+	Category					string	  `json:"category"`
+	Description					string	  `json:"description"`
+	TransactionDate 			time.Time `json:"transaction_date"`
+	TransactionType 			string	  `json:"transaction_type"`
+	CurrencyCode				string	  `json:"currency_code"`
+	AccountID					uuid.UUID `json:"account_id"`
 }
 
 //Request parameters for updating a transaction description

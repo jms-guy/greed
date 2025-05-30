@@ -18,11 +18,11 @@ import (
 	-Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
 	-More calculation functions, such as (avg income/expenses per month)
 	-Don't like that handler functions are all methods on apiConfig, refine later
+	-Implement transactions on database queries
 */
 
 type apiConfig struct{
 	db				*database.Queries
-	secret			string
 }
 
 func main() {
@@ -36,8 +36,6 @@ func main() {
 	addr := os.Getenv("ADDRESS")
 	//.env Database URL
 	dbURL := os.Getenv("DB_URL")
-	//.env Token Secret
-	tokenSecret := os.Getenv("TOKEN_SECRET")
 	
 	//Open the database connection
 	db, err := sql.Open("postgres", dbURL)
@@ -50,7 +48,6 @@ func main() {
 	//Initialize the config struct
 	cfg := &apiConfig{
 		db: 		dbQueries,
-		secret: 	tokenSecret,
 	}
 
 	//Initialize servemux and http server
@@ -63,10 +60,14 @@ func main() {
 	///////////////Handler Functions///////////////
 
 	//User handler functions
-	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)	//Creates user in db
-	mux.HandleFunc("GET /api/users/login", cfg.handlerUserLogin) //Returns a single user, will be used for logging in
-	mux.HandleFunc("DELETE /api/users/{userid}", cfg.handlerDeleteUser) //Deletes a user record from database
-	mux.HandleFunc("GET /api/users/all", cfg.handlerGetListOfUsers) //Returns a list of users in database
+	mux.HandleFunc("POST /api/auth/register", cfg.handlerCreateUser)	//Creates user 
+	mux.HandleFunc("POST /api/auth/login", cfg.handlerUserLogin) 		//Login user
+	mux.HandleFunc("POST /api/auth/logout", cfg.handlerUserLogout)		//Logs out user
+	mux.HandleFunc("POST /api/auth/refresh", cfg.handlerRefreshToken)	//Refresh token
+
+	mux.HandleFunc("GET /api/users", cfg.handlerGetListOfUsers) 		//Returns a list of users in database
+	mux.HandleFunc("GET /api/users/me", cfg.handlerGetCurrentUser) 		//Get logged-in user information
+	mux.HandleFunc("DELETE /api/users/me", cfg.handlerDeleteUser) 		//Deletes own account
 
 	//Main account handler functions
 	mux.HandleFunc("POST /api/users/{userid}/accounts", cfg.handlerCreateAccount)	//Creates account in db

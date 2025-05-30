@@ -31,6 +31,7 @@ type Delegation struct {
 type RefreshToken struct {
 	ID           uuid.UUID
 	HashedToken  string
+	UserID       uuid.UUID
 	DelegationID uuid.UUID
 	CreatedAt    time.Time
 	ExpiresAt    time.Time

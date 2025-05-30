@@ -28,3 +28,4 @@ func ValidatePasswordHash(hash, password string) error {
 
 	return nil
 }
+
