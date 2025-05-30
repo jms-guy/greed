@@ -50,7 +50,7 @@ func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 }
 
 //Function returns a single user record
-func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	//Decode request parameters
 	decoder := json.NewDecoder(r.Body)
 	params := models.UserDetails{}
@@ -73,6 +73,30 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "Password is incorrect", err)
 		return
 	}
+
+	delegationParams := database.CreateDelegationParams{
+		ID: uuid.New(),
+		UserID: user.ID,
+	}
+
+	delegation, err := cfg.db.CreateDelegation(context.Background(), delegationParams)
+	if err != nil {
+		respondWithError(w, 500, "Error creating token delegation", err)
+		return
+	}
+
+	JWT, err := auth.MakeJWT(user.ID, cfg.secret)
+	if err != nil {
+		respondWithError(w, 500, "Error creating JWT", err)
+		return 
+	}
+
+	tokenString, token, err := auth.MakeRefreshToken(cfg.db, delegation.ID)
+	if err != nil {
+		respondWithError(w, 500, "Error creating refresh token", err)
+		return
+	}
+	
 
 	respondWithJSON(w, 200, user)
 }

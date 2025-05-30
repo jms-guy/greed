@@ -19,6 +19,25 @@ type Account struct {
 	UserID    uuid.UUID
 }
 
+type Delegation struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	RevokedAt sql.NullTime
+	IsRevoked bool
+	LastUsed  time.Time
+}
+
+type RefreshToken struct {
+	ID           uuid.UUID
+	HashedToken  string
+	DelegationID uuid.UUID
+	CreatedAt    time.Time
+	ExpiresAt    time.Time
+	IsUsed       bool
+	UsedAt       sql.NullTime
+}
+
 type SupportedCurrency struct {
 	Code   string
 	Name   string

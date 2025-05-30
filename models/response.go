@@ -5,6 +5,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type LoginResponse struct{
+	User 			User	`json:"user"`
+	AccessToken		string	`json:"access_token"`
+	RefreshToken	string	`json:"refresh_token"`
+	TokenType		string	`json:"token_type"`
+	ExpiresIn		int		`json:"expires_in"`
+}
+
 //Structure for account JSON response 
 type Account struct {
 	ID				uuid.UUID `json:"id"`

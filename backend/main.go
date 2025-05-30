@@ -64,7 +64,7 @@ func main() {
 
 	//User handler functions
 	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)	//Creates user in db
-	mux.HandleFunc("GET /api/users", cfg.handlerGetUser) //Returns a single user, will be used for logging in
+	mux.HandleFunc("GET /api/users/login", cfg.handlerUserLogin) //Returns a single user, will be used for logging in
 	mux.HandleFunc("DELETE /api/users/{userid}", cfg.handlerDeleteUser) //Deletes a user record from database
 	mux.HandleFunc("GET /api/users/all", cfg.handlerGetListOfUsers) //Returns a list of users in database
 
