@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
 )
@@ -97,12 +99,16 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 
 //Function will delete an account from the database
 func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
-	//Get user ID
-	userId := r.PathValue("userid")
-
-	id, err := uuid.Parse(userId)
+	ctx := r.Context()
+	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, 400, "Error parsing User ID", err)
+		respondWithError(w, 400, "Bad token", err)
+		return
+	}
+
+	id, err := auth.ValidateJWT(token, auth.JWTSecret)
+	if err != nil {
+		respondWithError(w, 401, "Invalid JWT", err)
 		return
 	}
 
@@ -116,7 +122,7 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Delete account from database based on user ID given
-	err = cfg.db.DeleteAccount(context.Background(), database.DeleteAccountParams{
+	err = cfg.db.DeleteAccount(ctx, database.DeleteAccountParams{
 		ID: accountId,
 		UserID: id,
 	})
@@ -130,10 +136,22 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 
 //Function will create a new account in the database
 func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 400, "Bad token", err)
+		return
+	}
+
+	id, err := auth.ValidateJWT(token, auth.JWTSecret)
+	if err != nil {
+		respondWithError(w, 401, "Invalid JWT", err)
+		return
+	}
 	
 	decoder := json.NewDecoder(r.Body)
 	params := models.AccountDetails{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Couldn't decode parameters", err)
 		return
@@ -158,10 +176,10 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 	}
 	*/
 	//Creates the account in the database
-	newAccount, err := cfg.db.CreateAccount(context.Background(), database.CreateAccountParams{
+	newAccount, err := cfg.db.CreateAccount(ctx, database.CreateAccountParams{
 		ID: uuid.New(),
 		Name: params.Name,
-		UserID: params.UserID,
+		UserID: id,
 	})
 	if err != nil {
 		respondWithError(w, 500, "Error creating account in database", err)

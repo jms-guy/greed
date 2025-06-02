@@ -23,6 +23,7 @@ type Delegation struct {
 	ID        uuid.UUID
 	UserID    uuid.UUID
 	CreatedAt time.Time
+	ExpiresAt time.Time
 	RevokedAt sql.NullTime
 	IsRevoked bool
 	LastUsed  time.Time

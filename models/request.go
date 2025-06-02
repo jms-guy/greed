@@ -18,7 +18,6 @@ type UserDetails struct {
 //Request parameters for creating an account
 type AccountDetails struct {
 	Name					string `json:"name"`
-	UserID					uuid.UUID `json:"user_id"`
 }
 
 //Request parameters needed for creating a transaction record

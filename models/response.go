@@ -9,7 +9,6 @@ type RefreshResponse struct{
 	RefreshToken	string	`json:"refresh_token"`
 	AccessToken		string	`json:"access_token"`
 	TokenType		string	`json:"token_type"`
-	ExpiresIn		int		`json:"expires_in"`
 }
 
 type LoginResponse struct{

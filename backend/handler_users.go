@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/auth"
+	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -59,6 +62,7 @@ func (cfg *apiConfig) handlerGetListOfUsers(w http.ResponseWriter, r *http.Reque
 	respondWithJSON(w, 200, users)
 }
 
+//Gets current user database record
 func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	token, err := auth.GetBearerToken(r.Header)
@@ -123,11 +127,16 @@ func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 
 //Function returns a single user record
 func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+	delegationExp, err := strconv.Atoi(auth.TokenExpiration)
+	if err != nil {
+		respondWithError(w, 500, "Error getting .env session expiration time", err)
+	}
+
 	ctx := r.Context()
 	//Decode request parameters
 	decoder := json.NewDecoder(r.Body)
 	params := models.UserDetails{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Error decoding parameters", err)
 		return
@@ -150,6 +159,7 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	delegationParams := database.CreateDelegationParams{
 		ID: uuid.New(),
 		UserID: user.ID,
+		ExpiresAt: time.Now().Add(time.Duration(delegationExp) * time.Second),
 	}
 
 	delegation, err := cfg.db.CreateDelegation(ctx, delegationParams)
@@ -164,7 +174,7 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return 
 	}
 
-	tokenString, err := auth.MakeRefreshToken(cfg.db, user.ID, delegation.ID)
+	tokenString, err := auth.MakeRefreshToken(cfg.db, user.ID, delegation)
 	if err != nil {
 		respondWithError(w, 500, "Error creating refresh token", err)
 		return

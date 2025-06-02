@@ -66,11 +66,11 @@ func main() {
 	mux.HandleFunc("POST /api/auth/refresh", cfg.handlerRefreshToken)	//Refresh token
 
 	mux.HandleFunc("GET /api/users", cfg.handlerGetListOfUsers) 		//Returns a list of users in database
-	mux.HandleFunc("GET /api/users/me", cfg.handlerGetCurrentUser) 		//Get logged-in user information
+	mux.Handle("GET /api/users/me", cfg.AuthMiddleware(http.HandlerFunc(cfg.handlerGetCurrentUser))) 		//Get logged-in user information
 	mux.HandleFunc("DELETE /api/users/me", cfg.handlerDeleteUser) 		//Deletes own account
 
 	//Main account handler functions
-	mux.HandleFunc("POST /api/users/{userid}/accounts", cfg.handlerCreateAccount)	//Creates account in db
+	mux.HandleFunc("POST /api/auth/accounts/register", cfg.handlerCreateAccount)	//Creates account in db
 	mux.HandleFunc("GET /api/users/{userid}/accounts/all", cfg.handlerGetAccountsForUser)	//Gets all accounts for a user (currently not useful)
 	mux.HandleFunc("GET /api/users/{userid}/accounts/{accountid}", cfg.handlerGetSingleAccount)	//Get a single account
 	mux.HandleFunc("DELETE /api/users/{userid}/accounts/{accountid}", cfg.handlerDeleteAccount)	//Delete account from db

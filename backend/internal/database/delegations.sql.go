@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -16,6 +17,7 @@ INSERT INTO delegations (
     id,
     user_id,
     created_at,
+    expires_at,
     revoked_at,
     is_revoked,
     last_used)
@@ -23,25 +25,48 @@ VALUES (
     $1,
     $2,
     NOW(),
+    $3,
     NULL,
     FALSE,
     NOW()
 )
-RETURNING id, user_id, created_at, revoked_at, is_revoked, last_used
+RETURNING id, user_id, created_at, expires_at, revoked_at, is_revoked, last_used
 `
 
 type CreateDelegationParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	ExpiresAt time.Time
 }
 
 func (q *Queries) CreateDelegation(ctx context.Context, arg CreateDelegationParams) (Delegation, error) {
-	row := q.db.QueryRowContext(ctx, createDelegation, arg.ID, arg.UserID)
+	row := q.db.QueryRowContext(ctx, createDelegation, arg.ID, arg.UserID, arg.ExpiresAt)
 	var i Delegation
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.CreatedAt,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+		&i.IsRevoked,
+		&i.LastUsed,
+	)
+	return i, err
+}
+
+const getDelegation = `-- name: GetDelegation :one
+SELECT id, user_id, created_at, expires_at, revoked_at, is_revoked, last_used FROM delegations
+WHERE id = $1
+`
+
+func (q *Queries) GetDelegation(ctx context.Context, id uuid.UUID) (Delegation, error) {
+	row := q.db.QueryRowContext(ctx, getDelegation, id)
+	var i Delegation
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.ExpiresAt,
 		&i.RevokedAt,
 		&i.IsRevoked,
 		&i.LastUsed,

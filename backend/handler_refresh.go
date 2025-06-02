@@ -63,7 +63,13 @@ func (cfg *apiConfig) handlerRefreshToken(w http.ResponseWriter, r *http.Request
 		return 
 	}
 
-	newToken, err := auth.MakeRefreshToken(cfg.db, token.UserID, token.DelegationID)
+	del, err := cfg.db.GetDelegation(ctx, token.DelegationID)
+	if err != nil {
+		respondWithError(w, 401, "Session delegation not found", err)
+		return
+	}
+
+	newToken, err := auth.MakeRefreshToken(cfg.db, token.UserID, del)
 	if err != nil {
 		respondWithError(w, 500, "Error creating new refresh token", err)
 		return
@@ -79,7 +85,6 @@ func (cfg *apiConfig) handlerRefreshToken(w http.ResponseWriter, r *http.Request
 		RefreshToken: 	newToken,
 		AccessToken: 	newJWT,
 		TokenType: 		"Bearer",
-		ExpiresIn: 		600,
 	}
 
 	respondWithJSON(w, 200, response)

@@ -8,9 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 )
@@ -25,7 +22,7 @@ const TokenLength = 32
 var TokenExpiration = os.Getenv("REFRESH_TOKEN_EXPIRATION_SECONDS")
 
 //Function creates a new token string, hashes the token, and creates a record of it in the database
-func MakeRefreshToken(tokenStore TokenStore, userID, delegationID uuid.UUID) (string, error) {
+func MakeRefreshToken(tokenStore TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error) {
 	tokenString, err := generateRefreshToken()
 	if err != nil {
 		return "", err 
@@ -33,7 +30,7 @@ func MakeRefreshToken(tokenStore TokenStore, userID, delegationID uuid.UUID) (st
 
 	hashedToken := HashRefreshToken(tokenString)
 
-	_, err = storeRefreshToken(tokenStore, hashedToken, userID, delegationID)
+	_, err = storeRefreshToken(tokenStore, hashedToken, userID, delegation)
 	if err != nil {
 		return "", err
 	}
@@ -65,25 +62,20 @@ func HashRefreshToken(token string) string {
 }
 
 //Creates refresh token record in database
-func storeRefreshToken(tokenStore TokenStore, tokenHash string, userID, delegationID uuid.UUID) (database.RefreshToken, error) {
+func storeRefreshToken(tokenStore TokenStore, tokenHash string, userID uuid.UUID, delegation database.Delegation) (database.RefreshToken, error) {
 	if tokenHash == "" {
         return database.RefreshToken{}, errors.New("token hash cannot be empty")
     }
-    if delegationID == uuid.Nil {
+    if delegation.ID == uuid.Nil {
         return database.RefreshToken{}, errors.New("delegation ID cannot be nil")
     }
-
-	expirationTime, err := strconv.Atoi(TokenExpiration)
-	if err != nil {
-		return database.RefreshToken{}, fmt.Errorf("error getting .env refresh expiration time: %w", err)
-	}
 
 	tokenParams := database.CreateTokenParams{
 		ID: uuid.New(),
 		HashedToken: tokenHash,
 		UserID: userID,
-		DelegationID: delegationID,
-		ExpiresAt: time.Now().Add(time.Duration(expirationTime) * time.Second),
+		DelegationID: delegation.ID,
+		ExpiresAt: delegation.ExpiresAt,
 	}
 
 	token, err := tokenStore.CreateToken(context.Background(), tokenParams)
