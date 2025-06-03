@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/utils"
@@ -12,25 +12,24 @@ import (
 
 //Function will return all transactions for an account based on a category specified
 func (cfg *apiConfig) handlerGetTransactionsOfCategory(w http.ResponseWriter, r *http.Request) {
-	//Get account ID
-	accId := r.PathValue("accountid")
-
-	id, err := uuid.Parse(accId)
-	if err != nil {
-		respondWithError(w, 400, "Error parsing account ID", err)
+	ctx := r.Context()
+	accValue := ctx.Value(accountKey)
+	acc, ok := accValue.(database.Account)
+	if !ok {
+		respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Get category
-	cat := r.PathValue("category")
+	cat := chi.URLParam(r, "category")
 	if cat == "" {
 		respondWithError(w, 400, "Bad category given", nil)
 		return
 	}
 
 	//Get transactions from database
-	results, err := cfg.db.GetTransactionsOfCategory(context.Background(), database.GetTransactionsOfCategoryParams{
-		AccountID: id,
+	results, err := cfg.db.GetTransactionsOfCategory(ctx, database.GetTransactionsOfCategoryParams{
+		AccountID: acc.ID,
 		Category: cat,
 	})
 	if err != nil {
@@ -62,25 +61,24 @@ func (cfg *apiConfig) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 
 //Function will return all transactions for an account based on given transaction type
 func (cfg *apiConfig) handlerGetTransactionsofType(w http.ResponseWriter, r *http.Request) {
-	//Get account ID
-	accId := r.PathValue("accountid")
-
-	id, err := uuid.Parse(accId)
-	if err != nil {
-		respondWithError(w, 400, "Error parsing account ID", err)
+	ctx := r.Context()
+	accValue := ctx.Value(accountKey)
+	acc, ok := accValue.(database.Account)
+	if !ok {
+		respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Get transaction type
-	tType := r.PathValue("transactiontype")
+	tType := chi.URLParam(r, "transactiontype")
 	if !isValidTransactionType(tType) {
 		respondWithError(w, 400, "Bad transaction type", nil)
 		return
 	}
 
 	//Get transactions from database
-	results, err := cfg.db.GetTransactionsOfType(context.Background(), database.GetTransactionsOfTypeParams{
-		AccountID: id,
+	results, err := cfg.db.GetTransactionsOfType(ctx, database.GetTransactionsOfTypeParams{
+		AccountID: acc.ID,
 		TransactionType: tType,
 	})
 	if err != nil {
@@ -112,17 +110,16 @@ func (cfg *apiConfig) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 
 //Function returns a single transaction from database, based on transaction ID
 func (cfg *apiConfig) handlerGetTransactions(w http.ResponseWriter, r *http.Request) {
-	//Get account ID
-	accID := r.PathValue("accountid")
-
-	id, err := uuid.Parse(accID)
-	if err != nil {
-		respondWithError(w, 400, "Error parsing account ID", err)
+	ctx := r.Context()
+	accValue := ctx.Value(accountKey)
+	acc, ok := accValue.(database.Account)
+	if !ok {
+		respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Get transaction records
-	results, err := cfg.db.GetTransactions(context.Background(), id)
+	results, err := cfg.db.GetTransactions(ctx, acc.ID)
 	if err != nil {
 		respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
@@ -152,8 +149,8 @@ func (cfg *apiConfig) handlerGetTransactions(w http.ResponseWriter, r *http.Requ
 
 //Function will return a transaction result from database
 func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http.Request) {
-	//Get transaction ID
-	transID := r.PathValue("transactionid")
+	ctx := r.Context()
+	transID := chi.URLParam(r, "transactionid")
 
 	id, err := uuid.Parse(transID)
 	if err != nil {
@@ -162,7 +159,7 @@ func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 	}
 
 	//Get transaction record from database
-	result, err := cfg.db.GetSingleTransaction(context.Background(), id)
+	result, err := cfg.db.GetSingleTransaction(ctx, id)
 	if err != nil {
 		respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
@@ -188,19 +185,18 @@ func (cfg *apiConfig) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 
 //Function to create a transaction record in database
 func (cfg *apiConfig) handlerCreateTransaction(w http.ResponseWriter, r *http.Request) {
-	//Get account id
-	accountId := r.PathValue("accountid")
-
-	id, err := uuid.Parse(accountId)
-	if err != nil {
-		respondWithError(w, 400, "Error parsing account ID", err)
+	ctx := r.Context()
+	accValue := ctx.Value(accountKey)
+	acc, ok := accValue.(database.Account)
+	if !ok {
+		respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Decode request body
 	decoder := json.NewDecoder(r.Body)
 	params := models.CreateTransaction{}
-	err = decoder.Decode(&params)
+	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Error decoding request parameters", err)
 		return
@@ -215,11 +211,11 @@ func (cfg *apiConfig) handlerCreateTransaction(w http.ResponseWriter, r *http.Re
 		TransactionDate: params.TransactionDate,
 		TransactionType: params.TransactionType,
 		CurrencyCode: params.CurrencyCode,
-		AccountID: id,
+		AccountID: acc.ID,
 	}
 
 	//Create transaction in database
-	transaction, err := cfg.db.CreateTransaction(context.Background(), sqlParams)
+	transaction, err := cfg.db.CreateTransaction(ctx, sqlParams)
 	if err != nil {
 		respondWithError(w, 500, "Error creating transaction record in database", err)
 		return

@@ -107,7 +107,6 @@ func commandCreateAccount(c *config.Config, args []string) error {
 	//Create account request
 	reqParams := models.AccountDetails{
 		Name: accountName,
-		UserID: userId,
 	}
 
 	res, err := c.MakeBasicRequest("POST", url, reqParams)

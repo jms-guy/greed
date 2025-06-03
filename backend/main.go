@@ -5,20 +5,22 @@ import (
 	"log"
 	"net/http"
 	"os"
+	kitlog "github.com/go-kit/log"
+	"github.com/go-chi/chi/v5"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/joho/godotenv"
-	_"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 /* Notes & To-Do
-	-Db query/netincome function tentatively works based on the assumption that credit amounts are (+) and
-	debit amounts are (-). Keep in mind for future, may have to alter.
-	-Authentication & authorization
-	-Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
-	-Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
-	-More calculation functions, such as (avg income/expenses per month)
-	-Don't like that handler functions are all methods on apiConfig, refine later
-	-Implement transactions on database queries
+-Db query/netincome function tentatively works based on the assumption that credit amounts are (+) and
+debit amounts are (-). Keep in mind for future, may have to alter.
+-Authentication & authorization
+-Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
+-Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
+-More calculation functions, such as (avg income/expenses per month)
+-Don't like that handler functions are all methods on apiConfig, refine later
+-Implement transactions on database queries
 */
 
 type apiConfig struct{
@@ -50,69 +52,94 @@ func main() {
 		db: 		dbQueries,
 	}
 
-	//Initialize servemux and http server
-	mux := http.NewServeMux()
-	server := http.Server{
-		Handler: mux,
-		Addr: addr,
-	}
+	var kitLogger kitlog.Logger
 
-	///////////////Handler Functions///////////////
+	//Initialize a new router
+	r := chi.NewRouter()
 
-	//User handler functions
-	mux.HandleFunc("POST /api/auth/register", cfg.handlerCreateUser)	//Creates user 
-	mux.HandleFunc("POST /api/auth/login", cfg.handlerUserLogin) 		//Login user
-	mux.HandleFunc("POST /api/auth/logout", cfg.handlerUserLogout)		//Logs out user
-	mux.HandleFunc("POST /api/auth/refresh", cfg.handlerRefreshToken)	//Refresh token
+	//Authentication and authorization operations
+	r.Group(func(r chi.Router) {
+		r.Use(LoggingMiddleware(kitLogger))
+		r.Route("/api/auth", func(r chi.Router) {
+			r.Post("/register", cfg.handlerCreateUser)										//Creates a new user record
+			r.Post("/login", cfg.handlerUserLogin)											//Creates a "session" for a user, logging them in
+			r.Post("/logout", cfg.handlerUserLogout)										//Revokes a user's session tokens, logging out
+			r.Post("/refresh", cfg.handlerRefreshToken)										//Generates a new JWT/refresh token
+		})
+	})
 
-	mux.HandleFunc("GET /api/users", cfg.handlerGetListOfUsers) 		//Returns a list of users in database
-	mux.Handle("GET /api/users/me", cfg.AuthMiddleware(http.HandlerFunc(cfg.handlerGetCurrentUser))) 		//Get logged-in user information
-	mux.HandleFunc("DELETE /api/users/me", cfg.handlerDeleteUser) 		//Deletes own account
+	//Dev operations
+	r.Group(func(r chi.Router) {
+		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
+			r.Post("/users", cfg.handlerResetUsers)
+			r.Post("/accounts", cfg.handlerResetAccounts)
+			r.Post("/transactions", cfg.handlerResetTransactions)
+		})
+	})
 
-	//Main account handler functions
-	mux.HandleFunc("POST /api/auth/accounts/register", cfg.handlerCreateAccount)	//Creates account in db
-	mux.HandleFunc("GET /api/users/{userid}/accounts/all", cfg.handlerGetAccountsForUser)	//Gets all accounts for a user (currently not useful)
-	mux.HandleFunc("GET /api/users/{userid}/accounts/{accountid}", cfg.handlerGetSingleAccount)	//Get a single account
-	mux.HandleFunc("DELETE /api/users/{userid}/accounts/{accountid}", cfg.handlerDeleteAccount)	//Delete account from db
+	//User operations
+	r.Group(func(r chi.Router) {
+		r.Use(LoggingMiddleware(kitLogger))
 
-	//Secondary account handler functions
-	//mux.HandleFunc("PUT /api/accounts/{accountid}/balance", cfg.handlerUpdateBalance)	//Update an account's balance field
-	//mux.HandleFunc("PUT /api/accounts/{accountid}/goal", cfg.handlerUpdateGoal)			//Update an account's goal field
-	//mux.HandleFunc("PUT /api/accounts/{accountid}/currency", cfg.handlerUpdateCurrency) //Update an account's set currency
+		r.Get("/api/users", cfg.handlerGetListOfUsers)										//Get list of users
 
-	//Main transaction handler functions
-	mux.HandleFunc("POST /api/accounts/{accountid}/transactions", cfg.handlerCreateTransaction) //Create a transaction record in db
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/all", cfg.handlerGetTransactions)		//Get list of transactions for an account
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/{transactionid}", cfg.handlerGetSingleTransaction)	//Get a single transaction record
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/type/{transactiontype}", cfg.handlerGetTransactionsofType) //Gets all transactions for an account of certain type
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/category/{category}", cfg.handlerGetTransactionsOfCategory) //Gets all transactions for an account of certain category
+		r.Route("/api/users", func(r chi.Router) {
+			r.Use(cfg.AuthMiddleware)
 
-	//Secondary transaction handler functions
-	mux.HandleFunc("PUT /api/accounts/{accountid}/transactions/{transactionid}/description", cfg.handlerUpdateTransactionDescription) //Update a transaction's description field
-	mux.HandleFunc("PUT /api/accounts/{accountid}/transactions/{transactionid}/category", cfg.handlerUpdateTransactionCategory)	//Update a transaction's category field
+			r.Get("/me", cfg.handlerGetCurrentUser)											//Return a single user record
+			r.Delete("/me", cfg.handlerDeleteUser)											//Delete an entire user
+		})
+	})
 
-	//Transaction handler delete functions
-	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions/{transactionid}", cfg.handlerDeleteTransactionRecord) //Deletes a transaction record from database
-	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions", cfg.handlerDeleteTransactionsForAccount) //Deletes all transaction records for an account
-	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions/type/{transactiontype}", cfg.handlerDeleteTransactionsOfType) //Deletes all transactions for an account based on transaction_type
-	mux.HandleFunc("DELETE /api/accounts/{accountid}/transactions/category/{category}", cfg.handlerDeleteTransactionsOfCategory) //Deletes all transactions of a specified category
+	//Account operations
+	r.Group(func(r chi.Router) {
+		r.Use(LoggingMiddleware(kitLogger))
+		r.Use(cfg.AuthMiddleware)
+		
+		// Account creation and retreiving list of user's accounts
+		r.Post("/api/accounts", cfg.handlerCreateAccount)									//Create new account for user
+		r.Get("/api/accounts", cfg.handlerGetAccountsForUser)								//Get list of accounts for user
+		
+		// Account-specific routes that need AccountMiddleware
+		r.Route("/api/accounts/{accountid}", func(r chi.Router) {
+			r.Use(cfg.AccountMiddleware)
+			
+			//r.Get("/", cfg.handlerGetSingleAccount)										//Return a single account record for user
+			r.Delete("/", cfg.handlerDeleteAccount)											//Delete account
+			
+			// Transaction routes as a sub-resource of accounts
+			r.Route("/transactions", func(r chi.Router) {
+				r.Post("/", cfg.handlerCreateTransaction)									//Create transaction record
+				r.Get("/", cfg.handlerGetTransactions) 										//Get all transactions for account
+				r.Delete("/", cfg.handlerDeleteTransactionsForAccount)						//Delete all transactions for account
 
-	//Financial calculation handler functions
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/income/{year}/{month}", cfg.handlerGetIncomeForMonth) //Calculate an account's income for a month
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/expenses/{year}/{month}", cfg.handlerGetExpensesForMonth) //Calculate an account's expenses for a month
-	mux.HandleFunc("GET /api/accounts/{accountid}/transactions/netincome/{year}/{month}", cfg.handlerGetNetIncomeForMonth) //Calculate an account's net income for a month
+				// Transaction filtering
+				r.Get("/type/{transactiontype}", cfg.handlerGetTransactionsofType)			//Get all transactions of specific type
+				r.Delete("/type/{transactiontype}", cfg.handlerDeleteTransactionsOfType)	//Delete all transactions of specific type
+				r.Get("/category/{category}", cfg.handlerGetTransactionsOfCategory)			//Get all transactions of specific category
+				r.Delete("/category/{category}", cfg.handlerDeleteTransactionsOfCategory)	//Delete all transactions of specific category
+				
+				// Monthly reporting
+				r.Get("/income/{year}-{month}", cfg.handlerGetIncomeForMonth)				//Get income for given month
+				r.Get("/expenses/{year}-{month}", cfg.handlerGetExpensesForMonth)			//Get expenses for given month
+				r.Get("/netincome/{year}-{month}", cfg.handlerGetNetIncomeForMonth)			//Get net income for given month
 
-	//Dev testing handlers
-	mux.HandleFunc("POST /admin/reset/users", cfg.handlerResetUsers)	//Reset database's users tables
-	mux.HandleFunc("POST /admin/reset/accounts", cfg.handlerResetAccounts) //Reset database's accounts table
-	mux.HandleFunc("POST /admin/reset/transactions", cfg.handlerResetTransactions) //Reset the database's transactions table
-
+				 // Individual transaction operations
+				 r.Route("/{transactionid}", func(r chi.Router) {
+					r.Get("/", cfg.handlerGetSingleTransaction)								//Get a single transaction record
+					r.Delete("/", cfg.handlerDeleteTransactionRecord)						//Delete a single transaction record
+					r.Put("/description", cfg.handlerUpdateTransactionDescription)			//Update a transaction's description
+					r.Put("/category", cfg.handlerUpdateTransactionCategory)				//Update a transaction's category
+				 })
+			})
+		})
+	})
 
 
 	/////Start server/////
 
-	log.Printf("Server running at: %s", server.Addr)
-	err = server.ListenAndServe()
+	log.Printf("Server running at: %s", addr)
+	err = http.ListenAndServe(addr, r)
 	if err != nil {
 		log.Fatalf("Error running server: %s", err)
 	}

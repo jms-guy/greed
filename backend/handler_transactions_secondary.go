@@ -1,20 +1,19 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/jms-guy/greed/models"
 )
 
-
 //Function will update the category of a transaction record in database
 func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r *http.Request) {
-	//Get transaction ID
-	transID := r.PathValue("transactionid")
+	ctx := r.Context()
+	transID := chi.URLParam(r, "transactionid")
 
 	id, err := uuid.Parse(transID)
 	if err != nil {
@@ -32,7 +31,7 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 	}
 
 	//Update transaction category in database
-	result, err := cfg.db.UpdateTransactionCategory(context.Background(), database.UpdateTransactionCategoryParams{
+	result, err := cfg.db.UpdateTransactionCategory(ctx, database.UpdateTransactionCategoryParams{
 		Category: params.Category,
 		ID: id,
 	})
@@ -59,8 +58,8 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 
 //Function to update the description of a transaction based on transaction ID
 func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter, r *http.Request) {
-	//Get transaction ID
-	transID := r.PathValue("transactionid")
+	ctx := r.Context()
+	transID := chi.URLParam(r, "transactionid")
 
 	id, err := uuid.Parse(transID)
 	if err != nil {
@@ -78,7 +77,7 @@ func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter,
 	}
 
 	//Update transaction record in database
-	result, err := cfg.db.UpdateTransactionDescription(context.Background(), database.UpdateTransactionDescriptionParams{
+	result, err := cfg.db.UpdateTransactionDescription(ctx, database.UpdateTransactionDescriptionParams{
 		Description: utils.CreateTextNullString(params.Description),
 		ID: id,
 	})

@@ -65,16 +65,11 @@ func (cfg *apiConfig) handlerGetListOfUsers(w http.ResponseWriter, r *http.Reque
 //Gets current user database record
 func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	token, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		respondWithError(w, 400, "Bad token", err)
-		return 
-	}
-
-	id, err := auth.ValidateJWT(token, auth.JWTSecret)
-	if err != nil {
-		respondWithError(w, 401, "Invalid JWT", err)
-		return 
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		respondWithError(w, 400, "Bad userID in context", nil)
+		return
 	}
 
 	user, err := cfg.db.GetUser(ctx, id)
@@ -96,20 +91,15 @@ func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 //Function will delete a user record from database
 func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	token, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		respondWithError(w, 400, "Bad token", err)
-		return
-	}
-
-	id, err := auth.ValidateJWT(token, auth.JWTSecret)
-	if err != nil {
-		respondWithError(w, 401, "Invalid JWT", err)
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
 
 	//Find user in database
-	_, err = cfg.db.GetUser(ctx, id)
+	_, err := cfg.db.GetUser(ctx, id)
 	if err != nil {
 		respondWithError(w, 400, "User not found in database", err)
 		return
