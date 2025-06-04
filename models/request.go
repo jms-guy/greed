@@ -13,6 +13,7 @@ type RefreshRequest struct {
 type UserDetails struct {
 	Name					string `json:"name"`
 	Password				string `json:"password"`	
+	Email					string `json:"email"`
 }
 
 //Request parameters for creating an account

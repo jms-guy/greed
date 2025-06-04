@@ -12,5 +12,5 @@ VALUES
     ('EUR', 'Euro'),
     ('GBP', 'Great Britain Pound');
 
--- +goose Down
+-- +goose Down 
 DROP TABLE supported_currencies;

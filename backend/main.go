@@ -15,12 +15,11 @@ import (
 /* Notes & To-Do
 -Db query/netincome function tentatively works based on the assumption that credit amounts are (+) and
 debit amounts are (-). Keep in mind for future, may have to alter.
--Authentication & authorization
 -Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
 -Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
 -More calculation functions, such as (avg income/expenses per month)
--Don't like that handler functions are all methods on apiConfig, refine later
 -Implement transactions on database queries
+-Add log management system
 */
 
 type apiConfig struct{
@@ -38,7 +37,7 @@ func main() {
 	addr := os.Getenv("ADDRESS")
 	//.env Database URL
 	dbURL := os.Getenv("DB_URL")
-	
+
 	//Open the database connection
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -52,7 +51,7 @@ func main() {
 		db: 		dbQueries,
 	}
 
-	var kitLogger kitlog.Logger
+	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
 
 	//Initialize a new router
 	r := chi.NewRouter()
@@ -70,6 +69,10 @@ func main() {
 
 	//Dev operations
 	r.Group(func(r chi.Router) {
+		r.Use(LoggingMiddleware(kitLogger))
+		
+		r.Get("/admin/users", cfg.handlerGetListOfUsers)										//Get list of users
+
 		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
 			r.Post("/users", cfg.handlerResetUsers)
 			r.Post("/accounts", cfg.handlerResetAccounts)
@@ -80,12 +83,9 @@ func main() {
 	//User operations
 	r.Group(func(r chi.Router) {
 		r.Use(LoggingMiddleware(kitLogger))
-
-		r.Get("/api/users", cfg.handlerGetListOfUsers)										//Get list of users
+		r.Use(cfg.AuthMiddleware)
 
 		r.Route("/api/users", func(r chi.Router) {
-			r.Use(cfg.AuthMiddleware)
-
 			r.Get("/me", cfg.handlerGetCurrentUser)											//Return a single user record
 			r.Delete("/me", cfg.handlerDeleteUser)											//Delete an entire user
 		})

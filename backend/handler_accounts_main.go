@@ -39,6 +39,7 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
 			Name: account.Name,
+			UserID: id,
 		}
 		accounts = append(accounts, result)
 	}

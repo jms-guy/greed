@@ -5,23 +5,46 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"os"
+	"strings"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
 //Function gets bearer authorization token from incoming request header
 func GetBearerToken(headers http.Header) (string, error) {
-	tokenString := headers.Get("Authorization")
-	if tokenString == "" {
-		return "", fmt.Errorf("no token found")
-	}
-	tokenString = tokenString[len("Bearer "):]
-
-	return tokenString, nil
+	authHeader := headers.Get("Authorization")
+    if authHeader == "" {
+        return "", fmt.Errorf("no Authorization header found")
+    }
+    
+    // Remove any quotes that might be in the header
+    authHeader = strings.Trim(authHeader, "\"")
+    
+    // Check if it starts with "Bearer "
+    if !strings.HasPrefix(authHeader, "Bearer ") {
+        return "", fmt.Errorf("authorization header format must be 'Bearer {token}'")
+    }
+    
+    // Extract the token part
+    token := strings.TrimPrefix(authHeader, "Bearer ")
+    
+    // Additional validation if needed
+    if token == "" {
+        return "", fmt.Errorf("token is empty")
+    }
+    
+    return token, nil
 }
 
 //Function generates a JWT authorization token for a given userID
 func MakeJWT(userID uuid.UUID) (string, error) {
+	//JWT configuration from .env variables
+	JWTIssuer		:= getEnvOrDefault("JWT_ISSUER", "greed")
+	JWTAudience		:= strings.Split(getEnvOrDefault("JWT_AUDIENCE", "greed-cli-app"), ",")
+	JWTExpiration	:= os.Getenv("JWT_EXPIRATION_SECONDS")
+	JWTSecret		:= os.Getenv("JWT_SECRET")
+
 	//Get expiration time variable from .env
 	expirationTime, err := strconv.Atoi(JWTExpiration)
 	if err != nil {
@@ -51,6 +74,7 @@ func MakeJWT(userID uuid.UUID) (string, error) {
 
 //Validates a token input based off the secret string
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
+	JWTIssuer		:= getEnvOrDefault("JWT_ISSUER", "greed")
 	claims := &jwt.RegisteredClaims{}
 	//Parse token string into claims token
 	parsedToken, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {

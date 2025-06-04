@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
-
+	"os"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
@@ -26,13 +26,14 @@ const (
 //Middleware function to handle user authorization 
 func (cfg *apiConfig) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		JWTSecret		:= os.Getenv("JWT_SECRET")
 		token, err := auth.GetBearerToken(r.Header)
 		if err != nil {
 			respondWithError(w, 400, "Bad token", err)
 			return
 		}
 
-		id, err := auth.ValidateJWT(token, auth.JWTSecret)
+		id, err := auth.ValidateJWT(token, JWTSecret)
 		if err != nil {
 			respondWithError(w, 401, "Invalid JWT", err)
 			return

@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"os"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 )
@@ -16,10 +15,6 @@ import (
 type TokenStore interface {
 	CreateToken(ctx context.Context, params database.CreateTokenParams) (database.RefreshToken, error)
 }
-
-const TokenLength = 32
-
-var TokenExpiration = os.Getenv("REFRESH_TOKEN_EXPIRATION_SECONDS")
 
 //Function creates a new token string, hashes the token, and creates a record of it in the database
 func MakeRefreshToken(tokenStore TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error) {
@@ -40,6 +35,8 @@ func MakeRefreshToken(tokenStore TokenStore, userID uuid.UUID, delegation databa
 
 //Function creates a random 256-bit string key
 func generateRefreshToken() (string, error) {
+	const TokenLength = 32
+	
 	key := make([]byte, TokenLength)
 	
 	_, err := rand.Read(key)

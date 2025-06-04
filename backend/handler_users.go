@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
+	"os"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -81,6 +81,7 @@ func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 	response := models.User{
 		ID: user.ID,
 		Name: user.Name,
+		Email: user.Email,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
@@ -117,7 +118,9 @@ func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 
 //Function returns a single user record
 func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
-	delegationExp, err := strconv.Atoi(auth.TokenExpiration)
+	TokenExpiration := os.Getenv("REFRESH_TOKEN_EXPIRATION_SECONDS")
+
+	delegationExp, err := strconv.Atoi(TokenExpiration)
 	if err != nil {
 		respondWithError(w, 500, "Error getting .env session expiration time", err)
 	}
@@ -176,6 +179,7 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 			Name: user.Name,
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
+			Email: user.Email,
 		},
 		RefreshToken: tokenString,
 		AccessToken: JWT,
@@ -205,6 +209,16 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	givenEmail := params.Email
+	if givenEmail != "" {
+		if !auth.EmailValidation(params.Email) {
+			respondWithError(w, 400, "Email provided is invalid", nil)
+			return
+		}
+	} else {
+		givenEmail = "unset"
+	}
+
 	//Hash request password
 	hash, err := auth.HashPassword(params.Password)
 	if err != nil {
@@ -217,6 +231,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		Name: params.Name,
 		ID: uuid.New(),
 		HashedPassword: hash,
+		Email: givenEmail,
 	})
 	if err != nil {
 		respondWithError(w, 400, "Could not create user", err)
@@ -228,6 +243,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		Name: newUser.Name,
 		CreatedAt: newUser.CreatedAt,
 		UpdatedAt: newUser.UpdatedAt,
+		Email: newUser.Email,
 	}
 	respondWithJSON(w, 201, user)
 }
