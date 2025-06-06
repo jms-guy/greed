@@ -88,6 +88,17 @@ func (app *AppServer) handlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	user, err := app.db.GetUser(ctx, id)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
+		return
+	}
+
+	if !user.IsVerified.Bool {
+		app.respondWithError(w, 400, "User's email is not verified", nil)
+		return
+	}
+
 	request := models.UpdatePassword{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		app.respondWithError(w, 400, "Bad request", err)

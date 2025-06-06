@@ -310,6 +310,11 @@ func (app *AppServer) handlerResetPassword(w http.ResponseWriter, r *http.Reques
 		return 
 	}
 
+	if !user.IsVerified.Bool {
+		app.respondWithError(w, 400, "User's email is not verified", nil)
+		return
+	}
+
 	record, err := app.db.GetVerificationRecord(ctx, request.Code)
 	if err != nil {
 		if err == sql.ErrNoRows {
