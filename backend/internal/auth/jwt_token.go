@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
-	"os"
 	"strings"
+	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/internal/config"
 )
 
 //Function gets bearer authorization token from incoming request header
@@ -38,33 +38,28 @@ func GetBearerToken(headers http.Header) (string, error) {
 }
 
 //Function generates a JWT authorization token for a given userID
-func MakeJWT(userID uuid.UUID) (string, error) {
-	//JWT configuration from .env variables
-	JWTIssuer		:= getEnvOrDefault("JWT_ISSUER", "greed")
-	JWTAudience		:= strings.Split(getEnvOrDefault("JWT_AUDIENCE", "greed-cli-app"), ",")
-	JWTExpiration	:= os.Getenv("JWT_EXPIRATION_SECONDS")
-	JWTSecret		:= os.Getenv("JWT_SECRET")
+func MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) {
 
 	//Get expiration time variable from .env
-	expirationTime, err := strconv.Atoi(JWTExpiration)
+	expirationTime, err := strconv.Atoi(cfg.JWTExpiration)
 	if err != nil {
 		return "", fmt.Errorf("error getting JWT expiration time from .env: %w", err)
 	}
 
 	//Claims payload
 	claims := jwt.RegisteredClaims{
-		Issuer: 	JWTIssuer,
+		Issuer: 	cfg.JWTIssuer,
 		IssuedAt: 	jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: 	jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(expirationTime) * time.Second)),
 		NotBefore: 	jwt.NewNumericDate(time.Now().UTC()),
 		Subject: 	userID.String(),
 		ID:      	uuid.New().String(),
-		Audience: 	jwt.ClaimStrings(JWTAudience),
+		Audience: 	jwt.ClaimStrings(strings.Split(cfg.JWTAudience, ",")),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	s, err := token.SignedString([]byte(JWTSecret))
+	s, err := token.SignedString([]byte(cfg.JWTSecret))
 	if err != nil {
 		return "", fmt.Errorf("error creating JWT verification signature: %w", err)
 	}
@@ -73,12 +68,11 @@ func MakeJWT(userID uuid.UUID) (string, error) {
 }
 
 //Validates a token input based off the secret string
-func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
-	JWTIssuer		:= getEnvOrDefault("JWT_ISSUER", "greed")
+func ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error) {
 	claims := &jwt.RegisteredClaims{}
 	//Parse token string into claims token
 	parsedToken, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
-		return []byte(tokenSecret), nil 
+		return []byte(cfg.JWTSecret), nil 
 	})
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("token is invalid or expired")
@@ -87,7 +81,7 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return uuid.UUID{}, fmt.Errorf("token is invalid")
 	}
 
-	if claims.Issuer != JWTIssuer {
+	if claims.Issuer != cfg.JWTIssuer {
 		return uuid.UUID{}, fmt.Errorf("invalid issuer claim")
 	}
 

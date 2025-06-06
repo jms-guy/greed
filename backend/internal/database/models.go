@@ -68,3 +68,9 @@ type User struct {
 	Email          string
 	IsVerified     sql.NullBool
 }
+
+type VerificationRecord struct {
+	UserID           uuid.UUID
+	VerificationCode string
+	ExpiryTime       time.Time
+}

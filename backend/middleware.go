@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
-	"os"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
@@ -24,16 +23,15 @@ const (
 )
 
 //Middleware function to handle user authorization 
-func (cfg *apiConfig) AuthMiddleware(next http.Handler) http.Handler {
+func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		JWTSecret		:= os.Getenv("JWT_SECRET")
 		token, err := auth.GetBearerToken(r.Header)
 		if err != nil {
 			respondWithError(w, 400, "Bad token", err)
 			return
 		}
 
-		id, err := auth.ValidateJWT(token, JWTSecret)
+		id, err := auth.ValidateJWT(app.config, token)
 		if err != nil {
 			respondWithError(w, 401, "Invalid JWT", err)
 			return
@@ -45,7 +43,7 @@ func (cfg *apiConfig) AuthMiddleware(next http.Handler) http.Handler {
 }
 
 //Middleware function to handle account authorization
-func (cfg *apiConfig) AccountMiddleware(next http.Handler) http.Handler {
+func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userIDValue := ctx.Value(userIDKey)
@@ -62,7 +60,7 @@ func (cfg *apiConfig) AccountMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		account, err := cfg.db.GetAccount(ctx, database.GetAccountParams{
+		account, err := app.db.GetAccount(ctx, database.GetAccountParams{
 			ID: accountId,
 			UserID: userID,
 		})

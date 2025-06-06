@@ -5,12 +5,14 @@ import (
 	"github.com/google/uuid"
 )
 
+//Token refresh response structure
 type RefreshResponse struct{
 	RefreshToken	string	`json:"refresh_token"`
 	AccessToken		string	`json:"access_token"`
 	TokenType		string	`json:"token_type"`
 }
 
+//Login response structure
 type LoginResponse struct{
 	User 			User	`json:"user"`
 	RefreshToken	string	`json:"refresh_token"`
@@ -51,15 +53,23 @@ type Transaction struct {
 	AccountID		uuid.UUID `json:"account_id"`
 }
 
-//Income structure - used for income/expenses
+//Income structure 
 type Income struct {
 	Amount			string 	`json:"amount"`
 	Year			int 	`json:"year"`
 	Month			int 	`json:"month"`
 }
 
+//Expense structure
 type Expenses struct {
 	Amount			string 	`json:"amount"`
 	Year			int 	`json:"year"`
 	Month			int 	`json:"month"`
+}
+
+//Verification email response structure
+type VerificationData struct {
+	Email		string 					`json:"email"`
+	Code 		string					`json:"code"`
+	ExpiresAt	time.Time				`json:"expires_at"`
 }

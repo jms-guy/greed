@@ -40,6 +40,7 @@ type SGMailService struct {
 	Client		*sendgrid.Client
 }
 
+
 //Returns a new instance of SGMailService
 func NewSGMailService(logger hclog.Logger, configs *utils.Configurations) *SGMailService {
 	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
@@ -52,7 +53,7 @@ func NewSGMailService(logger hclog.Logger, configs *utils.Configurations) *SGMai
 //CreateMail takes in mail request, and constructs a sendgrid mail type
 func (ms *SGMailService) SendMail(mailReq *Mail) error {
 
-	from := mail.NewEmail("Greed", mailReq.From)
+	from := mail.NewEmail("Greed Finance", mailReq.From)
 	subject := mailReq.Subject
 	to  := mail.NewEmail(mailReq.Data.Username, mailReq.To)
 	plainTextContent := mailReq.Body

@@ -13,7 +13,7 @@ import (
 )
 
 //Function logs out a user, invalidating all session tokens
-func (cfg *apiConfig) handlerUserLogout(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerUserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var request models.RefreshRequest
@@ -29,19 +29,19 @@ func (cfg *apiConfig) handlerUserLogout(w http.ResponseWriter, r *http.Request) 
 
 	tokenHash := auth.HashRefreshToken(request.RefreshToken)
 
-	token, err := cfg.db.GetToken(ctx, tokenHash)
+	token, err := app.db.GetToken(ctx, tokenHash)
 	if err != nil {
 		respondWithError(w, 400, "Invalid refresh token", err)
 		return
 	}
 
-	err = cfg.db.RevokeDelegationByID(ctx, token.DelegationID)
+	err = app.db.RevokeDelegationByID(ctx, token.DelegationID)
 	if err != nil {
 		respondWithError(w, 500, "Error revoking session delegation", err)
 		return
 	}
 
-	err = cfg.db.ExpireAllDelegationTokens(ctx, token.DelegationID)
+	err = app.db.ExpireAllDelegationTokens(ctx, token.DelegationID)
 	if err != nil {
 		respondWithError(w, 500, "Error expiring all session tokens", err)
 		return
@@ -51,9 +51,9 @@ func (cfg *apiConfig) handlerUserLogout(w http.ResponseWriter, r *http.Request) 
 }
 
 //Function returns list of all user names in database
-func (cfg *apiConfig) handlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	users, err := cfg.db.GetAllUsers(ctx)
+	users, err := app.db.GetAllUsers(ctx)
 	if err != nil {
 		respondWithError(w, 500, "Error retrieving users", err)
 		return
@@ -63,7 +63,7 @@ func (cfg *apiConfig) handlerGetListOfUsers(w http.ResponseWriter, r *http.Reque
 }
 
 //Gets current user database record
-func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -72,7 +72,7 @@ func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := cfg.db.GetUser(ctx, id)
+	user, err := app.db.GetUser(ctx, id)
 	if err != nil {
 		respondWithError(w, 400, "User not found in database", err)
 		return 
@@ -90,7 +90,7 @@ func (cfg *apiConfig) handlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 }
 
 //Function will delete a user record from database
-func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -100,14 +100,14 @@ func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Find user in database
-	_, err := cfg.db.GetUser(ctx, id)
+	_, err := app.db.GetUser(ctx, id)
 	if err != nil {
 		respondWithError(w, 400, "User not found in database", err)
 		return
 	}
 
 	//Delete user record from database
-	err = cfg.db.DeleteUser(ctx, id)
+	err = app.db.DeleteUser(ctx, id)
 	if err != nil {
 		respondWithError(w, 500, "Error deleting user from database", err)
 		return
@@ -117,7 +117,7 @@ func (cfg *apiConfig) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 }
 
 //Function returns a single user record
-func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	TokenExpiration := os.Getenv("REFRESH_TOKEN_EXPIRATION_SECONDS")
 
 	delegationExp, err := strconv.Atoi(TokenExpiration)
@@ -136,7 +136,7 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Get user record from database
-	user, err := cfg.db.GetUserByName(ctx, params.Name)
+	user, err := app.db.GetUserByName(ctx, params.Name)
 	if err != nil {
 		respondWithError(w, 500, "Error getting user from database", err)
 		return
@@ -155,19 +155,19 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt: time.Now().Add(time.Duration(delegationExp) * time.Second),
 	}
 
-	delegation, err := cfg.db.CreateDelegation(ctx, delegationParams)
+	delegation, err := app.db.CreateDelegation(ctx, delegationParams)
 	if err != nil {
 		respondWithError(w, 500, "Error creating token delegation", err)
 		return
 	}
 
-	JWT, err := auth.MakeJWT(user.ID)
+	JWT, err := auth.MakeJWT(app.config, user.ID)
 	if err != nil {
 		respondWithError(w, 500, "Error creating JWT", err)
 		return 
 	}
 
-	tokenString, err := auth.MakeRefreshToken(cfg.db, user.ID, delegation)
+	tokenString, err := auth.MakeRefreshToken(app.db, user.ID, delegation)
 	if err != nil {
 		respondWithError(w, 500, "Error creating refresh token", err)
 		return
@@ -191,7 +191,7 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 //Function will create a new user in database
-func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	//Decode request parameters
 	decoder := json.NewDecoder(r.Body)
@@ -203,7 +203,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Check if user with request name exists in database already
-	_, err = cfg.db.GetUserByName(ctx, params.Name)
+	_, err = app.db.GetUserByName(ctx, params.Name)
 	if err == nil {
 		respondWithError(w, 400, "User already exists by that name", nil)
 		return
@@ -227,7 +227,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Creates new user in database
-	newUser, err := cfg.db.CreateUser(ctx, database.CreateUserParams{
+	newUser, err := app.db.CreateUser(ctx, database.CreateUserParams{
 		Name: params.Name,
 		ID: uuid.New(),
 		HashedPassword: hash,
@@ -249,3 +249,30 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 }
 
 
+func (app *AppServer) handlerVerifyEmail(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	//Email verification code expires after 1 hour
+	var verificationExpiryTime = 1
+
+	request := models.EmailVerification{}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		respondWithError(w, 400, "Bad request", err)
+		return
+	}
+
+	recordParams := database.CreateVerificationRecordParams{
+		UserID: request.UserID,
+		VerificationCode: auth.GenerateCode(),
+		ExpiryTime: time.Now().UTC().Add(time.Duration(verificationExpiryTime) * time.Hour),
+	}
+	
+
+	vRecord, err := app.db.CreateVerificationRecord(ctx, recordParams)
+	if err != nil {
+		respondWithError(w, 500, "Error creating verification record", err)
+		return
+	}
+
+	
+}

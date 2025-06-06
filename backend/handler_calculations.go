@@ -8,7 +8,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-func (cfg *apiConfig) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -33,7 +33,7 @@ func (cfg *apiConfig) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
     }
 
 	//Get income amount from database calculation
-	incAmount, err := cfg.db.GetNetIncomeForMonth(ctx, database.GetNetIncomeForMonthParams{
+	incAmount, err := app.db.GetNetIncomeForMonth(ctx, database.GetNetIncomeForMonthParams{
 		Year: int32(y),
 		Month: int32(m),
 		AccountID: acc.ID,
@@ -55,7 +55,7 @@ func (cfg *apiConfig) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
 
 //Function returns the sum of all transactions with transaction_type of
 //'debit' for a given account, to get expenses for a month
-func (cfg *apiConfig) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -80,7 +80,7 @@ func (cfg *apiConfig) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
     }
     
     // Get expenses amount from database calculation
-    expAmount, err := cfg.db.GetExpensesForMonth(ctx, database.GetExpensesForMonthParams{
+    expAmount, err := app.db.GetExpensesForMonth(ctx, database.GetExpensesForMonthParams{
         Year: int32(y),
         Month: int32(m),
         AccountID: acc.ID,
@@ -102,7 +102,7 @@ func (cfg *apiConfig) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
 
 //Gets income for a given month from the database, by summing transactions
 //of transaction_type 'credit' for a given account
-func (cfg *apiConfig) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -126,7 +126,7 @@ func (cfg *apiConfig) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Re
 		return
     }
 	//Get income amount from database calculation
-	incAmount, err := cfg.db.GetIncomeForMonth(ctx, database.GetIncomeForMonthParams{
+	incAmount, err := app.db.GetIncomeForMonth(ctx, database.GetIncomeForMonthParams{
 		Year: int32(y),
 		Month: int32(m),
 		AccountID: acc.ID,

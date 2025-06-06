@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,6 +32,7 @@ func ValidatePasswordHash(hash, password string) error {
 	return nil
 }
 
+//Validates that a given string represents a valid email address
 func EmailValidation(email string) bool {
 	emailRegex := `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
 
@@ -39,3 +41,11 @@ func EmailValidation(email string) bool {
 	return re.MatchString(email)
 }
 
+//Function generates a random 8 character string.
+//Creates a new UUID, and returns the first 8 characters of the converted string
+func GenerateCode() string {
+	initial := uuid.New()
+	code := initial.String()[:8]
+
+	return code
+}

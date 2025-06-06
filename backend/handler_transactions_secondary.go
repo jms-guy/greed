@@ -11,7 +11,7 @@ import (
 )
 
 //Function will update the category of a transaction record in database
-func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerUpdateTransactionCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	transID := chi.URLParam(r, "transactionid")
 
@@ -31,7 +31,7 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 	}
 
 	//Update transaction category in database
-	result, err := cfg.db.UpdateTransactionCategory(ctx, database.UpdateTransactionCategoryParams{
+	result, err := app.db.UpdateTransactionCategory(ctx, database.UpdateTransactionCategoryParams{
 		Category: params.Category,
 		ID: id,
 	})
@@ -57,7 +57,7 @@ func (cfg *apiConfig) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 }
 
 //Function to update the description of a transaction based on transaction ID
-func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerUpdateTransactionDescription(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	transID := chi.URLParam(r, "transactionid")
 
@@ -77,7 +77,7 @@ func (cfg *apiConfig) handlerUpdateTransactionDescription(w http.ResponseWriter,
 	}
 
 	//Update transaction record in database
-	result, err := cfg.db.UpdateTransactionDescription(ctx, database.UpdateTransactionDescriptionParams{
+	result, err := app.db.UpdateTransactionDescription(ctx, database.UpdateTransactionDescriptionParams{
 		Description: utils.CreateTextNullString(params.Description),
 		ID: id,
 	})

@@ -16,6 +16,11 @@ type UserDetails struct {
 	Email					string `json:"email"`
 }
 
+type EmailVerification struct {
+	UserID 					uuid.UUID	`json:"user_id"`
+	Email 					string 		`json:"email"`
+}
+
 //Request parameters for creating an account
 type AccountDetails struct {
 	Name					string `json:"name"`

@@ -6,8 +6,8 @@ import (
 )
 
 //Function to reset database accounts table
-func (cfg *apiConfig) handlerResetAccounts(w http.ResponseWriter, r *http.Request) {
-	err := cfg.db.ResetAccounts(context.Background())
+func (app *AppServer) handlerResetAccounts(w http.ResponseWriter, r *http.Request) {
+	err := app.db.ResetAccounts(context.Background())
 	if err != nil {
 		respondWithError(w, 500, "Could not reset account_financials table", err)
 		return
@@ -16,8 +16,8 @@ func (cfg *apiConfig) handlerResetAccounts(w http.ResponseWriter, r *http.Reques
 }
 
 //Function will reset database's transactions table
-func (cfg *apiConfig) handlerResetTransactions(w http.ResponseWriter, r *http.Request) {
-	err := cfg.db.ClearTransactionsTable(context.Background())
+func (app *AppServer) handlerResetTransactions(w http.ResponseWriter, r *http.Request) {
+	err := app.db.ClearTransactionsTable(context.Background())
 	if err != nil {
 		respondWithError(w, 500, "Could not clear transactions table", err)
 		return
@@ -26,8 +26,8 @@ func (cfg *apiConfig) handlerResetTransactions(w http.ResponseWriter, r *http.Re
 }
 
 //Function to reset database for dev testing -> users/accounts tables
-func (cfg *apiConfig) handlerResetUsers(w http.ResponseWriter, r *http.Request) {
-	err := cfg.db.ResetUsers(context.Background())
+func (app *AppServer) handlerResetUsers(w http.ResponseWriter, r *http.Request) {
+	err := app.db.ResetUsers(context.Background())
 	if err != nil {
 		respondWithError(w, 500, "Could not reset users table", err)
 		return

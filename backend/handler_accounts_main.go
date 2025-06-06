@@ -9,7 +9,7 @@ import (
 )
 
 //Function will get all accounts for user
-func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetAccountsForUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -19,7 +19,7 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	}
 
 	//Get accounts for user from database
-	accs, err := cfg.db.GetAllAccountsForUser(ctx, id)
+	accs, err := app.db.GetAllAccountsForUser(ctx, id)
 	if err != nil {
 		respondWithError(w, 500, "Error retrieving accounts for user", err)
 		return
@@ -48,7 +48,7 @@ func (cfg *apiConfig) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 }
 /*
 //Function will retrieve single account attached to the given userID and accountID
-func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerGetSingleAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -65,7 +65,7 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 	}
 
 	//Get account data from database based on user ID
-	account, err := cfg.db.GetAccount(ctx, database.GetAccountParams{
+	account, err := app.db.GetAccount(ctx, database.GetAccountParams{
 		ID: acc.ID,
 		UserID: id,
 	})
@@ -92,7 +92,7 @@ func (cfg *apiConfig) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 }
 */
 //Function will delete an account from the database
-func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -109,7 +109,7 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Delete account from database based on user ID given
-	err := cfg.db.DeleteAccount(ctx, database.DeleteAccountParams{
+	err := app.db.DeleteAccount(ctx, database.DeleteAccountParams{
 		ID: acc.ID,
 		UserID: id,
 	})
@@ -122,7 +122,7 @@ func (cfg *apiConfig) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 }
 
 //Function will create a new account in the database
-func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) handlerCreateAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -139,7 +139,7 @@ func (cfg *apiConfig) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	newAccount, err := cfg.db.CreateAccount(ctx, database.CreateAccountParams{
+	newAccount, err := app.db.CreateAccount(ctx, database.CreateAccountParams{
 		ID: uuid.New(),
 		Name: params.Name,
 		UserID: id,
