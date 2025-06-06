@@ -13,7 +13,7 @@ func (app *AppServer) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
@@ -21,14 +21,14 @@ func (app *AppServer) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
 	year := chi.URLParam(r, "year")
 	y, err := strconv.Atoi(year)
 	if err != nil {
-        respondWithError(w, 400, "Invalid year format", nil)
+        app.respondWithError(w, 400, "Invalid year format", nil)
 		return
     }
 
 	month := chi.URLParam(r, "month")
 	m, err := strconv.Atoi(month)
 	if err != nil || m < 1 || m > 12 {
-        respondWithError(w, 400, "Invalid month format or out of range (1-12)", nil)
+        app.respondWithError(w, 400, "Invalid month format or out of range (1-12)", nil)
 		return
     }
 
@@ -39,7 +39,7 @@ func (app *AppServer) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
 		AccountID: acc.ID,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Error calculating income for month", err)
+		app.respondWithError(w, 500, "Error calculating income for month", err)
 		return
 	}
 
@@ -50,7 +50,7 @@ func (app *AppServer) handlerGetNetIncomeForMonth(w http.ResponseWriter, r *http
 		Month: m,
 	}
 
-	respondWithJSON(w, 200, netIncome)
+	app.respondWithJSON(w, 200, netIncome)
 }
 
 //Function returns the sum of all transactions with transaction_type of
@@ -60,7 +60,7 @@ func (app *AppServer) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
@@ -68,14 +68,14 @@ func (app *AppServer) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
 	year := chi.URLParam(r, "year")
 	y, err := strconv.Atoi(year)
 	if err != nil {
-        respondWithError(w, 400, "Invalid year format", nil)
+        app.respondWithError(w, 400, "Invalid year format", nil)
 		return
     }
 
 	month := chi.URLParam(r, "month")
 	m, err := strconv.Atoi(month)
 	if err != nil || m < 1 || m > 12 {
-        respondWithError(w, 400, "Invalid month format or out of range (1-12)", nil)
+        app.respondWithError(w, 400, "Invalid month format or out of range (1-12)", nil)
 		return
     }
     
@@ -86,7 +86,7 @@ func (app *AppServer) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
         AccountID: acc.ID,
     })
     if err != nil {
-        respondWithError(w, 500, "Error calculating expenses for month", err)
+        app.respondWithError(w, 500, "Error calculating expenses for month", err)
         return
     }
     
@@ -97,7 +97,7 @@ func (app *AppServer) handlerGetExpensesForMonth(w http.ResponseWriter, r *http.
         Month: m,
     }
     
-    respondWithJSON(w, 200, expenses)
+    app.respondWithJSON(w, 200, expenses)
 }
 
 //Gets income for a given month from the database, by summing transactions
@@ -107,7 +107,7 @@ func (app *AppServer) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Re
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
@@ -115,14 +115,14 @@ func (app *AppServer) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Re
 	year := chi.URLParam(r, "year")
 	y, err := strconv.Atoi(year)
 	if err != nil {
-        respondWithError(w, 400, "Invalid year format", nil)
+        app.respondWithError(w, 400, "Invalid year format", nil)
 		return
     }
 
 	month := chi.URLParam(r, "month")
 	m, err := strconv.Atoi(month)
 	if err != nil || m < 1 || m > 12 {
-        respondWithError(w, 400, "Invalid month format or out of range (1-12)", nil)
+        app.respondWithError(w, 400, "Invalid month format or out of range (1-12)", nil)
 		return
     }
 	//Get income amount from database calculation
@@ -132,7 +132,7 @@ func (app *AppServer) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Re
 		AccountID: acc.ID,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Error calculating income for month", err)
+		app.respondWithError(w, 500, "Error calculating income for month", err)
 		return
 	}
 
@@ -143,5 +143,5 @@ func (app *AppServer) handlerGetIncomeForMonth(w http.ResponseWriter, r *http.Re
 		Month: m,
 	}
 
-	respondWithJSON(w, 200, income)
+	app.respondWithJSON(w, 200, income)
 }

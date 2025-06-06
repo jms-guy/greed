@@ -1,9 +1,8 @@
-package mail
+package sgrid
 
 import (
 	"os"
-	"github.com/d-vignesh/go-jwt-auth/utils"
-	"github.com/hashicorp/go-hclog"
+	"github.com/go-kit/log"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
@@ -36,13 +35,13 @@ type Mail struct {
 
 //Sendgrid implementation of mailservice
 type SGMailService struct {
-	Logger 		hclog.Logger
+	Logger 		log.Logger
 	Client		*sendgrid.Client
 }
 
 
 //Returns a new instance of SGMailService
-func NewSGMailService(logger hclog.Logger, configs *utils.Configurations) *SGMailService {
+func NewSGMailService(logger log.Logger) *SGMailService {
 	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	return &SGMailService{
 		Logger: logger,
@@ -61,10 +60,14 @@ func (ms *SGMailService) SendMail(mailReq *Mail) error {
 
 	response, err := ms.Client.Send(message)
 	if err != nil {
-		ms.Logger.Error("Failed to send email", "error", err)
+		ms.Logger.Log(
+			"level", "error",
+			"msg", "error sending email",
+			"err", err,
+		)
 		return err
 	} else {
-		ms.Logger.Info("Email sent successfully", 
+		ms.Logger.Log(
         "statusCode", response.StatusCode,
         "to", mailReq.To)
 	}

@@ -28,3 +28,17 @@ WHERE id = $1;
 
 -- name: ResetUsers :exec
 DELETE FROM users;
+
+-- name: VerifyUser :exec
+UPDATE users
+SET is_verified = true, updated_at = now()
+WHERE id = $1;
+
+-- name: UpdatePassword :exec
+UPDATE users
+SET hashed_password = $1, updated_at = now()
+WHERE id = $2;
+
+-- name: GetUserByEmail :one
+SELECT * FROM users
+WHERE email = $1;

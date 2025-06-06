@@ -16,6 +16,26 @@ type UserDetails struct {
 	Email					string `json:"email"`
 }
 
+//Request struct for email verification - with code
+type EmailVerificationWithCode struct {
+	UserID 					uuid.UUID 	`json:"user_id"`
+	Code 					string 		`json:"code"`
+}
+
+//Request struct for resetting user's forgotten password
+type ResetPassword struct {
+	Email 					string 		`json:"email"`
+	Code 					string		`json:"code"`		//email verification code
+	NewPassword				string 		`json:"new_password"`
+}
+
+//Request struct for updating user's password
+type UpdatePassword struct {
+	NewPassword				string 		`json:"new_password"`
+	Code					string 		`json:"code"`		//email verification code
+}
+
+//Request struct for email verification - without code
 type EmailVerification struct {
 	UserID 					uuid.UUID	`json:"user_id"`
 	Email 					string 		`json:"email"`

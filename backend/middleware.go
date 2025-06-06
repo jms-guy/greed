@@ -27,13 +27,13 @@ func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := auth.GetBearerToken(r.Header)
 		if err != nil {
-			respondWithError(w, 400, "Bad token", err)
+			app.respondWithError(w, 400, "Bad token", err)
 			return
 		}
 
 		id, err := auth.ValidateJWT(app.config, token)
 		if err != nil {
-			respondWithError(w, 401, "Invalid JWT", err)
+			app.respondWithError(w, 401, "Invalid JWT", err)
 			return
 		}
 
@@ -49,14 +49,14 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		userIDValue := ctx.Value(userIDKey)
 		userID, ok := userIDValue.(uuid.UUID)
 		if !ok {
-			respondWithError(w, 400, "Bad userID in context", nil)
+			app.respondWithError(w, 400, "Bad userID in context", nil)
 			return
 		}
 
 		accID := chi.URLParam(r, "accountid")
 		accountId, err := uuid.Parse(accID)
 		if err != nil {
-			respondWithError(w, 400, "Error parsing account ID", err)
+			app.respondWithError(w, 400, "Error parsing account ID", err)
 			return
 		}
 
@@ -66,10 +66,10 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				respondWithError(w, 404, "Account not found", nil)
+				app.respondWithError(w, 404, "Account not found", nil)
 				return
 			}
-			respondWithError(w, 500, "Error getting account from database", err)
+			app.respondWithError(w, 500, "Error getting account from database", err)
 			return
 		}
 

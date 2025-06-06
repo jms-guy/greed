@@ -15,6 +15,7 @@ type Config struct {
 	JWTExpiration			string		//in seconds
 	RefreshExpiration		string		//in seconds
 	SendGridAPIKey 			string
+	GreedEmail				string
 }
 
 func LoadConfig() (*Config, error) {
@@ -58,6 +59,11 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("SENDGRID_API_KEY environment variable not set")
 	}
 
+	greedEmail := os.Getenv("GREED_EMAIL")
+	if greedEmail == "" {
+		return nil, fmt.Errorf("GREED_EMAIL environment variable not set")
+	}
+
 	config := Config{
 		ServerAddress: serverAddress,
 		DatabaseURL: dbURL,
@@ -67,6 +73,7 @@ func LoadConfig() (*Config, error) {
 		JWTExpiration: jwtExpiration,
 		RefreshExpiration: refreshExpiration,
 		SendGridAPIKey: sendGridAPIKey,
+		GreedEmail: greedEmail,
 	}
 
 	return &config, nil

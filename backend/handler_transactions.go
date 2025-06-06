@@ -16,14 +16,14 @@ func (app *AppServer) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Get category
 	cat := chi.URLParam(r, "category")
 	if cat == "" {
-		respondWithError(w, 400, "Bad category given", nil)
+		app.respondWithError(w, 400, "Bad category given", nil)
 		return
 	}
 
@@ -33,7 +33,7 @@ func (app *AppServer) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 		Category: cat,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Error retrieving transaction data", err)
+		app.respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (app *AppServer) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 		transactions = append(transactions, t)
 	}
 
-	respondWithJSON(w, 200, transactions)
+	app.respondWithJSON(w, 200, transactions)
 }
 
 //Function will return all transactions for an account based on given transaction type
@@ -65,14 +65,14 @@ func (app *AppServer) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Get transaction type
 	tType := chi.URLParam(r, "transactiontype")
 	if !isValidTransactionType(tType) {
-		respondWithError(w, 400, "Bad transaction type", nil)
+		app.respondWithError(w, 400, "Bad transaction type", nil)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (app *AppServer) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 		TransactionType: tType,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Error retrieving transaction data", err)
+		app.respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
 	}
 
@@ -105,7 +105,7 @@ func (app *AppServer) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 		transactions = append(transactions, t)
 	}
 
-	respondWithJSON(w, 200, transactions)
+	app.respondWithJSON(w, 200, transactions)
 }
 
 //Function returns a single transaction from database, based on transaction ID
@@ -114,14 +114,14 @@ func (app *AppServer) handlerGetTransactions(w http.ResponseWriter, r *http.Requ
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
 	//Get transaction records
 	results, err := app.db.GetTransactions(ctx, acc.ID)
 	if err != nil {
-		respondWithError(w, 500, "Error retrieving transaction data", err)
+		app.respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
 	}
 
@@ -144,7 +144,7 @@ func (app *AppServer) handlerGetTransactions(w http.ResponseWriter, r *http.Requ
 		transactions = append(transactions, t)
 	}
 
-	respondWithJSON(w, 200, transactions)
+	app.respondWithJSON(w, 200, transactions)
 }
 
 //Function will return a transaction result from database
@@ -154,14 +154,14 @@ func (app *AppServer) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 
 	id, err := uuid.Parse(transID)
 	if err != nil {
-		respondWithError(w, 400, "Error parsing transaction ID", err)
+		app.respondWithError(w, 400, "Error parsing transaction ID", err)
 		return
 	}
 
 	//Get transaction record from database
 	result, err := app.db.GetSingleTransaction(ctx, id)
 	if err != nil {
-		respondWithError(w, 500, "Error retrieving transaction data", err)
+		app.respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (app *AppServer) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 		AccountID: result.AccountID,
 	}
 
-	respondWithJSON(w, 200, transaction)
+	app.respondWithJSON(w, 200, transaction)
 }
 
 
@@ -189,7 +189,7 @@ func (app *AppServer) handlerCreateTransaction(w http.ResponseWriter, r *http.Re
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
 	if !ok {
-		respondWithError(w, 400, "Bad account in context", nil)
+		app.respondWithError(w, 400, "Bad account in context", nil)
 		return
 	}
 
@@ -198,7 +198,7 @@ func (app *AppServer) handlerCreateTransaction(w http.ResponseWriter, r *http.Re
 	params := models.CreateTransaction{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 500, "Error decoding request parameters", err)
+		app.respondWithError(w, 500, "Error decoding request parameters", err)
 		return
 	}
 
@@ -217,9 +217,9 @@ func (app *AppServer) handlerCreateTransaction(w http.ResponseWriter, r *http.Re
 	//Create transaction in database
 	transaction, err := app.db.CreateTransaction(ctx, sqlParams)
 	if err != nil {
-		respondWithError(w, 500, "Error creating transaction record in database", err)
+		app.respondWithError(w, 500, "Error creating transaction record in database", err)
 		return
 	}
 
-	respondWithJSON(w, 201, transaction)
+	app.respondWithJSON(w, 201, transaction)
 }

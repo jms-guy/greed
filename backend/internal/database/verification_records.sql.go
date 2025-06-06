@@ -45,6 +45,16 @@ func (q *Queries) DeleteVerificationRecord(ctx context.Context, verificationCode
 	return err
 }
 
+const deleteVerificationRecordByUser = `-- name: DeleteVerificationRecordByUser :exec
+DELETE FROM verification_records
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteVerificationRecordByUser(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteVerificationRecordByUser, userID)
+	return err
+}
+
 const getVerificationRecord = `-- name: GetVerificationRecord :one
 SELECT user_id, verification_code, expiry_time FROM verification_records
 WHERE verification_code = $1
@@ -52,6 +62,18 @@ WHERE verification_code = $1
 
 func (q *Queries) GetVerificationRecord(ctx context.Context, verificationCode string) (VerificationRecord, error) {
 	row := q.db.QueryRowContext(ctx, getVerificationRecord, verificationCode)
+	var i VerificationRecord
+	err := row.Scan(&i.UserID, &i.VerificationCode, &i.ExpiryTime)
+	return i, err
+}
+
+const getVerificationRecordByUser = `-- name: GetVerificationRecordByUser :one
+SELECT user_id, verification_code, expiry_time FROM verification_records
+WHERE user_id = $1
+`
+
+func (q *Queries) GetVerificationRecordByUser(ctx context.Context, userID uuid.UUID) (VerificationRecord, error) {
+	row := q.db.QueryRowContext(ctx, getVerificationRecordByUser, userID)
 	var i VerificationRecord
 	err := row.Scan(&i.UserID, &i.VerificationCode, &i.ExpiryTime)
 	return i, err

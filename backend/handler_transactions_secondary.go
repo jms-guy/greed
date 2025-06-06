@@ -17,7 +17,7 @@ func (app *AppServer) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 
 	id, err := uuid.Parse(transID)
 	if err != nil {
-		respondWithError(w, 400, "Error parsing transaction ID", err)
+		app.respondWithError(w, 400, "Error parsing transaction ID", err)
 		return
 	}
 
@@ -26,7 +26,7 @@ func (app *AppServer) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 	params := models.UpdateCategory{}
 	err = decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 500, "Error decoding request parameters", err)
+		app.respondWithError(w, 500, "Error decoding request parameters", err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (app *AppServer) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 		ID: id,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Error updating transaction category in database", err)
+		app.respondWithError(w, 500, "Error updating transaction category in database", err)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (app *AppServer) handlerUpdateTransactionCategory(w http.ResponseWriter, r 
 		AccountID: result.AccountID,
 	}
 
-	respondWithJSON(w, 200, transaction)
+	app.respondWithJSON(w, 200, transaction)
 }
 
 //Function to update the description of a transaction based on transaction ID
@@ -63,7 +63,7 @@ func (app *AppServer) handlerUpdateTransactionDescription(w http.ResponseWriter,
 
 	id, err := uuid.Parse(transID)
 	if err != nil {
-		respondWithError(w, 400, "Error parsing transaction ID", err)
+		app.respondWithError(w, 400, "Error parsing transaction ID", err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (app *AppServer) handlerUpdateTransactionDescription(w http.ResponseWriter,
 	params := models.UpdateDescription{}
 	err = decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 500, "Error decoding request parameters", err)
+		app.respondWithError(w, 500, "Error decoding request parameters", err)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (app *AppServer) handlerUpdateTransactionDescription(w http.ResponseWriter,
 		ID: id,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Error updating transaction record in database", err)
+		app.respondWithError(w, 500, "Error updating transaction record in database", err)
 		return
 	}
 
@@ -99,5 +99,5 @@ func (app *AppServer) handlerUpdateTransactionDescription(w http.ResponseWriter,
 		AccountID: result.AccountID,
 	}
 
-	respondWithJSON(w, 200, transaction)
+	app.respondWithJSON(w, 200, transaction)
 }

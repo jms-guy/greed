@@ -2,14 +2,13 @@ package main
 
 import (
 	"database/sql"
-	stdlog "log"
 	"net/http"
 	"os"
-
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
-	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/config"
+	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -27,35 +26,59 @@ debit amounts are (-). Keep in mind for future, may have to alter.
 type AppServer struct{
 	db				*database.Queries
 	config 			*config.Config
+	logger 			kitlog.Logger
+	sgMail			*sgrid.SGMailService
 }
 
 func main() {
+
+	//Main logging struct
+	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
+
 	//Load the .env file
 	err := godotenv.Load()
 	if err != nil {
-		stdlog.Fatalf("Error loading .env file: %s", err)
+		kitLogger.Log(
+			"level", "error",
+			"msg", "failed to load .env file",
+			"err", err,
+		)
+		os.Exit(1)
 	}
 
 	config, err := config.LoadConfig()
 	if err != nil {
-		stdlog.Fatalf("Error creating configuration from .env file: %s", err)
+		kitLogger.Log(
+			"level", "error",
+			"msg", "failed to load application configuration",
+			"err", err,
+		)
+		os.Exit(1)
 	}
 
 	//Open the database connection
 	db, err := sql.Open("postgres", config.DatabaseURL)
 	if err != nil {
-		stdlog.Fatalf("Error opening database connection: %s", err)
+		kitLogger.Log(
+			"level", "error",
+			"msg", "failed to open database connection",
+			"err", err,
+		)
+		os.Exit(1)
 	}
 
 	dbQueries := database.New(db)
+
+	//Create mail service instance
+	service := sgrid.NewSGMailService(kitLogger)
 
 	//Initialize the server struct
 	app := &AppServer{
 		db: 		dbQueries,
 		config:  	config,
+		logger:     kitLogger,
+		sgMail:     service,
 	}
-
-	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
 
 	//Initialize a new router
 	r := chi.NewRouter()
@@ -68,7 +91,12 @@ func main() {
 			r.Post("/login", app.handlerUserLogin)											//Creates a "session" for a user, logging them in
 			r.Post("/logout", app.handlerUserLogout)										//Revokes a user's session tokens, logging out
 			r.Post("/refresh", app.handlerRefreshToken)										//Generates a new JWT/refresh token
-			r.Post("/email", app.handlerVerifyEmail)										//Sends a verification email to user's given email
+			r.Post("/reset-password", app.handlerResetPassword)								//Resets a user's forgotten password
+			
+			r.Route("/email", func(r chi.Router) {
+				r.Post("/send", app.handlerSendEmailCode)									//Sends a verification code to user's email 
+				r.Post("/verify", app.handlerVerifyEmail)									//Verifies a user's email based on a code sent to them
+			})
 		})
 	})
 
@@ -76,7 +104,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(LoggingMiddleware(kitLogger))
 		
-		r.Get("/admin/users", app.handlerGetListOfUsers)										//Get list of users
+		r.Get("/admin/users", app.handlerGetListOfUsers)									//Get list of users
 
 		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
 			r.Post("/users", app.handlerResetUsers)
@@ -93,6 +121,9 @@ func main() {
 		r.Route("/api/users", func(r chi.Router) {
 			r.Get("/me", app.handlerGetCurrentUser)											//Return a single user record
 			r.Delete("/me", app.handlerDeleteUser)											//Delete an entire user
+			
+			r.Put("/update-password", app.handlerUpdatePassword)								//Updates a user's password - requires an email code
+			
 		})
 	})
 
@@ -142,10 +173,16 @@ func main() {
 
 
 	/////Start server/////
-
-	stdlog.Printf("Server running at: %s", app.config.ServerAddress)
+	app.logger.Log(
+		"transport", "HTTP",
+		"address", app.config.ServerAddress,
+		"msg", "listening",
+	)
 	err = http.ListenAndServe(app.config.ServerAddress, r)
 	if err != nil {
-		stdlog.Fatalf("Error running server: %s", err)
+		app.logger.Log(
+			"level", "error",
+			"err", err)
+			os.Exit(1)
 	}
 }

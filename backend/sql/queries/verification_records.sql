@@ -11,7 +11,14 @@ RETURNING *;
 SELECT * FROM verification_records
 WHERE verification_code = $1;
 
+-- name: GetVerificationRecordByUser :one
+SELECT * FROM verification_records
+WHERE user_id = $1;
 
 -- name: DeleteVerificationRecord :exec
 DELETE FROM verification_records
 WHERE verification_code = $1;
+
+-- name: DeleteVerificationRecordByUser :exec 
+DELETE FROM verification_records
+WHERE user_id = $1;
