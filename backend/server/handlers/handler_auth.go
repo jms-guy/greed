@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"database/sql"
@@ -15,7 +15,7 @@ import (
 )
 
 //Function logs out a user, invalidating all session tokens
-func (app *AppServer) handlerUserLogout(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerUserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var request models.RefreshRequest
@@ -31,19 +31,19 @@ func (app *AppServer) handlerUserLogout(w http.ResponseWriter, r *http.Request) 
 
 	tokenHash := auth.HashRefreshToken(request.RefreshToken)
 
-	token, err := app.db.GetToken(ctx, tokenHash)
+	token, err := app.Db.GetToken(ctx, tokenHash)
 	if err != nil {
 		app.respondWithError(w, 400, "Invalid refresh token", err)
 		return
 	}
 
-	err = app.db.RevokeDelegationByID(ctx, token.DelegationID)
+	err = app.Db.RevokeDelegationByID(ctx, token.DelegationID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error revoking session delegation", err)
 		return
 	}
 
-	err = app.db.ExpireAllDelegationTokens(ctx, token.DelegationID)
+	err = app.Db.ExpireAllDelegationTokens(ctx, token.DelegationID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error expiring all session tokens", err)
 		return
@@ -53,9 +53,9 @@ func (app *AppServer) handlerUserLogout(w http.ResponseWriter, r *http.Request) 
 }
 
 //Function returns a single user record
-func (app *AppServer) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 
-	delegationExp, err := strconv.Atoi(app.config.RefreshExpiration)
+	delegationExp, err := strconv.Atoi(app.Config.RefreshExpiration)
 	if err != nil {
 		app.respondWithError(w, 500, "Error getting .env session expiration time", err)
 	}
@@ -71,7 +71,7 @@ func (app *AppServer) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Get user record from database
-	user, err := app.db.GetUserByName(ctx, params.Name)
+	user, err := app.Db.GetUserByName(ctx, params.Name)
 	if err != nil {
 		app.respondWithError(w, 500, "Error getting user from database", err)
 		return
@@ -90,19 +90,19 @@ func (app *AppServer) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt: time.Now().Add(time.Duration(delegationExp) * time.Second),
 	}
 
-	delegation, err := app.db.CreateDelegation(ctx, delegationParams)
+	delegation, err := app.Db.CreateDelegation(ctx, delegationParams)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating token delegation", err)
 		return
 	}
 
-	JWT, err := auth.MakeJWT(app.config, user.ID)
+	JWT, err := auth.MakeJWT(app.Config, user.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating JWT", err)
 		return 
 	}
 
-	tokenString, err := auth.MakeRefreshToken(app.db, user.ID, delegation)
+	tokenString, err := auth.MakeRefreshToken(app.Db, user.ID, delegation)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating refresh token", err)
 		return
@@ -126,7 +126,7 @@ func (app *AppServer) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 //Function will create a new user in database
-func (app *AppServer) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	//Decode request parameters
 	decoder := json.NewDecoder(r.Body)
@@ -138,7 +138,7 @@ func (app *AppServer) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Check if user with request name exists in database already
-	_, err = app.db.GetUserByName(ctx, params.Name)
+	_, err = app.Db.GetUserByName(ctx, params.Name)
 	if err == nil {
 		app.respondWithError(w, 400, "User already exists by that name", nil)
 		return
@@ -162,7 +162,7 @@ func (app *AppServer) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Creates new user in database
-	newUser, err := app.db.CreateUser(ctx, database.CreateUserParams{
+	newUser, err := app.Db.CreateUser(ctx, database.CreateUserParams{
 		Name: params.Name,
 		ID: uuid.New(),
 		HashedPassword: hash,
@@ -184,7 +184,7 @@ func (app *AppServer) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 }
 
 //Sends a verification code to the user's given email address
-func (app *AppServer) handlerSendEmailCode(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	//Email verification code expires after 1 hour
@@ -197,14 +197,14 @@ func (app *AppServer) handlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Expires any existing verification record for user
-	existingRec, err := app.db.GetVerificationRecordByUser(ctx, request.UserID)
+	existingRec, err := app.Db.GetVerificationRecordByUser(ctx, request.UserID)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting verification record: %w", err))
 			return
 		}
 	} else {
-		err = app.db.DeleteVerificationRecord(ctx, existingRec.VerificationCode)
+		err = app.Db.DeleteVerificationRecord(ctx, existingRec.VerificationCode)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting old verification record: %w", err))
 			return
@@ -218,13 +218,13 @@ func (app *AppServer) handlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 	}
 	
 
-	vRecord, err := app.db.CreateVerificationRecord(ctx, recordParams)
+	vRecord, err := app.Db.CreateVerificationRecord(ctx, recordParams)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error creating verification record: %w", err))
 		return
 	}
 
-	user, err := app.db.GetUser(ctx, request.UserID)
+	user, err := app.Db.GetUser(ctx, request.UserID)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
 		return 
@@ -235,9 +235,9 @@ func (app *AppServer) handlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 		Code: vRecord.VerificationCode,
 		Username: user.Name,
 	}
-	mail := app.sgMail.NewMail(app.config.GreedEmail, user.Email, "Email verification", emailBody, &data)
+	mail := app.SgMail.NewMail(app.Config.GreedEmail, user.Email, "Email verification", emailBody, &data)
 
-	err = app.sgMail.SendMail(mail)
+	err = app.SgMail.SendMail(mail)
 	if err != nil {
 		app.respondWithError(w, 500, "Error sending verification email", err)
 		return 
@@ -247,7 +247,7 @@ func (app *AppServer) handlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 }
 
 //Function verifies a user's email address with a sent code, updating database record
-func (app *AppServer) handlerVerifyEmail(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	request := models.EmailVerificationWithCode{}
@@ -256,7 +256,7 @@ func (app *AppServer) handlerVerifyEmail(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	 
-	record, err := app.db.GetVerificationRecord(ctx, request.Code)
+	record, err := app.Db.GetVerificationRecord(ctx, request.Code)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.respondWithError(w, 400, "No verification record found", err)
@@ -267,7 +267,7 @@ func (app *AppServer) handlerVerifyEmail(w http.ResponseWriter, r *http.Request)
 	}
 
 	if record.ExpiryTime.Before(time.Now()) {
-		err = app.db.DeleteVerificationRecord(ctx, record.VerificationCode)
+		err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting expired verification record: %w", err))
 			return 
@@ -276,13 +276,13 @@ func (app *AppServer) handlerVerifyEmail(w http.ResponseWriter, r *http.Request)
 		return 
 	}
 
-	err = app.db.VerifyUser(ctx, record.UserID)
+	err = app.Db.VerifyUser(ctx, record.UserID)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user record: %w", err))
 		return 
 	}
 
-	err = app.db.DeleteVerificationRecord(ctx, record.VerificationCode)
+	err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting verification record: %w", err))
 		return 
@@ -292,7 +292,7 @@ func (app *AppServer) handlerVerifyEmail(w http.ResponseWriter, r *http.Request)
 }
 
 //Handler for resetting a user's forgotten password
-func (app *AppServer) handlerResetPassword(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	request := models.ResetPassword{}
@@ -301,7 +301,7 @@ func (app *AppServer) handlerResetPassword(w http.ResponseWriter, r *http.Reques
 		return 
 	}
 
-	user, err := app.db.GetUserByEmail(ctx, request.Email)
+	user, err := app.Db.GetUserByEmail(ctx, request.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.respondWithError(w, 400, "No user found with that email", nil)
@@ -315,7 +315,7 @@ func (app *AppServer) handlerResetPassword(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	record, err := app.db.GetVerificationRecord(ctx, request.Code)
+	record, err := app.Db.GetVerificationRecord(ctx, request.Code)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.respondWithError(w, 400, "No verification record found", nil)
@@ -325,7 +325,7 @@ func (app *AppServer) handlerResetPassword(w http.ResponseWriter, r *http.Reques
 	} 
 
 	if record.ExpiryTime.Before(time.Now()) {
-		err = app.db.DeleteVerificationRecord(ctx, record.VerificationCode)
+		err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting expired verification record: %w", err))
 			return 
@@ -349,12 +349,12 @@ func (app *AppServer) handlerResetPassword(w http.ResponseWriter, r *http.Reques
 		HashedPassword: hashedPass,
 		ID: user.ID,
 	}
-	if err = app.db.UpdatePassword(ctx, params); err != nil {
+	if err = app.Db.UpdatePassword(ctx, params); err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user record: %w", err))
 		return 
 	}
 
-	if err = app.db.DeleteVerificationRecord(ctx, request.Code); err != nil {
+	if err = app.Db.DeleteVerificationRecord(ctx, request.Code); err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting verification record: %w", err))
 		return 
 	}

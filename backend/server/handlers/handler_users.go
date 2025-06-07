@@ -1,5 +1,4 @@
-package main
-
+package handlers
 import (
 	"database/sql"
 	"encoding/json"
@@ -7,16 +6,28 @@ import (
 	"net/http"
 	"time"
 
+	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
+	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/limiter"
 	"github.com/jms-guy/greed/models"
 )
 
+type AppServer struct{
+	Db				*database.Queries
+	Config 			*config.Config
+	Logger 			kitlog.Logger
+	SgMail			*sgrid.SGMailService
+	Limiter 		*limiter.IPRateLimiter
+}
+
 //Function returns list of all user names in database
-func (app *AppServer) handlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	users, err := app.db.GetAllUsers(ctx)
+	users, err := app.Db.GetAllUsers(ctx)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting users: %w", err))
 		return
@@ -26,7 +37,7 @@ func (app *AppServer) handlerGetListOfUsers(w http.ResponseWriter, r *http.Reque
 }
 
 //Gets current user database record
-func (app *AppServer) handlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -35,7 +46,7 @@ func (app *AppServer) handlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := app.db.GetUser(ctx, id)
+	user, err := app.Db.GetUser(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 400, "User not found in database", err)
 		return 
@@ -53,7 +64,7 @@ func (app *AppServer) handlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 }
 
 //Function will delete a user record from database
-func (app *AppServer) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -63,14 +74,14 @@ func (app *AppServer) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Find user in database
-	_, err := app.db.GetUser(ctx, id)
+	_, err := app.Db.GetUser(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 400, "User not found in database", err)
 		return
 	}
 
 	//Delete user record from database
-	err = app.db.DeleteUser(ctx, id)
+	err = app.Db.DeleteUser(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting user record: %w", err))
 		return
@@ -79,7 +90,7 @@ func (app *AppServer) handlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 	app.respondWithJSON(w, 200, "User deleted successfully")
 }
 
-func (app *AppServer) handlerUpdatePassword(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerUpdatePassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -88,7 +99,7 @@ func (app *AppServer) handlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := app.db.GetUser(ctx, id)
+	user, err := app.Db.GetUser(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
 		return
@@ -105,7 +116,7 @@ func (app *AppServer) handlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 		return 
 	}
 
-	record, err := app.db.GetVerificationRecord(ctx, request.Code)
+	record, err := app.Db.GetVerificationRecord(ctx, request.Code)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.respondWithError(w, 400, "No verification record found", err)
@@ -116,7 +127,7 @@ func (app *AppServer) handlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 	}
 
 	if record.ExpiryTime.Before(time.Now()) {
-		err = app.db.DeleteVerificationRecord(ctx, record.VerificationCode)
+		err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting expired verification record: %w", err))
 			return 
@@ -136,12 +147,12 @@ func (app *AppServer) handlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 		ID: id,
 	}
 
-	if err = app.db.UpdatePassword(ctx, params); err != nil {
+	if err = app.Db.UpdatePassword(ctx, params); err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user password: %w", err))
 		return 
 	}
 
-	if err = app.db.DeleteVerificationRecord(ctx, request.Code); err != nil {
+	if err = app.Db.DeleteVerificationRecord(ctx, request.Code); err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting verification record: %w", err))
 		return 
 	}

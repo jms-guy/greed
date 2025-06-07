@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -33,7 +33,7 @@ func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		id, err := auth.ValidateJWT(app.config, token)
+		id, err := auth.ValidateJWT(app.Config, token)
 		if err != nil {
 			app.respondWithError(w, 401, "Invalid JWT", err)
 			return
@@ -62,7 +62,7 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		account, err := app.db.GetAccount(ctx, database.GetAccountParams{
+		account, err := app.Db.GetAccount(ctx, database.GetAccountParams{
 			ID: accountId,
 			UserID: userID,
 		})
@@ -112,7 +112,7 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
     return rw.ResponseWriter.Write(b)
 }
 
-func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
+func LoggingMiddleware(Logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			requestID := uuid.New().String()
@@ -123,7 +123,7 @@ func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 			defer func() {
 				if err := recover(); err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					logger.Log(
+					Logger.Log(
 						"requestID", requestID,
 						"err", err,
 						"trace", debug.Stack(),
@@ -134,7 +134,7 @@ func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			wrapped := wrapResponseWriter(w)
 			next.ServeHTTP(wrapped, r)
-			logger.Log(
+			Logger.Log(
 				"requestID", requestID,
 				"status", wrapped.status,
 				"method", r.Method,
@@ -154,7 +154,7 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 		
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			app.logger.Log(
+			app.Logger.Log(
 				"level", "error",
 				"msg", "invalid IP",
 				"err", err,
@@ -163,11 +163,11 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 			return 
 		}
 
-		limiter := app.limiter.GetLimiter(ip, app.config.RateLimit, app.config.RateRefresh)
+		limiter := app.Limiter.GetLimiter(ip, app.Config.RateLimit, app.Config.RateRefresh)
 		if limiter.Allow() {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		} else {
-			app.logger.Log(
+			app.Logger.Log(
 				"level", "trace",
 				"msg", "rate limit exceeded",
 				"ip", ip,
@@ -179,13 +179,13 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 
 //Dev middleware for accessing admin endpoints
 func (app *AppServer) DevAuthMiddleware(next http.Handler) http.Handler {
-	isDev := app.config.Environment == "dev"
+	isDev := app.Config.Environment == "dev"
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isDev {
 			next.ServeHTTP(w, r)
 		} else {
-			app.logger.Log(
+			app.Logger.Log(
 				"level", "warn",
 				"msg", "attempted access to admin route in non-dev environment",
 				"ip", r.RemoteAddr,

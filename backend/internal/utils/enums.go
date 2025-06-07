@@ -1,5 +1,5 @@
-package main
-
+package utils
+/*
 import (
 
 )
@@ -22,3 +22,4 @@ const (
 	transfer
 )
 
+*/

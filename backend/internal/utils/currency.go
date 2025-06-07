@@ -1,5 +1,5 @@
-package main
-
+package utils
+/*
 import (
 	
 )
@@ -30,3 +30,4 @@ func isValidTransactionType(s string) bool {
 	_, ok := stringToTransactionType[s]
 	return ok
 }
+*/

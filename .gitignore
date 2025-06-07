@@ -7,6 +7,8 @@
 *.dll
 *.so
 *.dylib
+/backend/backend
+/backend/backend.exe
 
 # Test binary, built with `go test -c`
 *.test
@@ -25,3 +27,4 @@ go.work.sum
 *.env
 
 *.http
+
