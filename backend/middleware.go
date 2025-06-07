@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net"
 	"net/http"
 	"runtime/debug"
 	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
@@ -143,4 +145,52 @@ func LoggingMiddleware(logger log.Logger) func(http.Handler) http.Handler {
 
 		return http.HandlerFunc(fn)
 	}
+}
+
+//Middleware for rate limiting based off IP address
+func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			app.logger.Log(
+				"level", "error",
+				"msg", "invalid IP",
+				"err", err,
+			)
+			http.Error(w, "Invalid IP", 400)
+			return 
+		}
+
+		limiter := app.limiter.GetLimiter(ip, app.config.RateLimit, app.config.RateRefresh)
+		if limiter.Allow() {
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			app.logger.Log(
+				"level", "trace",
+				"msg", "rate limit exceeded",
+				"ip", ip,
+			)
+			http.Error(w, "Rate Limit Exceeded", http.StatusTooManyRequests)
+		}
+	})
+}
+
+//Dev middleware for accessing admin endpoints
+func (app *AppServer) DevAuthMiddleware(next http.Handler) http.Handler {
+	isDev := app.config.Environment == "dev"
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isDev {
+			next.ServeHTTP(w, r)
+		} else {
+			app.logger.Log(
+				"level", "warn",
+				"msg", "attempted access to admin route in non-dev environment",
+				"ip", r.RemoteAddr,
+			)
+			http.Error(w, "Not found", http.StatusForbidden)
+		}
+	})
 }

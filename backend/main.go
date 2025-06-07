@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/limiter"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -28,6 +30,7 @@ type AppServer struct{
 	config 			*config.Config
 	logger 			kitlog.Logger
 	sgMail			*sgrid.SGMailService
+	limiter 		*limiter.IPRateLimiter
 }
 
 func main() {
@@ -72,20 +75,26 @@ func main() {
 	//Create mail service instance
 	service := sgrid.NewSGMailService(kitLogger)
 
+	//Create rate limiter
+	limiter := limiter.NewIPRateLimiter()
+
 	//Initialize the server struct
 	app := &AppServer{
 		db: 		dbQueries,
 		config:  	config,
 		logger:     kitLogger,
 		sgMail:     service,
+		limiter:    limiter,
 	}
 
 	//Initialize a new router
 	r := chi.NewRouter()
 
+	r.Use(LoggingMiddleware(kitLogger))
+	r.Use(app.RateLimitMiddleware)
+
 	//Authentication and authorization operations
 	r.Group(func(r chi.Router) {
-		r.Use(LoggingMiddleware(kitLogger))
 		r.Route("/api/auth", func(r chi.Router) {
 			r.Post("/register", app.handlerCreateUser)										//Creates a new user record
 			r.Post("/login", app.handlerUserLogin)											//Creates a "session" for a user, logging them in
@@ -102,8 +111,7 @@ func main() {
 
 	//Dev operations
 	r.Group(func(r chi.Router) {
-		r.Use(LoggingMiddleware(kitLogger))
-		
+		r.Use(app.DevAuthMiddleware)
 		r.Get("/admin/users", app.handlerGetListOfUsers)									//Get list of users
 
 		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
@@ -115,21 +123,19 @@ func main() {
 
 	//User operations
 	r.Group(func(r chi.Router) {
-		r.Use(LoggingMiddleware(kitLogger))
 		r.Use(app.AuthMiddleware)
 
 		r.Route("/api/users", func(r chi.Router) {
 			r.Get("/me", app.handlerGetCurrentUser)											//Return a single user record
 			r.Delete("/me", app.handlerDeleteUser)											//Delete an entire user
 			
-			r.Put("/update-password", app.handlerUpdatePassword)								//Updates a user's password - requires an email code
+			r.Put("/update-password", app.handlerUpdatePassword)							//Updates a user's password - requires an email code
 			
 		})
 	})
 
 	//Account operations
 	r.Group(func(r chi.Router) {
-		r.Use(LoggingMiddleware(kitLogger))
 		r.Use(app.AuthMiddleware)
 		
 		// Account creation and retreiving list of user's accounts

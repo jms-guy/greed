@@ -1,19 +1,23 @@
-package config 
+package config
 
 import (
-	"os"
 	"fmt"
+	"os"
+	"strconv"
 )
 
 //Configuration struct holding all .env variables for server
 type Config struct {
 	ServerAddress 			string
+	Environment 			string
 	DatabaseURL				string
 	JWTSecret				string
 	JWTIssuer				string
 	JWTAudience				string
-	JWTExpiration			string		//in seconds
-	RefreshExpiration		string		//in seconds
+	JWTExpiration			string		// in seconds
+	RefreshExpiration		string		// in seconds
+	RateLimit				float64
+	RateRefresh 			float64		// per second
 	SendGridAPIKey 			string
 	GreedEmail				string
 }
@@ -22,6 +26,11 @@ func LoadConfig() (*Config, error) {
 	serverAddress := os.Getenv("SERVER_ADDRESS")
 	if serverAddress == "" {
 		return nil, fmt.Errorf("SERVER_ADDRESS environment variable not set")
+	}
+
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "" {
+		return nil, fmt.Errorf("ENVIRONMENT variable not set")
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -54,6 +63,26 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("REFRESH_EXPIRATION environment variable not set")
 	}
 
+	rateLimit := os.Getenv("RATE_LIMIT")
+	if rateLimit == "" {
+		return nil, fmt.Errorf("RATE_LIMIT environment variable not set")
+	}
+
+	limit, err := strconv.ParseFloat(rateLimit, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing RATE_LIMIT variable to flaot64: %w", err)
+	}
+
+	rateRefresh := os.Getenv("RATE_REFRESH")
+	if rateRefresh == "" {
+		return nil, fmt.Errorf("RATE_REFRESH environment variable not set")
+	}
+
+	refresh, err := strconv.ParseFloat(rateRefresh, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing RATE_REFRESH variable to float64: %w", err)
+	}
+
 	sendGridAPIKey := os.Getenv("SENDGRID_API_KEY")
 	if sendGridAPIKey == "" {
 		return nil, fmt.Errorf("SENDGRID_API_KEY environment variable not set")
@@ -66,12 +95,15 @@ func LoadConfig() (*Config, error) {
 
 	config := Config{
 		ServerAddress: serverAddress,
+		Environment: environment,
 		DatabaseURL: dbURL,
 		JWTSecret: jwtSecret,
 		JWTIssuer: jwtIssuer,
 		JWTAudience: jwtAudience,
 		JWTExpiration: jwtExpiration,
 		RefreshExpiration: refreshExpiration,
+		RateLimit: limit,
+		RateRefresh: refresh,
 		SendGridAPIKey: sendGridAPIKey,
 		GreedEmail: greedEmail,
 	}
