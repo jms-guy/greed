@@ -20,6 +20,8 @@ type Config struct {
 	RateRefresh 			float64		// per second
 	SendGridAPIKey 			string
 	GreedEmail				string
+	PlaidClientID			string 
+	PlaidSecret				string
 }
 
 func LoadConfig() (*Config, error) {
@@ -93,6 +95,16 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("GREED_EMAIL environment variable not set")
 	}
 
+	plaidClientID := os.Getenv("PLAID_CLIENT_ID")
+	if plaidClientID == "" {
+		return nil, fmt.Errorf("PLAID_CLIENT_ID environment variable not set")
+	}
+
+	plaidSecret := os.Getenv("PLAID_SECRET")
+	if plaidSecret == "" {
+		return nil, fmt.Errorf("PLAID_SECRET environment variable not set")
+	}
+
 	config := Config{
 		ServerAddress: serverAddress,
 		Environment: environment,
@@ -106,6 +118,8 @@ func LoadConfig() (*Config, error) {
 		RateRefresh: refresh,
 		SendGridAPIKey: sendGridAPIKey,
 		GreedEmail: greedEmail,
+		PlaidClientID: plaidClientID,
+		PlaidSecret: plaidSecret,
 	}
 
 	return &config, nil

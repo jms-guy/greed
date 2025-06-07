@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/models"
 )
@@ -29,30 +28,20 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 	}
 
 	if token.ExpiresAt.Before(time.Now()) {
-		err  = app.Db.ExpireToken(ctx, tokenHash)
+		err = ExpireDelegation(app, ctx, tokenHash, token)
 		if err != nil {
-			app.respondWithError(w, 500, "Error expiring refresh token", err)
+			app.respondWithError(w, 500, "Database error", err)
 			return
 		}
-		err = app.Db.RevokeDelegationByID(ctx, token.DelegationID)
-		if err != nil {
-			app.respondWithError(w, 500, "Error revoking refresh session", err)
-			return
-		}
-		app.respondWithError(w, 401, "Expired token", nil)
+		app.respondWithError(w, 401, "Token is expired", nil)
 		return
 	}
 	 if token.IsUsed {
-		err = app.Db.RevokeDelegationByID(ctx, token.DelegationID)
+		err = RevokeDelegation(app, ctx, token)
 		if err != nil {
-			app.respondWithError(w, 500, "Error revoking refresh session", err)
+			app.respondWithError(w, 500, "Database error", err)
 			return
 		}
-		err = app.Db.ExpireAllDelegationTokens(ctx, token.DelegationID)
-		if err != nil {
-			app.respondWithError(w, 500, "Error expiring tokens of delegation", err)
-		}
-
 		app.respondWithError(w, 401, "Refresh token has already been used", nil)
 		return
 	}

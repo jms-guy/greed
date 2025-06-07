@@ -21,7 +21,6 @@ debit amounts are (-). Keep in mind for future, may have to alter.
 -Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
 -Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
 -More calculation functions, such as (avg income/expenses per month)
--Implement transactions on database queries
 -Add log management system
 */
 
@@ -73,6 +72,7 @@ func Run() error {
 	//Initialize the server struct
 	app := &handlers.AppServer{
 		Db: 		dbQueries,
+		Database:   db,
 		Config:  	config,
 		Logger:     kitLogger,
 		SgMail:     service,
