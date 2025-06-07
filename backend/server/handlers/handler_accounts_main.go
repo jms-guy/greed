@@ -11,7 +11,7 @@ import (
 )
 
 //Function will get all accounts for user
-func (app *AppServer) handlerGetAccountsForUser(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -21,7 +21,7 @@ func (app *AppServer) handlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	}
 
 	//Get accounts for user from database
-	accs, err := app.db.GetAllAccountsForUser(ctx, id)
+	accs, err := app.Db.GetAllAccountsForUser(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error retrieving accounts: %w", err))
 		return
@@ -67,7 +67,7 @@ func (app *AppServer) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 	}
 
 	//Get account data from database based on user ID
-	account, err := app.db.GetAccount(ctx, database.GetAccountParams{
+	account, err := app.Db.GetAccount(ctx, database.GetAccountParams{
 		ID: acc.ID,
 		UserID: id,
 	})
@@ -94,7 +94,7 @@ func (app *AppServer) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 }
 */
 //Function will delete an account from the database
-func (app *AppServer) handlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -111,7 +111,7 @@ func (app *AppServer) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	}
 
 	//Delete account from database based on user ID given
-	err := app.db.DeleteAccount(ctx, database.DeleteAccountParams{
+	err := app.Db.DeleteAccount(ctx, database.DeleteAccountParams{
 		ID: acc.ID,
 		UserID: id,
 	})
@@ -124,7 +124,7 @@ func (app *AppServer) handlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 }
 
 //Function will create a new account in the database
-func (app *AppServer) handlerCreateAccount(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerCreateAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -141,7 +141,7 @@ func (app *AppServer) handlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	newAccount, err := app.db.CreateAccount(ctx, database.CreateAccountParams{
+	newAccount, err := app.Db.CreateAccount(ctx, database.CreateAccountParams{
 		ID: uuid.New(),
 		Name: params.Name,
 		UserID: id,

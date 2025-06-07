@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
-	"github.com/jms-guy/backend/server/handlers"
+	"github.com/jms-guy/greed/backend/server/handlers"
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
 	"github.com/jms-guy/greed/backend/api/sgrid"
@@ -25,7 +25,7 @@ debit amounts are (-). Keep in mind for future, may have to alter.
 -Add log management system
 */
 
-func main() {
+func Run() error {
 
 	//Main logging struct
 	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
@@ -38,7 +38,7 @@ func main() {
 			"msg", "failed to load .env file",
 			"err", err,
 		)
-		os.Exit(1)
+		return err
 	}
 
 	config, err := config.LoadConfig()
@@ -48,7 +48,7 @@ func main() {
 			"msg", "failed to load application configuration",
 			"err", err,
 		)
-		os.Exit(1)
+		return err
 	}
 
 	//Open the database connection
@@ -59,7 +59,7 @@ func main() {
 			"msg", "failed to open database connection",
 			"err", err,
 		)
-		os.Exit(1)
+		return err
 	}
 
 	dbQueries := database.New(db)
@@ -71,32 +71,32 @@ func main() {
 	limiter := limiter.NewIPRateLimiter()
 
 	//Initialize the server struct
-	app := &AppServer{
-		db: 		dbQueries,
-		config:  	config,
-		logger:     kitLogger,
-		sgMail:     service,
-		limiter:    limiter,
+	app := &handlers.AppServer{
+		Db: 		dbQueries,
+		Config:  	config,
+		Logger:     kitLogger,
+		SgMail:     service,
+		Limiter:    limiter,
 	}
 
 	//Initialize a new router
 	r := chi.NewRouter()
 
-	r.Use(LoggingMiddleware(kitLogger))
+	r.Use(handlers.LoggingMiddleware(kitLogger))
 	r.Use(app.RateLimitMiddleware)
 
 	//Authentication and authorization operations
 	r.Group(func(r chi.Router) {
 		r.Route("/api/auth", func(r chi.Router) {
-			r.Post("/register", app.handlerCreateUser)										//Creates a new user record
-			r.Post("/login", app.handlerUserLogin)											//Creates a "session" for a user, logging them in
-			r.Post("/logout", app.handlerUserLogout)										//Revokes a user's session tokens, logging out
-			r.Post("/refresh", app.handlerRefreshToken)										//Generates a new JWT/refresh token
-			r.Post("/reset-password", app.handlerResetPassword)								//Resets a user's forgotten password
+			r.Post("/register", app.HandlerCreateUser)										//Creates a new user record
+			r.Post("/login", app.HandlerUserLogin)											//Creates a "session" for a user, logging them in
+			r.Post("/logout", app.HandlerUserLogout)										//Revokes a user's session tokens, logging out
+			r.Post("/refresh", app.HandlerRefreshToken)										//Generates a new JWT/refresh token
+			r.Post("/reset-password", app.HandlerResetPassword)								//Resets a user's forgotten password
 			
 			r.Route("/email", func(r chi.Router) {
-				r.Post("/send", app.handlerSendEmailCode)									//Sends a verification code to user's email 
-				r.Post("/verify", app.handlerVerifyEmail)									//Verifies a user's email based on a code sent to them
+				r.Post("/send", app.HandlerSendEmailCode)									//Sends a verification code to user's email 
+				r.Post("/verify", app.HandlerVerifyEmail)									//Verifies a user's email based on a code sent to them
 			})
 		})
 	})
@@ -104,12 +104,12 @@ func main() {
 	//Dev operations
 	r.Group(func(r chi.Router) {
 		r.Use(app.DevAuthMiddleware)
-		r.Get("/admin/users", app.handlerGetListOfUsers)									//Get list of users
+		r.Get("/admin/users", app.HandlerGetListOfUsers)									//Get list of users
 
 		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
-			r.Post("/users", app.handlerResetUsers)
-			r.Post("/accounts", app.handlerResetAccounts)
-			r.Post("/transactions", app.handlerResetTransactions)
+			r.Post("/users", app.HandlerResetUsers)
+			r.Post("/accounts", app.HandlerResetAccounts)
+			r.Post("/transactions", app.HandlerResetTransactions)
 		})
 	})
 
@@ -118,10 +118,10 @@ func main() {
 		r.Use(app.AuthMiddleware)
 
 		r.Route("/api/users", func(r chi.Router) {
-			r.Get("/me", app.handlerGetCurrentUser)											//Return a single user record
-			r.Delete("/me", app.handlerDeleteUser)											//Delete an entire user
+			r.Get("/me", app.HandlerGetCurrentUser)											//Return a single user record
+			r.Delete("/me", app.HandlerDeleteUser)											//Delete an entire user
 			
-			r.Put("/update-password", app.handlerUpdatePassword)							//Updates a user's password - requires an email code
+			r.Put("/update-password", app.HandlerUpdatePassword)							//Updates a user's password - requires an email code
 			
 		})
 	})
@@ -131,39 +131,39 @@ func main() {
 		r.Use(app.AuthMiddleware)
 		
 		// Account creation and retreiving list of user's accounts
-		r.Post("/api/accounts", app.handlerCreateAccount)									//Create new account for user
-		r.Get("/api/accounts", app.handlerGetAccountsForUser)								//Get list of accounts for user
+		r.Post("/api/accounts", app.HandlerCreateAccount)									//Create new account for user
+		r.Get("/api/accounts", app.HandlerGetAccountsForUser)								//Get list of accounts for user
 		
 		// Account-specific routes that need AccountMiddleware
 		r.Route("/api/accounts/{accountid}", func(r chi.Router) {
 			r.Use(app.AccountMiddleware)
 			
 			//r.Get("/", app.handlerGetSingleAccount)										//Return a single account record for user
-			r.Delete("/", app.handlerDeleteAccount)											//Delete account
+			r.Delete("/", app.HandlerDeleteAccount)											//Delete account
 			
 			// Transaction routes as a sub-resource of accounts
 			r.Route("/transactions", func(r chi.Router) {
-				r.Post("/", app.handlerCreateTransaction)									//Create transaction record
-				r.Get("/", app.handlerGetTransactions) 										//Get all transactions for account
-				r.Delete("/", app.handlerDeleteTransactionsForAccount)						//Delete all transactions for account
+				r.Post("/", app.HandlerCreateTransaction)									//Create transaction record
+				r.Get("/", app.HandlerGetTransactions) 										//Get all transactions for account
+				r.Delete("/", app.HandlerDeleteTransactionsForAccount)						//Delete all transactions for account
 
 				// Transaction filtering
-				r.Get("/type/{transactiontype}", app.handlerGetTransactionsofType)			//Get all transactions of specific type
-				r.Delete("/type/{transactiontype}", app.handlerDeleteTransactionsOfType)	//Delete all transactions of specific type
-				r.Get("/category/{category}", app.handlerGetTransactionsOfCategory)			//Get all transactions of specific category
-				r.Delete("/category/{category}", app.handlerDeleteTransactionsOfCategory)	//Delete all transactions of specific category
+				r.Get("/type/{transactiontype}", app.HandlerGetTransactionsofType)			//Get all transactions of specific type
+				r.Delete("/type/{transactiontype}", app.HandlerDeleteTransactionsOfType)	//Delete all transactions of specific type
+				r.Get("/category/{category}", app.HandlerGetTransactionsOfCategory)			//Get all transactions of specific category
+				r.Delete("/category/{category}", app.HandlerDeleteTransactionsOfCategory)	//Delete all transactions of specific category
 				
 				// Monthly reporting
-				r.Get("/income/{year}-{month}", app.handlerGetIncomeForMonth)				//Get income for given month
-				r.Get("/expenses/{year}-{month}", app.handlerGetExpensesForMonth)			//Get expenses for given month
-				r.Get("/netincome/{year}-{month}", app.handlerGetNetIncomeForMonth)			//Get net income for given month
+				r.Get("/income/{year}-{month}", app.HandlerGetIncomeForMonth)				//Get income for given month
+				r.Get("/expenses/{year}-{month}", app.HandlerGetExpensesForMonth)			//Get expenses for given month
+				r.Get("/netincome/{year}-{month}", app.HandlerGetNetIncomeForMonth)			//Get net income for given month
 
 				 // Individual transaction operations
 				 r.Route("/{transactionid}", func(r chi.Router) {
-					r.Get("/", app.handlerGetSingleTransaction)								//Get a single transaction record
-					r.Delete("/", app.handlerDeleteTransactionRecord)						//Delete a single transaction record
-					r.Put("/description", app.handlerUpdateTransactionDescription)			//Update a transaction's description
-					r.Put("/category", app.handlerUpdateTransactionCategory)				//Update a transaction's category
+					r.Get("/", app.HandlerGetSingleTransaction)								//Get a single transaction record
+					r.Delete("/", app.HandlerDeleteTransactionRecord)						//Delete a single transaction record
+					r.Put("/description", app.HandlerUpdateTransactionDescription)			//Update a transaction's description
+					r.Put("/category", app.HandlerUpdateTransactionCategory)				//Update a transaction's category
 				 })
 			})
 		})
@@ -171,16 +171,18 @@ func main() {
 
 
 	/////Start server/////
-	app.logger.Log(
+	app.Logger.Log(
 		"transport", "HTTP",
-		"address", app.config.ServerAddress,
+		"address", app.Config.ServerAddress,
 		"msg", "listening",
 	)
-	err = http.ListenAndServe(app.config.ServerAddress, r)
+	err = http.ListenAndServe(app.Config.ServerAddress, r)
 	if err != nil {
-		app.logger.Log(
+		app.Logger.Log(
 			"level", "error",
 			"err", err)
-			os.Exit(1)
+			return err
 	}
+
+	return nil
 }

@@ -7,7 +7,7 @@ import (
 
 func (app *AppServer) respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
-		app.logger.Log(
+		app.Logger.Log(
 			"level", "error",
 			"status code", code,
 			"msg", msg,
@@ -26,7 +26,7 @@ func (app *AppServer) respondWithJSON(w http.ResponseWriter, code int, payload a
 	w.Header().Set("Content-Type", "application/json")
 	dat, err := json.Marshal(payload)
 	if err != nil {
-		app.logger.Log(
+		app.Logger.Log(
 			"level", "error",
 			"msg", "error marshalling JSON",
 			"err", err,

@@ -7,7 +7,7 @@ import (
 )
 
 //Function deletes all transaction records for an account of a given category
-func (app *AppServer) handlerDeleteTransactionsOfCategory(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerDeleteTransactionsOfCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -24,7 +24,7 @@ func (app *AppServer) handlerDeleteTransactionsOfCategory(w http.ResponseWriter,
 	}
 
 	//Delete transactions from database
-	err := app.db.DeleteTransactionsOfCategory(ctx, database.DeleteTransactionsOfCategoryParams{
+	err := app.Db.DeleteTransactionsOfCategory(ctx, database.DeleteTransactionsOfCategoryParams{
 		AccountID: acc.ID,
 		Category: cat,
 	})
@@ -38,7 +38,7 @@ func (app *AppServer) handlerDeleteTransactionsOfCategory(w http.ResponseWriter,
 
 //Function deletes all transaction records for an account based on a given transaction_type
 //(credit, debit, transfer)
-func (app *AppServer) handlerDeleteTransactionsOfType(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerDeleteTransactionsOfType(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -48,12 +48,12 @@ func (app *AppServer) handlerDeleteTransactionsOfType(w http.ResponseWriter, r *
 	}
 
 	tType := chi.URLParam(r, "transactiontype")
-	if !isValidTransactionType(tType) {
+	/*if !isValidTransactionType(tType) {
 		app.respondWithError(w, 400, "Bad transaction type", nil)
 		return
-	}
+	}*/
 	
-	err := app.db.DeleteTransactionsOfType(ctx, database.DeleteTransactionsOfTypeParams{
+	err := app.Db.DeleteTransactionsOfType(ctx, database.DeleteTransactionsOfTypeParams{
 		AccountID: acc.ID,
 		TransactionType: tType,
 	})
@@ -66,7 +66,7 @@ func (app *AppServer) handlerDeleteTransactionsOfType(w http.ResponseWriter, r *
 }
 
 //Deletes all transaction records for a given account number
-func (app *AppServer) handlerDeleteTransactionsForAccount(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerDeleteTransactionsForAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -76,7 +76,7 @@ func (app *AppServer) handlerDeleteTransactionsForAccount(w http.ResponseWriter,
 	}
 
 	//Delete transactions from database
-	err := app.db.DeleteTransactionsForAccount(ctx, acc.ID)
+	err := app.Db.DeleteTransactionsForAccount(ctx, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error deleting transaction records from database", err)
 		return
@@ -86,7 +86,7 @@ func (app *AppServer) handlerDeleteTransactionsForAccount(w http.ResponseWriter,
 }
 
 //Function deletes a transaction record from the database, based on transaction ID
-func (app *AppServer) handlerDeleteTransactionRecord(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerDeleteTransactionRecord(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -96,14 +96,14 @@ func (app *AppServer) handlerDeleteTransactionRecord(w http.ResponseWriter, r *h
 	}
 
 	//Check if transaction exists
-	_, err := app.db.GetSingleTransaction(ctx, acc.ID)
+	_, err := app.Db.GetSingleTransaction(ctx, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 400, "No transaction record of that ID found", nil)
 		return
 	}
 
 	//Delete transaction record from database
-	err = app.db.DeleteTransaction(ctx, acc.ID)
+	err = app.Db.DeleteTransaction(ctx, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error deleting transaction from database", err)
 		return

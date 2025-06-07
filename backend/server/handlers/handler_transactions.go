@@ -11,7 +11,7 @@ import (
 )
 
 //Function will return all transactions for an account based on a category specified
-func (app *AppServer) handlerGetTransactionsOfCategory(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetTransactionsOfCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -28,7 +28,7 @@ func (app *AppServer) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 	}
 
 	//Get transactions from database
-	results, err := app.db.GetTransactionsOfCategory(ctx, database.GetTransactionsOfCategoryParams{
+	results, err := app.Db.GetTransactionsOfCategory(ctx, database.GetTransactionsOfCategoryParams{
 		AccountID: acc.ID,
 		Category: cat,
 	})
@@ -60,7 +60,7 @@ func (app *AppServer) handlerGetTransactionsOfCategory(w http.ResponseWriter, r 
 }
 
 //Function will return all transactions for an account based on given transaction type
-func (app *AppServer) handlerGetTransactionsofType(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetTransactionsofType(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -71,13 +71,13 @@ func (app *AppServer) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 
 	//Get transaction type
 	tType := chi.URLParam(r, "transactiontype")
-	if !isValidTransactionType(tType) {
+	/*if !isValidTransactionType(tType) {
 		app.respondWithError(w, 400, "Bad transaction type", nil)
 		return
-	}
+	}*/
 
 	//Get transactions from database
-	results, err := app.db.GetTransactionsOfType(ctx, database.GetTransactionsOfTypeParams{
+	results, err := app.Db.GetTransactionsOfType(ctx, database.GetTransactionsOfTypeParams{
 		AccountID: acc.ID,
 		TransactionType: tType,
 	})
@@ -109,7 +109,7 @@ func (app *AppServer) handlerGetTransactionsofType(w http.ResponseWriter, r *htt
 }
 
 //Function returns a single transaction from database, based on transaction ID
-func (app *AppServer) handlerGetTransactions(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetTransactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -119,7 +119,7 @@ func (app *AppServer) handlerGetTransactions(w http.ResponseWriter, r *http.Requ
 	}
 
 	//Get transaction records
-	results, err := app.db.GetTransactions(ctx, acc.ID)
+	results, err := app.Db.GetTransactions(ctx, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
@@ -148,7 +148,7 @@ func (app *AppServer) handlerGetTransactions(w http.ResponseWriter, r *http.Requ
 }
 
 //Function will return a transaction result from database
-func (app *AppServer) handlerGetSingleTransaction(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerGetSingleTransaction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	transID := chi.URLParam(r, "transactionid")
 
@@ -159,7 +159,7 @@ func (app *AppServer) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 	}
 
 	//Get transaction record from database
-	result, err := app.db.GetSingleTransaction(ctx, id)
+	result, err := app.Db.GetSingleTransaction(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 500, "Error retrieving transaction data", err)
 		return
@@ -184,7 +184,7 @@ func (app *AppServer) handlerGetSingleTransaction(w http.ResponseWriter, r *http
 
 
 //Function to create a transaction record in database
-func (app *AppServer) handlerCreateTransaction(w http.ResponseWriter, r *http.Request) {
+func (app *AppServer) HandlerCreateTransaction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -215,7 +215,7 @@ func (app *AppServer) handlerCreateTransaction(w http.ResponseWriter, r *http.Re
 	}
 
 	//Create transaction in database
-	transaction, err := app.db.CreateTransaction(ctx, sqlParams)
+	transaction, err := app.Db.CreateTransaction(ctx, sqlParams)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating transaction record in database", err)
 		return
