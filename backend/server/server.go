@@ -1,10 +1,10 @@
-package main
+package server
 
 import (
 	"database/sql"
 	"net/http"
 	"os"
-
+	"github.com/jms-guy/backend/server/handlers"
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
 	"github.com/jms-guy/greed/backend/api/sgrid"
@@ -24,14 +24,6 @@ debit amounts are (-). Keep in mind for future, may have to alter.
 -Implement transactions on database queries
 -Add log management system
 */
-
-type AppServer struct{
-	db				*database.Queries
-	config 			*config.Config
-	logger 			kitlog.Logger
-	sgMail			*sgrid.SGMailService
-	limiter 		*limiter.IPRateLimiter
-}
 
 func main() {
 

@@ -1,5 +1,4 @@
-package main
-
+package handlers
 import (
 	"database/sql"
 	"encoding/json"
@@ -7,11 +6,23 @@ import (
 	"net/http"
 	"time"
 
+	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
+	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/limiter"
 	"github.com/jms-guy/greed/models"
 )
+
+type AppServer struct{
+	db				*database.Queries
+	config 			*config.Config
+	logger 			kitlog.Logger
+	sgMail			*sgrid.SGMailService
+	limiter 		*limiter.IPRateLimiter
+}
 
 //Function returns list of all user names in database
 func (app *AppServer) handlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
