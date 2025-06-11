@@ -17,4 +17,5 @@ type AppServer struct{
 	Logger 			kitlog.Logger				//Logging interface
 	SgMail			*sgrid.SGMailService		//SendGrid mail service 
 	Limiter 		*limiter.IPRateLimiter		//Rate limiter
+	PClient			*plaid.APIClient
 }

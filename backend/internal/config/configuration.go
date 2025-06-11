@@ -22,6 +22,7 @@ type Config struct {
 	GreedEmail				string
 	PlaidClientID			string 
 	PlaidSecret				string
+	PlaidHost				string
 }
 
 func LoadConfig() (*Config, error) {
@@ -104,6 +105,10 @@ func LoadConfig() (*Config, error) {
 	if plaidSecret == "" {
 		return nil, fmt.Errorf("PLAID_SECRET environment variable not set")
 	}
+	plaidHost := os.Getenv("PLAID_HOST")
+	if plaidHost == "" {
+		return nil, fmt.Errorf("PLAID_HOST environment variable not set")
+	}
 
 	config := Config{
 		ServerAddress: serverAddress,
@@ -120,6 +125,7 @@ func LoadConfig() (*Config, error) {
 		GreedEmail: greedEmail,
 		PlaidClientID: plaidClientID,
 		PlaidSecret: plaidSecret,
+		PlaidHost: plaidHost,
 	}
 
 	return &config, nil

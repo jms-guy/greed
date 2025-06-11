@@ -4,13 +4,15 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
-	"github.com/jms-guy/greed/backend/server/handlers"
+
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
+	"github.com/jms-guy/greed/backend/api/plaid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/limiter"
+	"github.com/jms-guy/greed/backend/server/handlers"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -65,6 +67,8 @@ func Run() error {
 
 	//Create mail service instance
 	service := sgrid.NewSGMailService(kitLogger)
+
+	plaidClient := plaid.NewPlaidClient(config.PlaidClientID, config.PlaidSecret)
 
 	//Create rate limiter
 	limiter := limiter.NewIPRateLimiter()
@@ -124,6 +128,13 @@ func Run() error {
 			r.Put("/update-password", app.HandlerUpdatePassword)							//Updates a user's password - requires an email code
 			
 		})
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(app.AuthMiddleware)
+
+		r.Post("/plaid/get_link_token", app.HandlerGetLinkToken)
+		r.Post("/plaid/get_access_token", app.HandlerGetAccessToken)
 	})
 
 	//Account operations
