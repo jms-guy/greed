@@ -81,6 +81,7 @@ func Run() error {
 		Logger:     kitLogger,
 		SgMail:     service,
 		Limiter:    limiter,
+		PClient: 	plaidClient,
 	}
 
 	//Initialize a new router
