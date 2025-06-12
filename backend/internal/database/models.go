@@ -12,11 +12,15 @@ import (
 )
 
 type Account struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	UserID    uuid.UUID
+	ID             uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Name           sql.NullString
+	Type           sql.NullString
+	Mask           sql.NullString
+	OfficialName   sql.NullString
+	PlaidAccountID string
+	ItemID         uuid.NullUUID
 }
 
 type Delegation struct {
@@ -27,6 +31,16 @@ type Delegation struct {
 	RevokedAt sql.NullTime
 	IsRevoked bool
 	LastUsed  time.Time
+}
+
+type PlaidItem struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	ItemID      string
+	AccessToken string
+	RequestID   sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type RefreshToken struct {

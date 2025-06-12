@@ -2,18 +2,18 @@ package handlers
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+	//"database/sql"
+	//"errors"
 	"net"
 	"net/http"
 	"runtime/debug"
 	"time"
 
-	"github.com/go-chi/chi/v5"
+	//"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/auth"
-	"github.com/jms-guy/greed/backend/internal/database"
+	//"github.com/jms-guy/greed/backend/internal/database"
 )
 
 type contextKey string
@@ -44,6 +44,7 @@ func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+/*
 //Middleware function to handle account authorization
 func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +79,7 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, accountKey, account)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
+}*/
 
 //Below is logging middleware - includes panic recovery 
 type responseWriter struct{

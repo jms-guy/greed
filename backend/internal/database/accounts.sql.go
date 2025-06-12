@@ -7,88 +7,91 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, name, user_id)
+INSERT INTO accounts(id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id)
 VALUES (
     $1,
     NOW(),
     NOW(),
     $2,
-    $3
+    $3,
+    $4,
+    $5,
+    $6,
+    $7
 )
-RETURNING id, created_at, updated_at, name, user_id
+RETURNING id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id
 `
 
 type CreateAccountParams struct {
-	ID     uuid.UUID
-	Name   string
-	UserID uuid.UUID
+	ID             uuid.UUID
+	Name           sql.NullString
+	Type           sql.NullString
+	Mask           sql.NullString
+	OfficialName   sql.NullString
+	PlaidAccountID string
+	ItemID         uuid.NullUUID
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount, arg.ID, arg.Name, arg.UserID)
+	row := q.db.QueryRowContext(ctx, createAccount,
+		arg.ID,
+		arg.Name,
+		arg.Type,
+		arg.Mask,
+		arg.OfficialName,
+		arg.PlaidAccountID,
+		arg.ItemID,
+	)
 	var i Account
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
-		&i.UserID,
+		&i.Type,
+		&i.Mask,
+		&i.OfficialName,
+		&i.PlaidAccountID,
+		&i.ItemID,
 	)
 	return i, err
 }
 
-const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM accounts
-WHERE id = $1
-AND user_id = $2
-`
-
-type DeleteAccountParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
-}
-
-func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) error {
-	_, err := q.db.ExecContext(ctx, deleteAccount, arg.ID, arg.UserID)
-	return err
-}
-
 const getAccount = `-- name: GetAccount :one
-SELECT id, created_at, updated_at, name, user_id FROM accounts
-WHERE id = $1
-AND user_id = $2
+SELECT id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id FROM accounts
+WHERE name = $1
 `
 
-type GetAccountParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
-}
-
-func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccount, arg.ID, arg.UserID)
+func (q *Queries) GetAccount(ctx context.Context, name sql.NullString) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, name)
 	var i Account
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
-		&i.UserID,
+		&i.Type,
+		&i.Mask,
+		&i.OfficialName,
+		&i.PlaidAccountID,
+		&i.ItemID,
 	)
 	return i, err
 }
 
 const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
-SELECT id, created_at, updated_at, name, user_id FROM accounts
-WHERE user_id = $1
+SELECT id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id FROM accounts
+WHERE item_id = $1
 `
 
-func (q *Queries) GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, getAllAccountsForUser, userID)
+func (q *Queries) GetAllAccountsForUser(ctx context.Context, itemID uuid.NullUUID) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAccountsForUser, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +104,11 @@ func (q *Queries) GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) (
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Name,
-			&i.UserID,
+			&i.Type,
+			&i.Mask,
+			&i.OfficialName,
+			&i.PlaidAccountID,
+			&i.ItemID,
 		); err != nil {
 			return nil, err
 		}

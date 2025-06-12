@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
-	"github.com/jms-guy/greed/backend/api/plaid"
+	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -68,7 +68,7 @@ func Run() error {
 	//Create mail service instance
 	service := sgrid.NewSGMailService(kitLogger)
 
-	plaidClient := plaid.NewPlaidClient(config.PlaidClientID, config.PlaidSecret)
+	plaidClient := plaidservice.NewPlaidClient(config.PlaidClientID, config.PlaidSecret)
 
 	//Create rate limiter
 	limiter := limiter.NewIPRateLimiter()
@@ -148,7 +148,7 @@ func Run() error {
 		
 		// Account-specific routes that need AccountMiddleware
 		r.Route("/api/accounts/{accountid}", func(r chi.Router) {
-			r.Use(app.AccountMiddleware)
+			//r.Use(app.AccountMiddleware)
 			
 			//r.Get("/", app.handlerGetSingleAccount)										//Return a single account record for user
 			r.Delete("/", app.HandlerDeleteAccount)											//Delete account

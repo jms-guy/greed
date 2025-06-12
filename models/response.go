@@ -5,6 +5,18 @@ import (
 	"github.com/google/uuid"
 )
 
+//Access token response
+type AccessResponse struct {
+	AccessToken 	string 	`json:"access_token"`
+	ItemID			string  `json:"item_id"`
+	RequestID 		string  `json:"request_id"`
+}
+
+//Link token request response
+type LinkResponse struct {
+	LinkToken		string 	`json:"link_token"`
+}
+
 //Token refresh response structure
 type RefreshResponse struct{
 	RefreshToken	string	`json:"refresh_token"`
