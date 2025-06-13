@@ -43,6 +43,7 @@ type PlaidItem struct {
 	ItemID      string
 	AccessToken string
 	RequestID   sql.NullString
+	Nickname    sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

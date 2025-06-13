@@ -7,24 +7,6 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
-/*	Initial request
-	1. Client - request server for link token
-	2. Server - request link token from plaid - clientID/secret
-	3. Server - send link token to client
-	4. Client - opens link with plaid
-	5. Client - OAuth/Plaid flow - gets public token from Plaid
-	6. Server - receives public token from client
-	7. Server - sends public token/clientID/secret to Plaid, gets back an access token
-	8. Server - store access token in database (secure as any other financial information)
-
-	Further requests
-	1. Client - request server for data
-	2. Server - send access token/clientID/secret to plaid
-	3. Server - receive item from plaid
-	4. Server - send item to client
-	5. Client - display item contents
-*/
-
 // Creates a new APIClient for Plaid requests
 func NewPlaidClient(clientID, secret string) *plaid.APIClient {
 	config := plaid.NewConfiguration()
@@ -52,7 +34,7 @@ func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (
 		DaysRequested: plaid.PtrInt32(730),
 	  }
 
-	request.SetProducts([]plaid.Products{plaid.PRODUCTS_AUTH, plaid.PRODUCTS_BALANCE, plaid.PRODUCTS_TRANSACTIONS, plaid.PRODUCTS_IDENTITY})
+	request.SetProducts([]plaid.Products{plaid.PRODUCTS_BALANCE, plaid.PRODUCTS_TRANSACTIONS})
 	request.SetLinkCustomizationName("default")
 	request.SetTransactions(transactions)
 	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
@@ -75,9 +57,9 @@ func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (
 }
 
 //Exchanges a public token received from client for a permanent access token for item from Plaid API
-func GetAccessToken(client *plaid.APIClient, ctx context.Context, sandboxPublicTokenResp plaid.SandboxPublicTokenCreateResponse) (models.AccessResponse, error) {
+func GetAccessToken(client *plaid.APIClient, ctx context.Context, publicToken string) (models.AccessResponse, error) {
 
-	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(sandboxPublicTokenResp.GetPublicToken())
+	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 
 	exchangePublicTokenResp, httpResp, err := client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
 		*exchangePublicTokenReq,

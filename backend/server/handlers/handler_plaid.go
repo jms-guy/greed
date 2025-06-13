@@ -9,7 +9,6 @@ import (
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/models"
-	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 //Endpoint gets a Link token from Plaid and serves it to the client
@@ -47,13 +46,13 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	request := plaid.SandboxPublicTokenCreateResponse{}
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		app.respondWithError(w, 400, "Bad request", err)
-		return 
+	reqStruct := models.AccessTokenRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&reqStruct); err != nil {
+		app.respondWithError(w, 400, "Couldn't decode JSON data", err)
+		return
 	}
 
-	accessToken, err := plaidservice.GetAccessToken(app.PClient, ctx, request)
+	accessToken, err := plaidservice.GetAccessToken(app.PClient, ctx, reqStruct.PublicToken)
 	if err != nil {
 		app.respondWithError(w, 500, "Error getting access token from Plaid", err)
 		return 
@@ -71,12 +70,19 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 		reqID.Valid = true
 	}
 
+	nickName := sql.NullString{}
+	if reqStruct.Nickname != "" {
+		nickName.String = reqStruct.Nickname
+		nickName.Valid = true
+	}
+
 	params := database.CreateItemParams{
 		ID: uuid.New(),
 		UserID: id,
 		ItemID: accessToken.ItemID,
 		AccessToken: encryptedAccessToken,
 		RequestID: reqID,
+		Nickname: nickName,
 	}
 	_, err = app.Db.CreateItem(ctx, params)
 

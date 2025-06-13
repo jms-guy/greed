@@ -6,6 +6,7 @@ CREATE TABLE plaid_items (
     item_id TEXT UNIQUE NOT NULL,
     access_token TEXT NOT NULL,
     request_id TEXT,
+    nickname TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

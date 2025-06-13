@@ -131,11 +131,25 @@ func Run() error {
 		})
 	})
 
+	//Plaid operations
 	r.Group(func(r chi.Router) {
 		r.Use(app.AuthMiddleware)
 
-		r.Post("/plaid/get_link_token", app.HandlerGetLinkToken)
-		r.Post("/plaid/get_access_token", app.HandlerGetAccessToken)
+		r.Post("/plaid/get-link-token", app.HandlerGetLinkToken)
+		r.Post("/plaid/get-access-token", app.HandlerGetAccessToken)
+	})
+
+	//Item operations
+	r.Group(func(r chi.Router) {
+		r.Use(app.AuthMiddleware)
+
+		r.Get("/api/items", app.HandlerGetItems)											//Get list of Plaid items for user
+
+		r.Route("/api/items/{item-id}", func(r chi.Router) {
+
+			r.Put("/name", app.HandlerUpdateItemName)										//Updates an item's name in record
+			r.Post("/accounts", app.HandlerCreateAccounts)									//Creates account records for Plaid item
+		})
 	})
 
 	//Account operations
@@ -143,7 +157,7 @@ func Run() error {
 		r.Use(app.AuthMiddleware)
 		
 		// Account creation and retreiving list of user's accounts
-		r.Post("/api/accounts", app.HandlerCreateAccounts)									//Create new account for user
+		
 		r.Get("/api/accounts", app.HandlerGetAccountsForUser)								//Get list of accounts for user
 		
 		// Account-specific routes that need AccountMiddleware

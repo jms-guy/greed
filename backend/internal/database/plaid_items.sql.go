@@ -13,17 +13,18 @@ import (
 )
 
 const createItem = `-- name: CreateItem :one
-INSERT INTO plaid_items(id, user_id, item_id, access_token, request_id, created_at, updated_at)
+INSERT INTO plaid_items(id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at)
 VALUES (
     $1,
     $2,
     $3,
     $4,
     $5,
+    $6,
     NOW(),
     NOW()
 )
-RETURNING id, user_id, item_id, access_token, request_id, created_at, updated_at
+RETURNING id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at
 `
 
 type CreateItemParams struct {
@@ -32,6 +33,7 @@ type CreateItemParams struct {
 	ItemID      string
 	AccessToken string
 	RequestID   sql.NullString
+	Nickname    sql.NullString
 }
 
 func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidItem, error) {
@@ -41,6 +43,7 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 		arg.ItemID,
 		arg.AccessToken,
 		arg.RequestID,
+		arg.Nickname,
 	)
 	var i PlaidItem
 	err := row.Scan(
@@ -49,6 +52,7 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 		&i.ItemID,
 		&i.AccessToken,
 		&i.RequestID,
+		&i.Nickname,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -56,12 +60,12 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 }
 
 const getAccessToken = `-- name: GetAccessToken :one
-SELECT id, user_id, item_id, access_token, request_id, created_at, updated_at FROM plaid_items
-WHERE user_id = $1
+SELECT id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at FROM plaid_items
+WHERE item_id = $1
 `
 
-func (q *Queries) GetAccessToken(ctx context.Context, userID uuid.UUID) (PlaidItem, error) {
-	row := q.db.QueryRowContext(ctx, getAccessToken, userID)
+func (q *Queries) GetAccessToken(ctx context.Context, itemID string) (PlaidItem, error) {
+	row := q.db.QueryRowContext(ctx, getAccessToken, itemID)
 	var i PlaidItem
 	err := row.Scan(
 		&i.ID,
@@ -69,8 +73,67 @@ func (q *Queries) GetAccessToken(ctx context.Context, userID uuid.UUID) (PlaidIt
 		&i.ItemID,
 		&i.AccessToken,
 		&i.RequestID,
+		&i.Nickname,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getItemByName = `-- name: GetItemByName :one
+SELECT id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at FROM plaid_items
+WHERE nickname = $1
+`
+
+func (q *Queries) GetItemByName(ctx context.Context, nickname sql.NullString) (PlaidItem, error) {
+	row := q.db.QueryRowContext(ctx, getItemByName, nickname)
+	var i PlaidItem
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ItemID,
+		&i.AccessToken,
+		&i.RequestID,
+		&i.Nickname,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getItemsByUser = `-- name: GetItemsByUser :many
+SELECT id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at FROM plaid_items
+WHERE user_id = $1
+`
+
+func (q *Queries) GetItemsByUser(ctx context.Context, userID uuid.UUID) ([]PlaidItem, error) {
+	rows, err := q.db.QueryContext(ctx, getItemsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlaidItem
+	for rows.Next() {
+		var i PlaidItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ItemID,
+			&i.AccessToken,
+			&i.RequestID,
+			&i.Nickname,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
