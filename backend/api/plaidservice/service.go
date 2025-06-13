@@ -123,3 +123,20 @@ func InvalidateAccessToken(client *plaid.APIClient,ctx context.Context, accessTo
 
 	return newToken, nil
 }
+
+//Retrieves account data listed in a Plaid item
+func GetAccounts(client *plaid.APIClient, ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error){
+
+	accountsGetRequest := plaid.NewAccountsGetRequest(accessToken)
+
+	accountsGetResp, httpResp, err := client.PlaidApi.AccountsGet(ctx).AccountsGetRequest(
+		*accountsGetRequest,
+	).Execute()
+	if err != nil {
+		return nil, "", err
+	}
+
+	accounts := accountsGetResp.GetAccounts()
+
+	return accounts, httpResp.Header.Get("X-Request-Id"), nil
+}

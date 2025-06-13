@@ -1,5 +1,18 @@
 -- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id)
+INSERT INTO accounts(
+    id,
+    created_at, 
+    updated_at, 
+    name, 
+    type, 
+    subtype, 
+    mask, 
+    official_name,
+    available_balance,
+    current_balance,
+    iso_currency_code, 
+    plaid_account_id, 
+    item_id)
 VALUES (
     $1,
     NOW(),
@@ -9,7 +22,11 @@ VALUES (
     $4,
     $5,
     $6,
-    $7
+    $7,
+    $8,
+    $9,
+    $10,
+    $11
 )
 RETURNING *;
 

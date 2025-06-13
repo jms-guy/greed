@@ -57,7 +57,7 @@ type CreateTransactionParams struct {
 	TransactionDate time.Time
 	TransactionType string
 	CurrencyCode    string
-	AccountID       uuid.UUID
+	AccountID       string
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
@@ -102,7 +102,7 @@ DELETE FROM transactions
 WHERE account_id = $1
 `
 
-func (q *Queries) DeleteTransactionsForAccount(ctx context.Context, accountID uuid.UUID) error {
+func (q *Queries) DeleteTransactionsForAccount(ctx context.Context, accountID string) error {
 	_, err := q.db.ExecContext(ctx, deleteTransactionsForAccount, accountID)
 	return err
 }
@@ -114,7 +114,7 @@ AND category = $2
 `
 
 type DeleteTransactionsOfCategoryParams struct {
-	AccountID uuid.UUID
+	AccountID string
 	Category  string
 }
 
@@ -130,7 +130,7 @@ AND transaction_type = $2
 `
 
 type DeleteTransactionsOfTypeParams struct {
-	AccountID       uuid.UUID
+	AccountID       string
 	TransactionType string
 }
 
@@ -167,7 +167,7 @@ SELECT id, created_at, updated_at, amount, category, description, transaction_da
 WHERE account_id = $1
 `
 
-func (q *Queries) GetTransactions(ctx context.Context, accountID uuid.UUID) ([]Transaction, error) {
+func (q *Queries) GetTransactions(ctx context.Context, accountID string) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, getTransactions, accountID)
 	if err != nil {
 		return nil, err
@@ -208,7 +208,7 @@ AND category = $2
 `
 
 type GetTransactionsOfCategoryParams struct {
-	AccountID uuid.UUID
+	AccountID string
 	Category  string
 }
 
@@ -253,7 +253,7 @@ AND transaction_type = $2
 `
 
 type GetTransactionsOfTypeParams struct {
-	AccountID       uuid.UUID
+	AccountID       string
 	TransactionType string
 }
 

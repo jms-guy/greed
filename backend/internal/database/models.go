@@ -12,15 +12,19 @@ import (
 )
 
 type Account struct {
-	ID             uuid.UUID
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Name           sql.NullString
-	Type           sql.NullString
-	Mask           sql.NullString
-	OfficialName   sql.NullString
-	PlaidAccountID string
-	ItemID         uuid.NullUUID
+	ID               string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	Name             string
+	Type             string
+	Subtype          sql.NullString
+	Mask             sql.NullString
+	OfficialName     sql.NullString
+	AvailableBalance sql.NullString
+	CurrentBalance   sql.NullString
+	IsoCurrencyCode  sql.NullString
+	PlaidAccountID   string
+	ItemID           uuid.NullUUID
 }
 
 type Delegation struct {
@@ -70,7 +74,7 @@ type Transaction struct {
 	TransactionDate time.Time
 	TransactionType string
 	CurrencyCode    string
-	AccountID       uuid.UUID
+	AccountID       string
 }
 
 type User struct {

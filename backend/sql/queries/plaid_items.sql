@@ -4,9 +4,13 @@ VALUES (
     $1,
     $2,
     $3,
-    ??,
+    $4,
     $5,
     NOW(),
     NOW()
 )
 RETURNING *;
+
+-- name: GetAccessToken :one
+SELECT * FROM plaid_items
+WHERE user_id = $1;

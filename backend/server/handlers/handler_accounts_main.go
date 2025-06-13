@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -123,8 +126,8 @@ func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	app.respondWithJSON(w, 200, "Account deleted successfully")
 }
 
-//Function will create a new account in the database
-func (app *AppServer) HandlerCreateAccount(w http.ResponseWriter, r *http.Request) {
+//Handler populates accounts table in database with account records grabbed from Plaid item ID attached to user
+func (app *AppServer) HandlerCreateAccounts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
@@ -133,31 +136,107 @@ func (app *AppServer) HandlerCreateAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := models.AccountDetails{}
-	err := decoder.Decode(&params)
+	token, err := app.Db.GetAccessToken(ctx, id)
 	if err != nil {
-		app.respondWithError(w, 400, "Bad request", err)
-		return
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No item found for user", nil)
+			return
+		} 
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting access token: %w", err))
+		return 
 	}
 
-	newAccount, err := app.Db.CreateAccount(ctx, database.CreateAccountParams{
-		ID: uuid.New(),
-		Name: params.Name,
-		UserID: id,
-	})
+	accessTokenbytes, err := encrypt.DecryptAccessToken(token.AccessToken, app.Config.AESKey)
 	if err != nil {
-		app.respondWithError(w, 500, "Database error", fmt.Errorf("error creating account: %w", err))
-		return
+		app.respondWithError(w, 500, "Error decrypting access token", err)
+		return 
 	}
 
-	//Creates the return JSON struct to send back
-	account := models.Account{
-		ID: newAccount.ID,
-		CreatedAt: newAccount.CreatedAt,
-		UpdatedAt: newAccount.UpdatedAt,
-		Name: newAccount.Name,
-		UserID: newAccount.UserID,
+	accessToken := string(accessTokenbytes)
+
+	accounts, reqID, err := plaidservice.GetAccounts(app.PClient, ctx, accessToken)
+	if err != nil {
+		app.respondWithError(w, 500, "Service Error", fmt.Errorf("error getting accounts from Plaid: %w", err))
+		return 
 	}
-	app.respondWithJSON(w, 201, account)
+
+	accRecords := []models.Account{}
+
+	for _, acc := range accounts {
+
+		accSub :=  sql.NullString{}
+		if acc.Subtype.IsSet() {
+			accSub.String = string(*acc.Subtype.Get().Ptr())
+			accSub.Valid = true
+		}
+
+		accMask := sql.NullString{}
+		if acc.Mask.IsSet() {
+			accMask.String = *acc.Mask.Get()
+			accMask.Valid = true
+		}
+
+		accOffName := sql.NullString{}
+		if acc.OfficialName.IsSet() {
+			accOffName.String = *acc.OfficialName.Get()
+			accOffName.Valid = true
+		}
+
+		accBalAvail := sql.NullString{}
+		if acc.Balances.Available.IsSet() {
+			accBalAvail.String = fmt.Sprintf("%.2f", *acc.Balances.Available.Get())
+			accBalAvail.Valid = true
+		}
+
+		accBalCur := sql.NullString{}
+		if acc.Balances.Current.IsSet() {
+			accBalCur.String = fmt.Sprintf("%.2f", *acc.Balances.Current.Get())
+			accBalCur.Valid = true
+		}
+
+		curCode := sql.NullString{}
+		if acc.Balances.IsoCurrencyCode.IsSet() {
+			curCode.String = acc.Balances.GetIsoCurrencyCode()
+			curCode.Valid = true
+		}
+
+		params := database.CreateAccountParams{
+			ID: acc.AccountId,
+			Name: acc.Name,
+			Type: string(acc.Type),
+			Subtype: accSub,
+			Mask: accMask,
+			OfficialName: accOffName,
+			AvailableBalance: accBalAvail,
+			CurrentBalance: accBalCur,
+			IsoCurrencyCode: curCode,
+		}
+
+		dbAcc, err := app.Db.CreateAccount(ctx, params)
+		if err != nil {
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error creating account record: %w", err))
+			return 
+		}
+
+		returnAcc := models.Account{
+			Id: dbAcc.ID,
+			Name: dbAcc.Name,
+			Type: dbAcc.Type,
+			Subtype: dbAcc.Subtype.String,
+			Mask: dbAcc.Mask.String,
+			OfficialName: dbAcc.OfficialName.String,
+			AvailableBalance: dbAcc.AvailableBalance.String,
+			CurrentBalance: dbAcc.CurrentBalance.String,
+			IsoCurrencyCode: dbAcc.IsoCurrencyCode.String,
+		}
+
+		accRecords = append(accRecords, returnAcc)
+	}
+
+	accountsResponse := models.Accounts{
+		Accounts: accRecords,
+		RequestID: reqID,
+	}
+
+	app.respondWithJSON(w, 201, accountsResponse)
 }

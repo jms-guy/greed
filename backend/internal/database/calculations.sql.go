@@ -7,8 +7,6 @@ package database
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const getExpensesForMonth = `-- name: GetExpensesForMonth :one
@@ -28,7 +26,7 @@ WHERE transaction_type = 'debit'
 type GetExpensesForMonthParams struct {
 	Year      int32
 	Month     int32
-	AccountID uuid.UUID
+	AccountID string
 }
 
 func (q *Queries) GetExpensesForMonth(ctx context.Context, arg GetExpensesForMonthParams) (string, error) {
@@ -55,7 +53,7 @@ WHERE transaction_type = 'credit'
 type GetIncomeForMonthParams struct {
 	Year      int32
 	Month     int32
-	AccountID uuid.UUID
+	AccountID string
 }
 
 func (q *Queries) GetIncomeForMonth(ctx context.Context, arg GetIncomeForMonthParams) (string, error) {
@@ -82,7 +80,7 @@ WHERE transaction_type != 'transfer'
 type GetNetIncomeForMonthParams struct {
 	Year      int32
 	Month     int32
-	AccountID uuid.UUID
+	AccountID string
 }
 
 func (q *Queries) GetNetIncomeForMonth(ctx context.Context, arg GetNetIncomeForMonthParams) (string, error) {

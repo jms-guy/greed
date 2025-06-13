@@ -143,7 +143,7 @@ func Run() error {
 		r.Use(app.AuthMiddleware)
 		
 		// Account creation and retreiving list of user's accounts
-		r.Post("/api/accounts", app.HandlerCreateAccount)									//Create new account for user
+		r.Post("/api/accounts", app.HandlerCreateAccounts)									//Create new account for user
 		r.Get("/api/accounts", app.HandlerGetAccountsForUser)								//Get list of accounts for user
 		
 		// Account-specific routes that need AccountMiddleware

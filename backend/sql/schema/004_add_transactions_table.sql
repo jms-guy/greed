@@ -9,7 +9,7 @@ CREATE TABLE transactions (
     transaction_date TIMESTAMPTZ NOT NULL,
     transaction_type TEXT NOT NULL CHECK (transaction_type in ('debit', 'credit', 'transfer')),
     currency_code TEXT NOT NULL REFERENCES supported_currencies(code),
-    account_id UUID NOT NULL REFERENCES accounts(id)
+    account_id TEXT NOT NULL REFERENCES accounts(id)
     ON DELETE CASCADE
 );
 

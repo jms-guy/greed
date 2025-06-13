@@ -13,7 +13,20 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts(id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id)
+INSERT INTO accounts(
+    id,
+    created_at, 
+    updated_at, 
+    name, 
+    type, 
+    subtype, 
+    mask, 
+    official_name,
+    available_balance,
+    current_balance,
+    iso_currency_code, 
+    plaid_account_id, 
+    item_id)
 VALUES (
     $1,
     NOW(),
@@ -23,19 +36,27 @@ VALUES (
     $4,
     $5,
     $6,
-    $7
+    $7,
+    $8,
+    $9,
+    $10,
+    $11
 )
-RETURNING id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id
+RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, plaid_account_id, item_id
 `
 
 type CreateAccountParams struct {
-	ID             uuid.UUID
-	Name           sql.NullString
-	Type           sql.NullString
-	Mask           sql.NullString
-	OfficialName   sql.NullString
-	PlaidAccountID string
-	ItemID         uuid.NullUUID
+	ID               string
+	Name             string
+	Type             string
+	Subtype          sql.NullString
+	Mask             sql.NullString
+	OfficialName     sql.NullString
+	AvailableBalance sql.NullString
+	CurrentBalance   sql.NullString
+	IsoCurrencyCode  sql.NullString
+	PlaidAccountID   string
+	ItemID           uuid.NullUUID
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
@@ -43,8 +64,12 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		arg.ID,
 		arg.Name,
 		arg.Type,
+		arg.Subtype,
 		arg.Mask,
 		arg.OfficialName,
+		arg.AvailableBalance,
+		arg.CurrentBalance,
+		arg.IsoCurrencyCode,
 		arg.PlaidAccountID,
 		arg.ItemID,
 	)
@@ -55,8 +80,12 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Type,
+		&i.Subtype,
 		&i.Mask,
 		&i.OfficialName,
+		&i.AvailableBalance,
+		&i.CurrentBalance,
+		&i.IsoCurrencyCode,
 		&i.PlaidAccountID,
 		&i.ItemID,
 	)
@@ -64,11 +93,11 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id FROM accounts
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, plaid_account_id, item_id FROM accounts
 WHERE name = $1
 `
 
-func (q *Queries) GetAccount(ctx context.Context, name sql.NullString) (Account, error) {
+func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) {
 	row := q.db.QueryRowContext(ctx, getAccount, name)
 	var i Account
 	err := row.Scan(
@@ -77,8 +106,12 @@ func (q *Queries) GetAccount(ctx context.Context, name sql.NullString) (Account,
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Type,
+		&i.Subtype,
 		&i.Mask,
 		&i.OfficialName,
+		&i.AvailableBalance,
+		&i.CurrentBalance,
+		&i.IsoCurrencyCode,
 		&i.PlaidAccountID,
 		&i.ItemID,
 	)
@@ -86,7 +119,7 @@ func (q *Queries) GetAccount(ctx context.Context, name sql.NullString) (Account,
 }
 
 const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
-SELECT id, created_at, updated_at, name, type, mask, official_name, plaid_account_id, item_id FROM accounts
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, plaid_account_id, item_id FROM accounts
 WHERE item_id = $1
 `
 
@@ -105,8 +138,12 @@ func (q *Queries) GetAllAccountsForUser(ctx context.Context, itemID uuid.NullUUI
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Type,
+			&i.Subtype,
 			&i.Mask,
 			&i.OfficialName,
+			&i.AvailableBalance,
+			&i.CurrentBalance,
+			&i.IsoCurrencyCode,
 			&i.PlaidAccountID,
 			&i.ItemID,
 		); err != nil {

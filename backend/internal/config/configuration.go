@@ -23,6 +23,7 @@ type Config struct {
 	PlaidClientID			string 
 	PlaidSecret				string
 	PlaidHost				string
+	AESKey 					string
 }
 
 func LoadConfig() (*Config, error) {
@@ -110,6 +111,11 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("PLAID_HOST environment variable not set")
 	}
 
+	aesKey := os.Getenv("AES_KEY")
+	if aesKey == "" {
+		return nil, fmt.Errorf("AES_KEY environment variable not set")
+	}
+
 	config := Config{
 		ServerAddress: serverAddress,
 		Environment: environment,
@@ -126,6 +132,7 @@ func LoadConfig() (*Config, error) {
 		PlaidClientID: plaidClientID,
 		PlaidSecret: plaidSecret,
 		PlaidHost: plaidHost,
+		AESKey: aesKey,
 	}
 
 	return &config, nil
