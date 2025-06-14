@@ -13,7 +13,7 @@ import (
 )
 
 const createItem = `-- name: CreateItem :one
-INSERT INTO plaid_items(id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at)
+INSERT INTO plaid_items(id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at)
 VALUES (
     $1,
     $2,
@@ -24,16 +24,16 @@ VALUES (
     NOW(),
     NOW()
 )
-RETURNING id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at
+RETURNING id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at
 `
 
 type CreateItemParams struct {
-	ID              string
-	UserID          uuid.UUID
-	AccessToken     string
-	InstitutionName string
-	RequestID       sql.NullString
-	Nickname        sql.NullString
+	ID                    string
+	UserID                uuid.UUID
+	AccessToken           string
+	InstitutionName       string
+	Nickname              sql.NullString
+	TransactionSyncCursor sql.NullString
 }
 
 func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidItem, error) {
@@ -42,8 +42,8 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 		arg.UserID,
 		arg.AccessToken,
 		arg.InstitutionName,
-		arg.RequestID,
 		arg.Nickname,
+		arg.TransactionSyncCursor,
 	)
 	var i PlaidItem
 	err := row.Scan(
@@ -51,8 +51,8 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 		&i.UserID,
 		&i.AccessToken,
 		&i.InstitutionName,
-		&i.RequestID,
 		&i.Nickname,
+		&i.TransactionSyncCursor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -75,7 +75,7 @@ func (q *Queries) DeleteItem(ctx context.Context, arg DeleteItemParams) error {
 }
 
 const getAccessToken = `-- name: GetAccessToken :one
-SELECT id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at FROM plaid_items
+SELECT id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at FROM plaid_items
 WHERE id = $1
 `
 
@@ -87,16 +87,33 @@ func (q *Queries) GetAccessToken(ctx context.Context, id string) (PlaidItem, err
 		&i.UserID,
 		&i.AccessToken,
 		&i.InstitutionName,
-		&i.RequestID,
 		&i.Nickname,
+		&i.TransactionSyncCursor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const getCursor = `-- name: GetCursor :one
+SELECT transaction_sync_cursor FROM plaid_items
+WHERE id = $1 AND access_token = $2
+`
+
+type GetCursorParams struct {
+	ID          string
+	AccessToken string
+}
+
+func (q *Queries) GetCursor(ctx context.Context, arg GetCursorParams) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getCursor, arg.ID, arg.AccessToken)
+	var transaction_sync_cursor sql.NullString
+	err := row.Scan(&transaction_sync_cursor)
+	return transaction_sync_cursor, err
+}
+
 const getItemByName = `-- name: GetItemByName :one
-SELECT id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at FROM plaid_items
+SELECT id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at FROM plaid_items
 WHERE nickname = $1
 `
 
@@ -108,8 +125,8 @@ func (q *Queries) GetItemByName(ctx context.Context, nickname sql.NullString) (P
 		&i.UserID,
 		&i.AccessToken,
 		&i.InstitutionName,
-		&i.RequestID,
 		&i.Nickname,
+		&i.TransactionSyncCursor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -117,7 +134,7 @@ func (q *Queries) GetItemByName(ctx context.Context, nickname sql.NullString) (P
 }
 
 const getItemsByUser = `-- name: GetItemsByUser :many
-SELECT id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at FROM plaid_items
+SELECT id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at FROM plaid_items
 WHERE user_id = $1
 `
 
@@ -135,8 +152,8 @@ func (q *Queries) GetItemsByUser(ctx context.Context, userID uuid.UUID) ([]Plaid
 			&i.UserID,
 			&i.AccessToken,
 			&i.InstitutionName,
-			&i.RequestID,
 			&i.Nickname,
+			&i.TransactionSyncCursor,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -153,12 +170,40 @@ func (q *Queries) GetItemsByUser(ctx context.Context, userID uuid.UUID) ([]Plaid
 	return items, nil
 }
 
+const getLatestCursorOrNil = `-- name: GetLatestCursorOrNil :one
+SELECT transaction_sync_cursor FROM plaid_items
+WHERE id = $1
+`
+
+func (q *Queries) GetLatestCursorOrNil(ctx context.Context, id string) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getLatestCursorOrNil, id)
+	var transaction_sync_cursor sql.NullString
+	err := row.Scan(&transaction_sync_cursor)
+	return transaction_sync_cursor, err
+}
+
 const resetItems = `-- name: ResetItems :exec
 DELETE FROM plaid_items
 `
 
 func (q *Queries) ResetItems(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetItems)
+	return err
+}
+
+const updateCursor = `-- name: UpdateCursor :exec
+UPDATE plaid_items
+SET transaction_sync_cursor = $1, updated_at = NOW()
+WHERE id = $2
+`
+
+type UpdateCursorParams struct {
+	TransactionSyncCursor sql.NullString
+	ID                    string
+}
+
+func (q *Queries) UpdateCursor(ctx context.Context, arg UpdateCursorParams) error {
+	_, err := q.db.ExecContext(ctx, updateCursor, arg.TransactionSyncCursor, arg.ID)
 	return err
 }
 

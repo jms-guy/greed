@@ -38,14 +38,14 @@ type Delegation struct {
 }
 
 type PlaidItem struct {
-	ID              string
-	UserID          uuid.UUID
-	AccessToken     string
-	InstitutionName string
-	RequestID       sql.NullString
-	Nickname        sql.NullString
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID                    string
+	UserID                uuid.UUID
+	AccessToken           string
+	InstitutionName       string
+	Nickname              sql.NullString
+	TransactionSyncCursor sql.NullString
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 type RefreshToken struct {
@@ -66,16 +66,16 @@ type SupportedCurrency struct {
 }
 
 type Transaction struct {
-	ID              uuid.UUID
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	Amount          string
-	Category        string
-	Description     sql.NullString
-	TransactionDate time.Time
-	TransactionType string
-	CurrencyCode    string
-	AccountID       string
+	ID                      string
+	AccountID               string
+	Amount                  string
+	IsoCurrencyCode         sql.NullString
+	Date                    sql.NullTime
+	MerchantName            sql.NullString
+	PaymentChannel          string
+	PersonalFinanceCategory string
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
 }
 
 type User struct {

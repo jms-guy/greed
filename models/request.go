@@ -6,6 +6,13 @@ import (
 
 //Structs used in http requests
 
+/*
+	/items/{item-id}/name
+*/
+type UpdateItemName struct {
+	Nickname				string 	`json:"nickname"`
+}
+
 /* 
 	/plaid/get_access_token
 */

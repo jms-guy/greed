@@ -13,6 +13,7 @@ import (
 type ItemName struct {
 	Nickname		string 	`json:"nickname"`
 	ItemId 			string 	`json:"item_id"`
+	InstitutionName string 	`json:"institution_name"`
 }
 
 /*
@@ -23,9 +24,16 @@ type Accounts struct {
 	RequestID		string 	`json:"request_id"`	//This field is the request ID returned from the Plaid API call
 }
 
-//Account struct for use in accounts response above
+/*
+	/api/items/accounts
+	/api/accounts
+	/api/accounts/{item-id}
+	/api/accounts/{account-id}/data
+*/
 type Account struct {
 	Id 				string 	`json:"id"`
+	CreatedAt 		time.Time 	`json:"created_at"`
+	UpdatedAt 		time.Time 	`json:"updated_at"`
 	Name			string 	`json:"name:"`
 	Type 			string  `json:"type"`
 	Subtype 		string  `json:"subtype"`
@@ -34,6 +42,18 @@ type Account struct {
 	AvailableBalance string `json:"available_balance"`
 	CurrentBalance  string  `json:"current_balance"`
 	IsoCurrencyCode string  `json:"iso_currency_code"`
+	ItemId 			string 	`json:"item_id"`
+}
+
+/*
+	/api/accounts/balance
+*/
+type UpdatedBalance struct {
+	Id 				string 	`json:"id"`
+	AvailableBalance string `json:"available_balance"`
+	CurrentBalance  string 	`json:"current_balance"`
+	ItemId			string 	`json:"item_id"`
+	RequestID 		string 	`json:"request_id"`
 }
 
 /*
@@ -42,6 +62,7 @@ type Account struct {
 type AccessResponse struct {
 	AccessToken 	string 	`json:"access_token"`
 	ItemID			string  `json:"item_id"`
+	InstitutionName string 	`json:"institution_name"`
 	RequestID 		string  `json:"request_id"`	//Request ID returned from Plaid API call
 }
 

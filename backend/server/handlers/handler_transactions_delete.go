@@ -1,71 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
-	"github.com/go-chi/chi/v5"
 	"github.com/jms-guy/greed/backend/internal/database"
 )
 
-//Function deletes all transaction records for an account of a given category
-func (app *AppServer) HandlerDeleteTransactionsOfCategory(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	accValue := ctx.Value(accountKey)
-	acc, ok := accValue.(database.Account)
-	if !ok {
-		app.respondWithError(w, 400, "Bad account in context", nil)
-		return
-	}
 
-	cat := chi.URLParam(r, "category")
-	
-	if cat == "" {
-		app.respondWithError(w, 400, "Bad category given", nil)
-		return
-	}
 
-	//Delete transactions from database
-	err := app.Db.DeleteTransactionsOfCategory(ctx, database.DeleteTransactionsOfCategoryParams{
-		AccountID: acc.ID,
-		Category: cat,
-	})
-	if err != nil {
-		app.respondWithError(w, 500, "Error deleting transactions", err)
-		return
-	}
-
-	app.respondWithJSON(w, 200, "Transactions deleted successfully")
-}
-
-//Function deletes all transaction records for an account based on a given transaction_type
-//(credit, debit, transfer)
-func (app *AppServer) HandlerDeleteTransactionsOfType(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	accValue := ctx.Value(accountKey)
-	acc, ok := accValue.(database.Account)
-	if !ok {
-		app.respondWithError(w, 400, "Bad account in context", nil)
-		return
-	}
-
-	tType := chi.URLParam(r, "transactiontype")
-	/*if !isValidTransactionType(tType) {
-		app.respondWithError(w, 400, "Bad transaction type", nil)
-		return
-	}*/
-	
-	err := app.Db.DeleteTransactionsOfType(ctx, database.DeleteTransactionsOfTypeParams{
-		AccountID: acc.ID,
-		TransactionType: tType,
-	})
-	if err != nil {
-		app.respondWithError(w, 500, "Error deleting transactions from database", err)
-		return
-	}
-
-	app.respondWithJSON(w, 200, "Transactions deleted successfully")
-}
-
-//Deletes all transaction records for a given account number
+//Deletes all transaction records for a given account ID
 func (app *AppServer) HandlerDeleteTransactionsForAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	accValue := ctx.Value(accountKey)
@@ -75,39 +18,11 @@ func (app *AppServer) HandlerDeleteTransactionsForAccount(w http.ResponseWriter,
 		return
 	}
 
-	//Delete transactions from database
 	err := app.Db.DeleteTransactionsForAccount(ctx, acc.ID)
 	if err != nil {
-		app.respondWithError(w, 500, "Error deleting transaction records from database", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting transaction records: %w", err))
 		return
 	}
 
 	app.respondWithJSON(w, 200, "Transactions deleted successfully")
-}
-
-//Function deletes a transaction record from the database, based on transaction ID
-func (app *AppServer) HandlerDeleteTransactionRecord(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	accValue := ctx.Value(accountKey)
-	acc, ok := accValue.(database.Account)
-	if !ok {
-		app.respondWithError(w, 400, "Bad account in context", nil)
-		return
-	}
-
-	//Check if transaction exists
-	_, err := app.Db.GetSingleTransaction(ctx, acc.ID)
-	if err != nil {
-		app.respondWithError(w, 400, "No transaction record of that ID found", nil)
-		return
-	}
-
-	//Delete transaction record from database
-	err = app.Db.DeleteTransaction(ctx, acc.ID)
-	if err != nil {
-		app.respondWithError(w, 500, "Error deleting transaction from database", err)
-		return
-	}
-
-	app.respondWithJSON(w, 200, "Transaction deleted successfully")
 }

@@ -202,6 +202,7 @@ func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Reque
 			AvailableBalance: accBalAvail.String,
 			CurrentBalance: accBalCur.String,
 			ItemId: accs.Item.ItemId,
+			RequestID: reqID,
 		}
 
 		responseAccounts = append(responseAccounts, updatedRecord)

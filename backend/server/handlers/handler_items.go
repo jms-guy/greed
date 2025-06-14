@@ -212,3 +212,45 @@ func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) 
 
 	app.respondWithJSON(w, 200, "Item deleted successfully")
 }
+
+//Function to populate database with transaction data for a given account
+func (app *AppServer) HandlerSyncTransactions(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	tokenValue := ctx.Value(accessTokenKey)
+	accessToken, ok := tokenValue.(string)
+	if !ok {
+		app.respondWithError(w, 400, "Bad access token in context", nil)
+		return 
+	}
+
+	itemID := chi.URLParam(r, "item-id")
+
+	params := database.GetCursorParams{
+		ID: itemID,
+		AccessToken: accessToken,
+	}
+	cursor, err := app.Db.GetCursor(ctx, params)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No record found", nil)
+			return 
+		}
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting cursor: %w", err))
+		return 
+	}
+
+	added, modified, removed, nextCursor, reqID, err := plaidservice.GetTransactions(app.PClient, ctx, accessToken, cursor.String)
+	if err != nil {
+		app.respondWithError(w, 500, "Service error", fmt.Errorf("plaid request id: %s, error getting transaction data: %w", reqID, err))
+		return 
+	}
+
+	err = ApplyTransactionUpdates(app, ctx, added, modified, removed, nextCursor, itemID)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error completing database txn on transactional data: %w", err))
+		return
+	}
+
+	app.respondWithJSON(w, 200, "Item transaction data synced successfully")
+}

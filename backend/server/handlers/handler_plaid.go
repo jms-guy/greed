@@ -76,13 +76,15 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 		nickName.Valid = true
 	}
 
+	cursor := sql.NullString{String: "", Valid: true}
+
 	params := database.CreateItemParams{
 		ID: accessToken.ItemID,
 		UserID: id,
 		AccessToken: encryptedAccessToken,
 		InstitutionName: accessToken.InstitutionName,
-		RequestID: reqID,
 		Nickname: nickName,
+		TransactionSyncCursor: cursor,
 	}
 	_, err = app.Db.CreateItem(ctx, params)
 

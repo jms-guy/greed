@@ -5,8 +5,8 @@ CREATE TABLE plaid_items (
     ON DELETE CASCADE,
     access_token TEXT NOT NULL,
     institution_name TEXT NOT NULL,
-    request_id TEXT,
     nickname TEXT,
+    transaction_sync_cursor TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

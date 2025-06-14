@@ -1,19 +1,19 @@
 -- +goose Up
 CREATE TABLE transactions (
-    id UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    amount NUMERIC (16, 2) NOT NULL,
-    category TEXT NOT NULL,
-    description TEXT,
-    transaction_date TIMESTAMPTZ NOT NULL,
-    transaction_type TEXT NOT NULL CHECK (transaction_type in ('debit', 'credit', 'transfer')),
-    currency_code TEXT NOT NULL REFERENCES supported_currencies(code),
+    id TEXT PRIMARY KEY,
     account_id TEXT NOT NULL REFERENCES accounts(id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+    amount NUMERIC(16, 2) NOT NULL,
+    iso_currency_code TEXT,
+    date TIMESTAMPTZ,
+    merchant_name TEXT,
+    payment_channel TEXT NOT NULL DEFAULT 'unset',
+    personal_finance_category TEXT NOT NULL DEFAULT 'unset',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_transactions_date ON transactions(transaction_date);
+CREATE INDEX idx_transactions_date ON transactions(date);
 
 -- +goose Down
 DROP TABLE transactions;

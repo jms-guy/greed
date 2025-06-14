@@ -20,6 +20,7 @@ import (
 /* Notes & To-Do
 -Db query/netincome function tentatively works based on the assumption that credit amounts are (+) and
 debit amounts are (-). Keep in mind for future, may have to alter.
+-For bulk database queries, track success/failures and log as such
 -Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
 -Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
 -More calculation functions, such as (avg income/expenses per month)
@@ -149,8 +150,15 @@ func Run() error {
 		r.Route("/api/items/{item-id}", func(r chi.Router) {
 
 			r.Put("/name", app.HandlerUpdateItemName)										//Updates an item's name in record
-			r.With(app.AccessTokenMiddleware).Post("/accounts", app.HandlerCreateAccounts)	//Creates account records for Plaid item
 			r.Delete("/", app.HandlerDeleteItem)											//Deletes an item's records from database
+			r.Get("/accounts", app.HandlerGetAccountsForItem) 								//Get list of accounts for a user's specific item
+		
+			r.Use(app.AccessTokenMiddleware)
+
+			r.Post("/accounts", app.HandlerCreateAccounts)									//Creates account records for Plaid item
+			r.Put("/balances", app.HandlerUpdateBalances)									//Update accounts database records with real-time balances
+			r.Post("/transactions", app.HandlerSyncTransactions)							//Sync database transaction records for item with Plaid
+
 		})
 	})
 
@@ -159,9 +167,7 @@ func Run() error {
 		r.Use(app.AuthMiddleware)
 		
 		// Retrieving accounts
-		r.Get("/api/accounts", app.HandlerGetAccountsForUser)												//Get list of all accounts for user
-		r.Get("/api/accounts/{item-id}", app.HandlerGetAccountsForItem) 									//Get list of accounts for a user's specific item
-		r.With(app.AccessTokenMiddleware).Put("/api/accounts/{item-id}/balances", app.HandlerUpdateBalances)//Update accounts database records with real-time balances
+		r.Get("/api/accounts", app.HandlerGetAccountsForUser)								//Get list of all accounts for user
 		
 		// Account-specific routes that need AccountMiddleware
 		r.Route("/api/accounts/{accountid}", func(r chi.Router) {
@@ -172,16 +178,11 @@ func Run() error {
 			
 			// Transaction routes as a sub-resource of accounts
 			r.Route("/transactions", func(r chi.Router) {
-				r.Post("/", app.HandlerCreateTransaction)									//Create transaction record
-				r.Get("/", app.HandlerGetTransactions) 										//Get all transactions for account
 				r.Delete("/", app.HandlerDeleteTransactionsForAccount)						//Delete all transactions for account
 
 				// Transaction filtering
-				r.Get("/type/{transactiontype}", app.HandlerGetTransactionsofType)			//Get all transactions of specific type
-				r.Delete("/type/{transactiontype}", app.HandlerDeleteTransactionsOfType)	//Delete all transactions of specific type
-				r.Get("/category/{category}", app.HandlerGetTransactionsOfCategory)			//Get all transactions of specific category
-				r.Delete("/category/{category}", app.HandlerDeleteTransactionsOfCategory)	//Delete all transactions of specific category
 				
+			
 				// Monthly reporting
 				r.Get("/income/{year}-{month}", app.HandlerGetIncomeForMonth)				//Get income for given month
 				r.Get("/expenses/{year}-{month}", app.HandlerGetExpensesForMonth)			//Get expenses for given month
@@ -189,10 +190,7 @@ func Run() error {
 
 				 // Individual transaction operations
 				 r.Route("/{transactionid}", func(r chi.Router) {
-					r.Get("/", app.HandlerGetSingleTransaction)								//Get a single transaction record
-					r.Delete("/", app.HandlerDeleteTransactionRecord)						//Delete a single transaction record
-					r.Put("/description", app.HandlerUpdateTransactionDescription)			//Update a transaction's description
-					r.Put("/category", app.HandlerUpdateTransactionCategory)				//Update a transaction's category
+					
 				 })
 			})
 		})

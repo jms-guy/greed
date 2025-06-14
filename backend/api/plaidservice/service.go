@@ -14,7 +14,7 @@ func GetAccounts(client *plaid.APIClient, ctx context.Context, accessToken strin
 		*accountsGetRequest,
 	).Execute()
 	if err != nil {
-		return nil, "", err
+		return nil, httpResp.Header.Get("X-Request-Id"), err
 	}
 
 	accounts := accountsGetResp.GetAccounts()
@@ -49,8 +49,51 @@ func GetBalances(client *plaid.APIClient, ctx context.Context, accessToken strin
 	balancesGetResp, httpResp, err := client.PlaidApi.AccountsBalanceGet(ctx).AccountsBalanceGetRequest(*balancesGetReq).Execute()
 
 	if err != nil {
-		return plaid.AccountsGetResponse{}, "", err
+		return plaid.AccountsGetResponse{}, httpResp.Header.Get("X-Request-Id"), err
 	}
 
 	return balancesGetResp, httpResp.Header.Get("X-Request-Id"), nil
+}
+
+//Calls transactions/sync Plaid endpoint, getting all transaction data for a specific account.
+//Returns last Plaid request ID in loop
+func GetTransactions(client *plaid.APIClient, ctx context.Context, accessToken, cursor string) (
+	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) {
+
+	hasMore := true
+	yes := true
+	options := plaid.TransactionsSyncRequestOptions{
+		IncludePersonalFinanceCategory: &yes,
+	}
+
+	reqID = ""
+
+	for hasMore {
+		request := plaid.NewTransactionsSyncRequest(accessToken)
+		request.SetOptions(options)
+		if cursor != "" {
+			request.SetCursor(cursor)
+		}
+		resp, httpResp, err := client.PlaidApi.TransactionsSync(ctx).TransactionsSyncRequest(*request).Execute()
+		if err != nil {
+			if httpResp != nil {
+                reqID = httpResp.Header.Get("X-Request-Id")
+            }
+			return added, modified, removed, "", reqID, err 
+		}
+
+		added = append(added, resp.GetAdded()...)
+		modified = append(modified, resp.GetModified()...)
+		removed = append(removed, resp.GetRemoved()...)
+
+		hasMore = resp.GetHasMore()
+		nextCursor = resp.GetNextCursor()
+
+		if httpResp != nil {
+            reqID = httpResp.Header.Get("X-Request-Id")
+        }
+
+		cursor = nextCursor
+	}
+	return added, modified, removed, nextCursor, reqID, nil
 }
