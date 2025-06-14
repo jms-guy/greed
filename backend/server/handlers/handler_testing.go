@@ -5,6 +5,16 @@ import (
 	"net/http"
 )
 
+//Function to reset plaid_items database table
+func (app *AppServer) HandlerResetItems(w http.ResponseWriter, r *http.Request) {
+	err := app.Db.ResetItems(context.Background())
+	if err != nil {
+		app.respondWithError(w, 500, "Could not reset plaid_items table", err)
+		return 
+	}
+	app.respondWithJSON(w, 200, "Items table cleared successfully")
+}
+
 //Function to reset database accounts table
 func (app *AppServer) HandlerResetAccounts(w http.ResponseWriter, r *http.Request) {
 	err := app.Db.ResetAccounts(context.Background())

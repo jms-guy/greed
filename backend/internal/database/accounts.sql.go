@@ -25,7 +25,6 @@ INSERT INTO accounts(
     available_balance,
     current_balance,
     iso_currency_code, 
-    plaid_account_id, 
     item_id)
 VALUES (
     $1,
@@ -39,10 +38,9 @@ VALUES (
     $7,
     $8,
     $9,
-    $10,
-    $11
+    $10
 )
-RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, plaid_account_id, item_id
+RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id
 `
 
 type CreateAccountParams struct {
@@ -55,8 +53,7 @@ type CreateAccountParams struct {
 	AvailableBalance sql.NullString
 	CurrentBalance   sql.NullString
 	IsoCurrencyCode  sql.NullString
-	PlaidAccountID   string
-	ItemID           uuid.NullUUID
+	ItemID           string
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
@@ -70,7 +67,6 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		arg.AvailableBalance,
 		arg.CurrentBalance,
 		arg.IsoCurrencyCode,
-		arg.PlaidAccountID,
 		arg.ItemID,
 	)
 	var i Account
@@ -86,14 +82,29 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.AvailableBalance,
 		&i.CurrentBalance,
 		&i.IsoCurrencyCode,
-		&i.PlaidAccountID,
 		&i.ItemID,
+		&i.UserID,
 	)
 	return i, err
 }
 
+const deleteAccount = `-- name: DeleteAccount :exec
+DELETE FROM accounts
+WHERE id = $1 AND user_id = $2
+`
+
+type DeleteAccountParams struct {
+	ID     string
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteAccount(ctx context.Context, arg DeleteAccountParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAccount, arg.ID, arg.UserID)
+	return err
+}
+
 const getAccount = `-- name: GetAccount :one
-SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, plaid_account_id, item_id FROM accounts
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id FROM accounts
 WHERE name = $1
 `
 
@@ -112,19 +123,50 @@ func (q *Queries) GetAccount(ctx context.Context, name string) (Account, error) 
 		&i.AvailableBalance,
 		&i.CurrentBalance,
 		&i.IsoCurrencyCode,
-		&i.PlaidAccountID,
 		&i.ItemID,
+		&i.UserID,
 	)
 	return i, err
 }
 
-const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
-SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, plaid_account_id, item_id FROM accounts
+const getAccountById = `-- name: GetAccountById :one
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id FROM accounts
+WHERE id = $1 AND user_id = $2
+`
+
+type GetAccountByIdParams struct {
+	ID     string
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetAccountById(ctx context.Context, arg GetAccountByIdParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountById, arg.ID, arg.UserID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Type,
+		&i.Subtype,
+		&i.Mask,
+		&i.OfficialName,
+		&i.AvailableBalance,
+		&i.CurrentBalance,
+		&i.IsoCurrencyCode,
+		&i.ItemID,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getAccountsForItem = `-- name: GetAccountsForItem :many
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id FROM accounts
 WHERE item_id = $1
 `
 
-func (q *Queries) GetAllAccountsForUser(ctx context.Context, itemID uuid.NullUUID) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, getAllAccountsForUser, itemID)
+func (q *Queries) GetAccountsForItem(ctx context.Context, itemID string) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAccountsForItem, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +186,50 @@ func (q *Queries) GetAllAccountsForUser(ctx context.Context, itemID uuid.NullUUI
 			&i.AvailableBalance,
 			&i.CurrentBalance,
 			&i.IsoCurrencyCode,
-			&i.PlaidAccountID,
 			&i.ItemID,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllAccountsForUser = `-- name: GetAllAccountsForUser :many
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id FROM accounts
+WHERE user_id = $1
+`
+
+func (q *Queries) GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAccountsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Type,
+			&i.Subtype,
+			&i.Mask,
+			&i.OfficialName,
+			&i.AvailableBalance,
+			&i.CurrentBalance,
+			&i.IsoCurrencyCode,
+			&i.ItemID,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -167,4 +251,44 @@ DELETE FROM accounts
 func (q *Queries) ResetAccounts(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetAccounts)
 	return err
+}
+
+const updateBalances = `-- name: UpdateBalances :one
+UPDATE accounts
+SET available_balance = $1, current_balance = $2, updated_at = NOW()
+WHERE id = $3 AND item_id = $4
+RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id
+`
+
+type UpdateBalancesParams struct {
+	AvailableBalance sql.NullString
+	CurrentBalance   sql.NullString
+	ID               string
+	ItemID           string
+}
+
+func (q *Queries) UpdateBalances(ctx context.Context, arg UpdateBalancesParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, updateBalances,
+		arg.AvailableBalance,
+		arg.CurrentBalance,
+		arg.ID,
+		arg.ItemID,
+	)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Type,
+		&i.Subtype,
+		&i.Mask,
+		&i.OfficialName,
+		&i.AvailableBalance,
+		&i.CurrentBalance,
+		&i.IsoCurrencyCode,
+		&i.ItemID,
+		&i.UserID,
+	)
+	return i, err
 }

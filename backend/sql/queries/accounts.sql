@@ -11,7 +11,6 @@ INSERT INTO accounts(
     available_balance,
     current_balance,
     iso_currency_code, 
-    plaid_account_id, 
     item_id)
 VALUES (
     $1,
@@ -25,13 +24,16 @@ VALUES (
     $7,
     $8,
     $9,
-    $10,
-    $11
+    $10
 )
 RETURNING *;
 
 -- name: ResetAccounts :exec
 DELETE FROM accounts;
+
+-- name: GetAccountById :one
+SELECT * FROM accounts
+WHERE id = $1 AND user_id = $2;
 
 -- name: GetAccount :one
 SELECT * FROM accounts
@@ -39,6 +41,18 @@ WHERE name = $1;
 
 -- name: GetAllAccountsForUser :many
 SELECT * FROM accounts
+WHERE user_id = $1;
+
+-- name: GetAccountsForItem :many
+SELECT * FROM accounts
 WHERE item_id = $1;
 
+-- name: UpdateBalances :one
+UPDATE accounts
+SET available_balance = $1, current_balance = $2, updated_at = NOW()
+WHERE id = $3 AND item_id = $4
+RETURNING *;
 
+-- name: DeleteAccount :exec
+DELETE FROM accounts
+WHERE id = $1 AND user_id = $2;

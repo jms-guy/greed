@@ -23,8 +23,8 @@ type Account struct {
 	AvailableBalance sql.NullString
 	CurrentBalance   sql.NullString
 	IsoCurrencyCode  sql.NullString
-	PlaidAccountID   string
-	ItemID           uuid.NullUUID
+	ItemID           string
+	UserID           uuid.UUID
 }
 
 type Delegation struct {
@@ -38,14 +38,14 @@ type Delegation struct {
 }
 
 type PlaidItem struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	ItemID      string
-	AccessToken string
-	RequestID   sql.NullString
-	Nickname    sql.NullString
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID              string
+	UserID          uuid.UUID
+	AccessToken     string
+	InstitutionName string
+	RequestID       sql.NullString
+	Nickname        sql.NullString
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type RefreshToken struct {

@@ -77,10 +77,10 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 	}
 
 	params := database.CreateItemParams{
-		ID: uuid.New(),
+		ID: accessToken.ItemID,
 		UserID: id,
-		ItemID: accessToken.ItemID,
 		AccessToken: encryptedAccessToken,
+		InstitutionName: accessToken.InstitutionName,
 		RequestID: reqID,
 		Nickname: nickName,
 	}

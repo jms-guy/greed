@@ -13,7 +13,7 @@ import (
 )
 
 const createItem = `-- name: CreateItem :one
-INSERT INTO plaid_items(id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at)
+INSERT INTO plaid_items(id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at)
 VALUES (
     $1,
     $2,
@@ -24,24 +24,24 @@ VALUES (
     NOW(),
     NOW()
 )
-RETURNING id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at
+RETURNING id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at
 `
 
 type CreateItemParams struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	ItemID      string
-	AccessToken string
-	RequestID   sql.NullString
-	Nickname    sql.NullString
+	ID              string
+	UserID          uuid.UUID
+	AccessToken     string
+	InstitutionName string
+	RequestID       sql.NullString
+	Nickname        sql.NullString
 }
 
 func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidItem, error) {
 	row := q.db.QueryRowContext(ctx, createItem,
 		arg.ID,
 		arg.UserID,
-		arg.ItemID,
 		arg.AccessToken,
+		arg.InstitutionName,
 		arg.RequestID,
 		arg.Nickname,
 	)
@@ -49,8 +49,8 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.ItemID,
 		&i.AccessToken,
+		&i.InstitutionName,
 		&i.RequestID,
 		&i.Nickname,
 		&i.CreatedAt,
@@ -59,19 +59,34 @@ func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (PlaidIt
 	return i, err
 }
 
-const getAccessToken = `-- name: GetAccessToken :one
-SELECT id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at FROM plaid_items
-WHERE item_id = $1
+const deleteItem = `-- name: DeleteItem :exec
+DELETE FROM plaid_items
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) GetAccessToken(ctx context.Context, itemID string) (PlaidItem, error) {
-	row := q.db.QueryRowContext(ctx, getAccessToken, itemID)
+type DeleteItemParams struct {
+	ID     string
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteItem(ctx context.Context, arg DeleteItemParams) error {
+	_, err := q.db.ExecContext(ctx, deleteItem, arg.ID, arg.UserID)
+	return err
+}
+
+const getAccessToken = `-- name: GetAccessToken :one
+SELECT id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at FROM plaid_items
+WHERE id = $1
+`
+
+func (q *Queries) GetAccessToken(ctx context.Context, id string) (PlaidItem, error) {
+	row := q.db.QueryRowContext(ctx, getAccessToken, id)
 	var i PlaidItem
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.ItemID,
 		&i.AccessToken,
+		&i.InstitutionName,
 		&i.RequestID,
 		&i.Nickname,
 		&i.CreatedAt,
@@ -81,7 +96,7 @@ func (q *Queries) GetAccessToken(ctx context.Context, itemID string) (PlaidItem,
 }
 
 const getItemByName = `-- name: GetItemByName :one
-SELECT id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at FROM plaid_items
+SELECT id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at FROM plaid_items
 WHERE nickname = $1
 `
 
@@ -91,8 +106,8 @@ func (q *Queries) GetItemByName(ctx context.Context, nickname sql.NullString) (P
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.ItemID,
 		&i.AccessToken,
+		&i.InstitutionName,
 		&i.RequestID,
 		&i.Nickname,
 		&i.CreatedAt,
@@ -102,7 +117,7 @@ func (q *Queries) GetItemByName(ctx context.Context, nickname sql.NullString) (P
 }
 
 const getItemsByUser = `-- name: GetItemsByUser :many
-SELECT id, user_id, item_id, access_token, request_id, nickname, created_at, updated_at FROM plaid_items
+SELECT id, user_id, access_token, institution_name, request_id, nickname, created_at, updated_at FROM plaid_items
 WHERE user_id = $1
 `
 
@@ -118,8 +133,8 @@ func (q *Queries) GetItemsByUser(ctx context.Context, userID uuid.UUID) ([]Plaid
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.ItemID,
 			&i.AccessToken,
+			&i.InstitutionName,
 			&i.RequestID,
 			&i.Nickname,
 			&i.CreatedAt,
@@ -136,4 +151,30 @@ func (q *Queries) GetItemsByUser(ctx context.Context, userID uuid.UUID) ([]Plaid
 		return nil, err
 	}
 	return items, nil
+}
+
+const resetItems = `-- name: ResetItems :exec
+DELETE FROM plaid_items
+`
+
+func (q *Queries) ResetItems(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetItems)
+	return err
+}
+
+const updateNickname = `-- name: UpdateNickname :exec
+UPDATE plaid_items
+SET nickname = $1, updated_at = NOW()
+WHERE id = $2 AND user_id = $3
+`
+
+type UpdateNicknameParams struct {
+	Nickname sql.NullString
+	ID       string
+	UserID   uuid.UUID
+}
+
+func (q *Queries) UpdateNickname(ctx context.Context, arg UpdateNicknameParams) error {
+	_, err := q.db.ExecContext(ctx, updateNickname, arg.Nickname, arg.ID, arg.UserID)
+	return err
 }

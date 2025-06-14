@@ -113,6 +113,7 @@ func Run() error {
 
 		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
 			r.Post("/users", app.HandlerResetUsers)
+			r.Post("/items", app.HandlerResetItems)
 			r.Post("/accounts", app.HandlerResetAccounts)
 			r.Post("/transactions", app.HandlerResetTransactions)
 		})
@@ -135,8 +136,8 @@ func Run() error {
 	r.Group(func(r chi.Router) {
 		r.Use(app.AuthMiddleware)
 
-		r.Post("/plaid/get-link-token", app.HandlerGetLinkToken)
-		r.Post("/plaid/get-access-token", app.HandlerGetAccessToken)
+		r.Post("/plaid/get-link-token", app.HandlerGetLinkToken)							//Gets a Link token from Plaid to return to client
+		r.Post("/plaid/get-access-token", app.HandlerGetAccessToken)						//Exchanges a client's public token with an access token from Plaid
 	})
 
 	//Item operations
@@ -148,7 +149,8 @@ func Run() error {
 		r.Route("/api/items/{item-id}", func(r chi.Router) {
 
 			r.Put("/name", app.HandlerUpdateItemName)										//Updates an item's name in record
-			r.Post("/accounts", app.HandlerCreateAccounts)									//Creates account records for Plaid item
+			r.With(app.AccessTokenMiddleware).Post("/accounts", app.HandlerCreateAccounts)	//Creates account records for Plaid item
+			r.Delete("/", app.HandlerDeleteItem)											//Deletes an item's records from database
 		})
 	})
 
@@ -156,15 +158,16 @@ func Run() error {
 	r.Group(func(r chi.Router) {
 		r.Use(app.AuthMiddleware)
 		
-		// Account creation and retreiving list of user's accounts
-		
-		r.Get("/api/accounts", app.HandlerGetAccountsForUser)								//Get list of accounts for user
+		// Retrieving accounts
+		r.Get("/api/accounts", app.HandlerGetAccountsForUser)												//Get list of all accounts for user
+		r.Get("/api/accounts/{item-id}", app.HandlerGetAccountsForItem) 									//Get list of accounts for a user's specific item
+		r.With(app.AccessTokenMiddleware).Put("/api/accounts/{item-id}/balances", app.HandlerUpdateBalances)//Update accounts database records with real-time balances
 		
 		// Account-specific routes that need AccountMiddleware
 		r.Route("/api/accounts/{accountid}", func(r chi.Router) {
-			//r.Use(app.AccountMiddleware)
+			r.Use(app.AccountMiddleware)
 			
-			//r.Get("/", app.handlerGetSingleAccount)										//Return a single account record for user
+			r.Get("/data", app.HandlerGetAccountData)										//Return a single account record for user
 			r.Delete("/", app.HandlerDeleteAccount)											//Delete account
 			
 			// Transaction routes as a sub-resource of accounts

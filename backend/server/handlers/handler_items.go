@@ -2,55 +2,32 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
-	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/models"
 )
 
 //Handler populates accounts table in database with account records grabbed from Plaid item ID attached to user
 func (app *AppServer) HandlerCreateAccounts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userIDValue := ctx.Value(userIDKey)
-	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
-		app.respondWithError(w, 400, "Bad userID in context", nil)
-		return
-	}
 
 	itemID := chi.URLParam(r, "item-id")
 	
-
-	token, err := app.Db.GetAccessToken(ctx, itemID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			app.respondWithError(w, 400, "No item found for user", nil)
-			return
-		} 
-		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting access token: %w", err))
-		return 
-	}
-
-	if token.UserID != id {
-		app.respondWithError(w, 403, "UserID does not match item's database record", nil)
+	tokenValue := ctx.Value(accessTokenKey)
+	accessToken, ok := tokenValue.(string)
+	if !ok {
+		app.respondWithError(w, 400, "Bad access token in context", nil)
 		return
 	}
 
-	accessTokenbytes, err := encrypt.DecryptAccessToken(token.AccessToken, app.Config.AESKey)
-	if err != nil {
-		app.respondWithError(w, 500, "Error decrypting access token", err)
-		return 
-	}
-
-	accessToken := string(accessTokenbytes)
-
 	accounts, reqID, err := plaidservice.GetAccounts(app.PClient, ctx, accessToken)
 	if err != nil {
-		app.respondWithError(w, 500, "Service Error", fmt.Errorf("error getting accounts from Plaid: %w", err))
+		app.respondWithError(w, 500, "Service Error", fmt.Errorf("plaid request id: %s, error getting accounts from Plaid: %w", reqID, err))
 		return 
 	}
 
@@ -104,6 +81,7 @@ func (app *AppServer) HandlerCreateAccounts(w http.ResponseWriter, r *http.Reque
 			AvailableBalance: accBalAvail,
 			CurrentBalance: accBalCur,
 			IsoCurrencyCode: curCode,
+			ItemID: itemID,
 		}
 
 		dbAcc, err := app.Db.CreateAccount(ctx, params)
@@ -165,9 +143,72 @@ func (app *AppServer) HandlerGetItems(w http.ResponseWriter, r *http.Request) {
 			nickname = item.Nickname.String
 		}
 		response.Items = append(response.Items, models.ItemName{
-			ItemId: item.ItemID,
+			ItemId: item.ID,
 			Nickname: nickname,
+			InstitutionName: item.InstitutionName,
 		})
 	}
 	app.respondWithJSON(w, 200, response)
+}
+
+//Updates item's nickname field in database
+func (app *AppServer) HandlerUpdateItemName(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
+
+	request := models.UpdateItemName{}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		app.respondWithError(w, 400, "Bad request data", err)
+		return 
+	}
+
+	itemID := chi.URLParam(r, "item-id")
+
+	params := database.UpdateNicknameParams{
+		Nickname: sql.NullString{String: request.Nickname, Valid: true},
+		ID: itemID,
+		UserID: id,
+	}
+
+	err := app.Db.UpdateNickname(ctx, params)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating item name: %w", err))
+		return 
+	}
+
+	app.respondWithJSON(w, 200, "Item name updated successfully")
+}
+
+
+//Endpoint deletes a user's item from database
+func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
+
+	itemID := chi.URLParam(r, "item-id")
+
+	params := database.DeleteItemParams{
+		ID: itemID,
+		UserID: id,
+	}
+
+	err := app.Db.DeleteItem(ctx, params)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting item record: %w", err))
+		return 
+	}
+
+	app.respondWithJSON(w, 200, "Item deleted successfully")
 }

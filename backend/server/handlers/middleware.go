@@ -2,29 +2,32 @@ package handlers
 
 import (
 	"context"
-	//"database/sql"
-	//"errors"
+	"database/sql"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"runtime/debug"
 	"time"
-
-	//"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/auth"
-	//"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/encrypt"
 )
 
 type contextKey string
 
 const (
-    userIDKey contextKey = "userID"
-    accountKey contextKey = "account"
-	requestIDKey contextKey = "requestID"
+    userIDKey 		contextKey = "userID"
+	accessTokenKey 	contextKey = "accessTokenKey"
+    accountKey 		contextKey = "account"
+	requestIDKey 	contextKey = "requestID"
 )
 
-//Middleware function to handle user authorization 
+//Middleware function to handle user authorization.
+//Serves following handlers with UserID in context
 func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := auth.GetBearerToken(r.Header)
@@ -44,8 +47,51 @@ func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-/*
-//Middleware function to handle account authorization
+//Middleware function to handle the Plaid access token.
+//Serves following handlers with Plaid Access token in context
+func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userIDValue := ctx.Value(userIDKey)
+		userID, ok := userIDValue.(uuid.UUID)
+		if !ok {
+			app.respondWithError(w, 400, "Bad userID in context", nil)
+			return
+		}
+
+		itemID := chi.URLParam(r, "item-id")
+	
+		token, err := app.Db.GetAccessToken(ctx, itemID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				app.respondWithError(w, 400, "No item found for user", nil)
+				return
+			} 
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting access token: %w", err))
+			return 
+		}
+
+		if token.UserID != userID {
+			app.respondWithError(w, 403, "UserID does not match item's database record", nil)
+			return
+		}
+
+		accessTokenbytes, err := encrypt.DecryptAccessToken(token.AccessToken, app.Config.AESKey)
+		if err != nil {
+			app.respondWithError(w, 500, "Error decrypting access token", err)
+			return 
+		}
+
+		accessToken := string(accessTokenbytes)
+
+		ctx = context.WithValue(ctx, accessTokenKey, accessToken)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+
+//Middleware function to handle account authorization.
+//Serves following handlers with an account struct in context
 func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -57,14 +103,9 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		}
 
 		accID := chi.URLParam(r, "accountid")
-		accountId, err := uuid.Parse(accID)
-		if err != nil {
-			app.respondWithError(w, 400, "Error parsing account ID", err)
-			return
-		}
 
-		account, err := app.Db.GetAccount(ctx, database.GetAccountParams{
-			ID: accountId,
+		account, err := app.Db.GetAccountById(ctx, database.GetAccountByIdParams{
+			ID: accID,
 			UserID: userID,
 		})
 		if err != nil {
@@ -79,7 +120,7 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, accountKey, account)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}*/
+}
 
 //Below is logging middleware - includes panic recovery 
 type responseWriter struct{
@@ -113,6 +154,8 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
     return rw.ResponseWriter.Write(b)
 }
 
+//Logging middleware function.
+//Logs details of http request, and any errors
 func LoggingMiddleware(Logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {

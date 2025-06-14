@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
-	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -27,13 +25,11 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	//Get accounts for user from database
 	accs, err := app.Db.GetAllAccountsForUser(ctx, id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No accounts found for user", nil)
+			return
+		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error retrieving accounts: %w", err))
-		return
-	}
-
-	//If no accounts found
-	if len(accs) == 0 {
-		app.respondWithError(w, 400, "No accounts found for user", nil)
 		return
 	}
 
@@ -41,27 +37,65 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	var accounts []models.Account
 	for _, account := range accs {
 		result := models.Account{
-			ID: account.ID,
+			Id: account.ID,
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
 			Name: account.Name,
-			UserID: id,
+			Type: account.Type,
+			Subtype: account.Subtype.String,
+			Mask: account.Mask.String,
+			OfficialName: account.OfficialName.String,
+			AvailableBalance: account.AvailableBalance.String,
+			CurrentBalance: account.CurrentBalance.String,
+			IsoCurrencyCode: account.IsoCurrencyCode.String,
 		}
 		accounts = append(accounts, result)
 	}
 
 	app.respondWithJSON(w, 200, accounts)
 }
-/*
-//Function will retrieve single account attached to the given userID and accountID
-func (app *AppServer) handlerGetSingleAccount(w http.ResponseWriter, r *http.Request) {
+
+//Gets accounts only for a user's specific item
+func (app *AppServer) HandlerGetAccountsForItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userIDValue := ctx.Value(userIDKey)
-	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
-		app.respondWithError(w, 400, "Bad userID in context", nil)
-		return
+
+	itemID := chi.URLParam(r, "item-id")
+
+	accs, err := app.Db.GetAccountsForItem(ctx, itemID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No accounts found for item", nil)
+			return 
+		}
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting accounts for item: %w", err))
+		return 
 	}
+
+	//Return slice of account structs
+	var accounts []models.Account
+	for _, account := range accs {
+		result := models.Account{
+			Id: account.ID,
+			CreatedAt: account.CreatedAt,
+			UpdatedAt: account.UpdatedAt,
+			Name: account.Name,
+			Type: account.Type,
+			Subtype: account.Subtype.String,
+			Mask: account.Mask.String,
+			OfficialName: account.OfficialName.String,
+			AvailableBalance: account.AvailableBalance.String,
+			CurrentBalance: account.CurrentBalance.String,
+			IsoCurrencyCode: account.IsoCurrencyCode.String,
+		}
+		accounts = append(accounts, result)
+	}
+	
+	app.respondWithJSON(w, 200, accounts)
+}
+
+//Returns data of a single account, placed into context value through account middleware
+func (app *AppServer) HandlerGetAccountData(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
 	accValue := ctx.Value(accountKey)
 	acc, ok := accValue.(database.Account)
@@ -70,33 +104,24 @@ func (app *AppServer) handlerGetSingleAccount(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	//Get account data from database based on user ID
-	account, err := app.Db.GetAccount(ctx, database.GetAccountParams{
-		ID: acc.ID,
-		UserID: id,
-	})
-	if err != nil {
-		app.respondWithError(w, 500, "Could not retrieve accounts for user", err)
-		return
-	}
-
-	//If an empty account structure is returned, respond as such
-	if account == (database.Account{}) {
-		app.respondWithError(w, 400, "No account found for user", nil)
-		return
-	}
-
-	//Structure returned database data into return JSON account struct
 	response := models.Account{
-		ID: account.ID,
-		CreatedAt: account.CreatedAt,
-		UpdatedAt: account.UpdatedAt,
-		Name: account.Name,
+		Id: acc.ID,
+		CreatedAt: acc.CreatedAt,
+		UpdatedAt: acc.UpdatedAt,
+		Name: acc.Name,
+		Type: acc.Type,
+		Subtype: acc.Subtype.String,
+		Mask: acc.Mask.String,
+		OfficialName: acc.OfficialName.String,
+		AvailableBalance: acc.AvailableBalance.String,
+		CurrentBalance: acc.CurrentBalance.String,
+		IsoCurrencyCode: acc.IsoCurrencyCode.String,
+		ItemId: acc.ItemID,
 	}
 
 	app.respondWithJSON(w, 200, response)
 }
-*/
+
 //Function will delete an account from the database
 func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -127,3 +152,60 @@ func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	app.respondWithJSON(w, 200, "Account deleted successfully")
 }
 
+//Updates the balances of all accounts associated with an item
+func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	tokenValue := ctx.Value(accessTokenKey)
+	accessToken, ok := tokenValue.(string)
+	if !ok {
+		app.respondWithError(w, 400, "Bad access token in context", nil)
+		return
+	}
+
+	accs, reqID, err := plaidservice.GetBalances(app.PClient, ctx, accessToken)
+	if err != nil {
+		app.respondWithError(w, 500, "Service error", fmt.Errorf("plaid request id: %s, error getting updated account balances: %w", reqID, err))
+		return 
+	}
+
+	responseAccounts := []models.UpdatedBalance{}
+	for _, acc := range accs.Accounts {
+
+		accBalAvail := sql.NullString{}
+		if acc.Balances.Available.IsSet() {
+			accBalAvail.String = fmt.Sprintf("%.2f", *acc.Balances.Available.Get())
+			accBalAvail.Valid = true
+		}
+
+		accBalCur := sql.NullString{}
+		if acc.Balances.Current.IsSet() {
+			accBalCur.String = fmt.Sprintf("%.2f", *acc.Balances.Current.Get())
+			accBalCur.Valid = true
+		}
+
+		params := database.UpdateBalancesParams{
+			AvailableBalance: accBalAvail,
+			CurrentBalance: accBalCur,
+			ID: acc.AccountId,
+			ItemID: accs.Item.ItemId,
+		}
+
+		updatedAcc, err := app.Db.UpdateBalances(ctx, params)
+		if err != nil {
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating account record: %w", err))
+			return 
+		}
+
+		updatedRecord := models.UpdatedBalance{
+			Id: updatedAcc.ID,
+			AvailableBalance: accBalAvail.String,
+			CurrentBalance: accBalCur.String,
+			ItemId: accs.Item.ItemId,
+		}
+
+		responseAccounts = append(responseAccounts, updatedRecord)
+	}
+
+	app.respondWithJSON(w, 200, responseAccounts)
+}
