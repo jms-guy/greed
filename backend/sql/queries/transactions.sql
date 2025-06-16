@@ -28,6 +28,22 @@ RETURNING *;
 SELECT * FROM transactions
 WHERE account_id = $1;
 
+-- name: GetTransactionsByMerchant :many
+SELECT * FROM transactions
+WHERE account_id = $1 AND merchant_name = $2;
+
+-- name: GetTransactionsByChannel :many
+SELECT * FROM transactions
+WHERE account_id = $1 AND payment_channel = $2;
+
+-- name: GetTransactionsByCategory :many
+SELECT * FROM transactions
+WHERE account_id = $1 AND personal_finance_category = $2;
+
+-- name: GetTransactionsforDate :many
+SELECT * FROM transactions
+WHERE account_id = $1 AND date = $2;
+
 -- name: ClearTransactionsTable :exec
 DELETE FROM transactions;
 

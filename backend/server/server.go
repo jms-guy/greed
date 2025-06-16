@@ -178,10 +178,8 @@ func Run() error {
 			
 			// Transaction routes as a sub-resource of accounts
 			r.Route("/transactions", func(r chi.Router) {
+				r.Get("/", app.HandlerGetTransactionsForAccount)
 				r.Delete("/", app.HandlerDeleteTransactionsForAccount)						//Delete all transactions for account
-
-				// Transaction filtering
-				
 			
 				// Monthly reporting
 				r.Get("/income/{year}-{month}", app.HandlerGetIncomeForMonth)				//Get income for given month
