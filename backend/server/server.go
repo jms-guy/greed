@@ -22,7 +22,6 @@ import (
 debit amounts are (-). Keep in mind for future, may have to alter.
 -For bulk database queries, track success/failures and log as such
 -Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
--Enhance gettransactions functions to parse query (return transactions on optional fields of amount, or date)
 -More calculation functions, such as (avg income/expenses per month)
 -Add log management system
 */
@@ -186,10 +185,6 @@ func Run() error {
 				r.Get("/expenses/{year}-{month}", app.HandlerGetExpensesForMonth)			//Get expenses for given month
 				r.Get("/netincome/{year}-{month}", app.HandlerGetNetIncomeForMonth)			//Get net income for given month
 
-				 // Individual transaction operations
-				 r.Route("/{transactionid}", func(r chi.Router) {
-					
-				 })
 			})
 		})
 	})
