@@ -67,12 +67,12 @@ func ApplyTransactionUpdates(app *AppServer, ctx context.Context, added, modifie
 
 	var (
 		valueStrings 	[]string
-		valueArgs 		[]interface{}
+		valueArgs 		[]any
 	)
 
 	added = append(added, modified...)
 
-	//This loop handles upserting transaction data
+	//This loop handles creating the query arguments for upserting data
 	for i, txn := range added {
 		curCode := ""
 		if txn.IsoCurrencyCode.IsSet(){
