@@ -3,7 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -54,7 +56,7 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 
 	accessToken, err := plaidservice.GetAccessToken(app.PClient, ctx, reqStruct.PublicToken)
 	if err != nil {
-		app.respondWithError(w, 500, "Error getting access token from Plaid", err)
+		app.respondWithError(w, 500, fmt.Sprintf("Error getting access token, Plaid request ID: %s", accessToken.RequestID), fmt.Errorf("reqID: %s, err: %w", accessToken.RequestID, err))
 		return 
 	}
 
@@ -62,12 +64,6 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		app.respondWithError(w, 500, "Error encrypting access token", err)
 		return
-	}
-
-	reqID := sql.NullString{}
-	if accessToken.RequestID != "" {
-		reqID.String = accessToken.RequestID
-		reqID.Valid = true
 	}
 
 	nickName := sql.NullString{}
@@ -87,6 +83,10 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 		TransactionSyncCursor: cursor,
 	}
 	_, err = app.Db.CreateItem(ctx, params)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error creating item record: %w", err))
+		return
+	}
 
 	app.respondWithJSON(w, 201, "Item created")
 }

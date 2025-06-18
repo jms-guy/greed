@@ -9,83 +9,82 @@ import (
 	"context"
 )
 
-const getExpensesForMonth = `-- name: GetExpensesForMonth :one
-SELECT CAST(
-    CASE 
-        WHEN COUNT(*) = 0 THEN 0
-        ELSE SUM(amount) 
-    END as NUMERIC(16,2)
-) as monthly_expenses
+const getDataForAllMonths = `-- name: GetDataForAllMonths :many
+SELECT
+  EXTRACT(YEAR FROM date)::int AS year,
+  EXTRACT(MONTH FROM date)::int AS month,
+  CAST(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) AS NUMERIC(16,2)) AS income,
+  CAST(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) AS NUMERIC(16,2)) AS expenses,
+  CAST(SUM(amount) AS NUMERIC(16,2)) AS net_income
 FROM transactions
-WHERE transaction_type = 'debit'
-  AND transaction_date >= make_date($1, $2, 1)
-  AND transaction_date < make_date($1, $2, 1) + interval '1 month'
+WHERE account_id = $1
+GROUP BY year, month
+ORDER BY year, month
+`
+
+type GetDataForAllMonthsRow struct {
+	Year      int32
+	Month     int32
+	Income    string
+	Expenses  string
+	NetIncome string
+}
+
+func (q *Queries) GetDataForAllMonths(ctx context.Context, accountID string) ([]GetDataForAllMonthsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDataForAllMonths, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDataForAllMonthsRow
+	for rows.Next() {
+		var i GetDataForAllMonthsRow
+		if err := rows.Scan(
+			&i.Year,
+			&i.Month,
+			&i.Income,
+			&i.Expenses,
+			&i.NetIncome,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDataForMonth = `-- name: GetDataForMonth :one
+SELECT
+    CAST(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) AS NUMERIC(16, 2)) AS income,
+    CAST(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) AS NUMERIC(16, 2)) AS expenses,
+    CAST(SUM(amount) AS NUMERIC(16, 2)) AS net_income
+FROM transactions
+WHERE date >= make_date($1, $2, 1)
+  AND date < (make_date($1, $2, 1) + interval '1 month')
   AND account_id = $3
 `
 
-type GetExpensesForMonthParams struct {
+type GetDataForMonthParams struct {
 	Year      int32
 	Month     int32
 	AccountID string
 }
 
-func (q *Queries) GetExpensesForMonth(ctx context.Context, arg GetExpensesForMonthParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getExpensesForMonth, arg.Year, arg.Month, arg.AccountID)
-	var monthly_expenses string
-	err := row.Scan(&monthly_expenses)
-	return monthly_expenses, err
+type GetDataForMonthRow struct {
+	Income    string
+	Expenses  string
+	NetIncome string
 }
 
-const getIncomeForMonth = `-- name: GetIncomeForMonth :one
-SELECT CAST(
-    CASE 
-        WHEN COUNT(*) = 0 THEN 0
-        ELSE SUM(amount) 
-    END as NUMERIC(16,2)
-) as monthly_income
-FROM transactions
-WHERE transaction_type = 'credit'
-  AND transaction_date >= make_date($1, $2, 1)
-  AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-  AND account_id = $3
-`
-
-type GetIncomeForMonthParams struct {
-	Year      int32
-	Month     int32
-	AccountID string
-}
-
-func (q *Queries) GetIncomeForMonth(ctx context.Context, arg GetIncomeForMonthParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getIncomeForMonth, arg.Year, arg.Month, arg.AccountID)
-	var monthly_income string
-	err := row.Scan(&monthly_income)
-	return monthly_income, err
-}
-
-const getNetIncomeForMonth = `-- name: GetNetIncomeForMonth :one
-SELECT CAST(
-    CASE 
-        WHEN COUNT(*) = 0 THEN 0
-        ELSE SUM(amount) 
-    END as NUMERIC(16,2)
-) as net_income
-FROM transactions
-WHERE transaction_type != 'transfer'
-  AND transaction_date >= make_date($1, $2, 1)
-  AND transaction_date < make_date($1, $2, 1) + interval '1 month'
-  AND account_id = $3
-`
-
-type GetNetIncomeForMonthParams struct {
-	Year      int32
-	Month     int32
-	AccountID string
-}
-
-func (q *Queries) GetNetIncomeForMonth(ctx context.Context, arg GetNetIncomeForMonthParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getNetIncomeForMonth, arg.Year, arg.Month, arg.AccountID)
-	var net_income string
-	err := row.Scan(&net_income)
-	return net_income, err
+func (q *Queries) GetDataForMonth(ctx context.Context, arg GetDataForMonthParams) (GetDataForMonthRow, error) {
+	row := q.db.QueryRowContext(ctx, getDataForMonth, arg.Year, arg.Month, arg.AccountID)
+	var i GetDataForMonthRow
+	err := row.Scan(&i.Income, &i.Expenses, &i.NetIncome)
+	return i, err
 }

@@ -18,11 +18,8 @@ import (
 )
 
 /* Notes & To-Do
--Db query/netincome function tentatively works based on the assumption that credit amounts are (+) and
-debit amounts are (-). Keep in mind for future, may have to alter.
 -For bulk database queries, track success/failures and log as such
--Enhance delete functions, more descriptive when it comes to the response data (how many of what were deleted? etc.)
--More calculation functions, such as (avg income/expenses per month)
+-(avg income/expenses per month)
 -Add log management system
 */
 
@@ -152,12 +149,13 @@ func Run() error {
 			r.Delete("/", app.HandlerDeleteItem)											//Deletes an item's records from database
 			r.Get("/accounts", app.HandlerGetAccountsForItem) 								//Get list of accounts for a user's specific item
 		
-			r.Use(app.AccessTokenMiddleware)
+			r.Route("/access", func(r chi.Router) {
+				r.Use(app.AccessTokenMiddleware)
 
-			r.Post("/accounts", app.HandlerCreateAccounts)									//Creates account records for Plaid item
-			r.Put("/balances", app.HandlerUpdateBalances)									//Update accounts database records with real-time balances
-			r.Post("/transactions", app.HandlerSyncTransactions)							//Sync database transaction records for item with Plaid
-
+				r.Post("/accounts", app.HandlerCreateAccounts)									//Creates account records for Plaid item
+				r.Put("/balances", app.HandlerUpdateBalances)									//Update accounts database records with real-time balances
+				r.Post("/transactions", app.HandlerSyncTransactions)							//Sync database transaction records for item with Plaid
+			})
 		})
 	})
 
@@ -177,14 +175,12 @@ func Run() error {
 			
 			// Transaction routes as a sub-resource of accounts
 			r.Route("/transactions", func(r chi.Router) {
-				r.Get("/", app.HandlerGetTransactionsForAccount)
+				r.Get("/", app.HandlerGetTransactionsForAccount)							//Get transaction records for account
 				r.Delete("/", app.HandlerDeleteTransactionsForAccount)						//Delete all transactions for account
 			
-				// Monthly reporting
-				r.Get("/income/{year}-{month}", app.HandlerGetIncomeForMonth)				//Get income for given month
-				r.Get("/expenses/{year}-{month}", app.HandlerGetExpensesForMonth)			//Get expenses for given month
-				r.Get("/netincome/{year}-{month}", app.HandlerGetNetIncomeForMonth)			//Get net income for given month
-
+				// Monetary reporting - for credit/debit type accounts
+				r.Get("/monetary", app.HandlerGetMonetaryData)								//Get monetary data for history of account
+				r.Get("/monetary/{year}-{month}", app.HandlerGetMonetaryDataForMonth)		//Get monetary data for given month
 			})
 		})
 	})
