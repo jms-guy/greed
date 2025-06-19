@@ -8,48 +8,31 @@ import (
 )
 
 func main() {
-	//Load the .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 
-	//.env Website URL
-	addr := os.Getenv("ADDRESS")
-
-	//Create config struct
-	cfg := config.Config{
-		FileData: config.FileData{},
-		EnvData: config.EnvData{
-			Address: addr,
-		},
-		Client: *config.NewClient(addr),
-	}
-
-	err = cfg.LoadCurrentUserSession()
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("\rError loading current session: %s", err)
-	}
-
-	err = cfg.LoadAccountData()
-	if err != nil {
-		log.Fatalf("\rError loading account current session: %s", err)
-	}
+		log.Fatalf("Error loading configuration: %s", err)
+	}	
 
 	//Get user input arguments
 	args := os.Args
-	//args[0] = program name, args[1] = command name, args[2:] = arguments
- 	command := args[1]
+	//args[0] = program name, args[1] = registry name, args[2] = command name, args[3:] = arguments/flags
+ 	registry := args[1]
+	command := args[2]
 
-	//Check if input command is in command registry
-	cmd, ok := commandRegistry[command]
-	if !ok {
-		log.Fatalf("Command not found")
-	}
+	if registry == "user" {
+		cmd, ok := userRegistry[command]
+		if !ok {
+			log.Fatalf("Command not found")
+		}
+		err = cmd.callback(cfg, args[3:])
+		if err != nil {
+			log.Fatalf("%s\n", err)
+		}
+	} 
 
-	//Execute command callback function
-	err = cmd.callback(&cfg, args[2:])
-	if err != nil {
-		log.Fatalf("%s\n", err)
-	}
 }
