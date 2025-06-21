@@ -46,6 +46,20 @@ type Account struct {
 }
 
 /*
+	/api/accounts/{account-id}/transactions
+*/
+type Transaction struct {
+	Id 							string 		`json:"id"`
+	AccountId 					string 		`json:"account_id"`
+	Amount 						string 		`json:"amount"`
+	IsoCurrencyCode 			string 		`json:"iso_currency_code"`
+	Date 						time.Time 	`json:"date"`
+	MerchantName 				string 		`json:"merchant_name"`
+	PaymentChannel				string 		`json:"payment_channel"`
+	PersonalFinanceCategory 	string 		`json:"personal_finance_category"`
+}
+
+/*
 	/api/accounts/balance
 */
 type UpdatedBalance struct {
@@ -100,7 +114,23 @@ type User struct{
 	ID				uuid.UUID 	`json:"id"`
 	Name			string 		`json:"name"`
 	Email			string		`json:"email"`
+	HashedPassword  string 		`json:"hashed_password"`
 	CreatedAt		time.Time 	`json:"created_at"`
 	UpdatedAt		time.Time 	`json:"updated_at"`	
 }
+
+/*
+	/api/accounts/{account-id}/transactions/income
+	/api/accounts/{account-id}/transactions/income/{year}-{month}
+*/
+//For credit/debit account types, fields are straightforward. For loan accounts, income =  
+//loan payments, expenses = interest, netincome = income - expenses
+type MonetaryData struct {
+	Income 			string 		`json:"income"`
+	Expenses 		string 		`json:"expenses"`
+	NetIncome 		string 		`json:"net_income"`
+	Year 			int 		`json:"year"`
+	Month 			int 		`json:"month"`
+}
+
 

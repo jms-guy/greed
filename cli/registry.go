@@ -17,10 +17,10 @@ var userRegistry map[string]cliCommand
 
 func init() {
 	userRegistry = map[string]cliCommand{
-		"create":	{
-			name: "create",
-			description: "Create a new user",
-			callback: commandCreateUser,
+		"register":	{
+			name: "register",
+			description: "Register a new user",
+			callback: commandRegisterUser,
 		},
 		"login":	{
 			name: "login",

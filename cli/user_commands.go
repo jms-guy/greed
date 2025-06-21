@@ -2,16 +2,19 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
-
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/config"
+	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
 )
 
-func commandCreateUser(c *config.Config, args []string) error {
+//Function registers a new user with the server
+func commandRegisterUser(c *config.Config, args []string) error {
 	if len(args) != 1 {
 		fmt.Printf("Incorrect number of arguments given - type --help for more details")
 		return nil 
@@ -84,7 +87,7 @@ func commandCreateUser(c *config.Config, args []string) error {
 		Email: email,
 	}
 
-	res, err := c.MakeBasicRequest("POST", registerURL, reqData)
+	res, err := c.MakeBasicRequest("POST", registerURL, "", reqData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -107,7 +110,7 @@ func commandCreateUser(c *config.Config, args []string) error {
 		Email: user.Email,
 	}
 
-	emailRes, err := c.MakeBasicRequest("POST", sendURL, emailData)
+	emailRes, err := c.MakeBasicRequest("POST", sendURL, "", emailData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -137,7 +140,7 @@ func commandCreateUser(c *config.Config, args []string) error {
 		Code: code,
 	}
 
-	verifyRes, err := c.MakeBasicRequest("POST", verifyURL, verifyData)
+	verifyRes, err := c.MakeBasicRequest("POST", verifyURL, "", verifyData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -146,5 +149,127 @@ func commandCreateUser(c *config.Config, args []string) error {
 		return fmt.Errorf("server returned error: %s", verifyRes.Status)
 	}
 
+	params := database.CreateUserParams{
+		ID: user.ID.String(),
+		Name: username,
+		CreatedAt: user.CreatedAt.Format("2006-01-02"),
+		UpdatedAt: user.UpdatedAt.Format("2006-01-02"),
+		HashedPassword: user.HashedPassword,
+		Email: user.Email,
+		IsVerified: sql.NullBool{Bool: true, Valid: true},
+	}
+
+	_, err = c.Db.CreateUser(context.Background(), params)
+	if err != nil {
+		return fmt.Errorf("error creating local record of user: %w", err)	
+	}
+
+	fmt.Printf("User: %s has been successfully registered!\n", username)
+	return nil
+}
+
+//Function creates a login session for user, getting auth tokens
+func commandUserLogin(c *config.Config, args []string) error {
+	if len(args) != 1 {
+		fmt.Printf("Incorrect number of arguments given - type --help for more details")
+		return nil 
+	}
+
+	username := args[0]
+
+	loginURL := c.Client.BaseURL + "/api/auth/login"
+	itemsURL := c.Client.BaseURL + "/api/items"
+	linkURL := c.Client.BaseURL + "/plaid/get-link-token"
+
+	pw, err := auth.ReadPassword("Please enter your password > ")
+	if err != nil {
+		return fmt.Errorf("error getting password: %w", err)
+	}
+
+	req := models.UserDetails{
+		Name: username,
+		Password: pw,
+	}
+
+	res, err := c.MakeBasicRequest("POST", loginURL, "", req)
+	if err != nil {
+		return fmt.Errorf("error making request: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >= 500 {
+		fmt.Println("Server error")
+		return nil
+	}
+	if res.StatusCode >= 400 {
+		fmt.Printf("Bad request - %s", res.Status)
+		return nil
+	}
+
+	var login models.LoginResponse
+
+	if err = json.NewDecoder(res.Body).Decode(&login); err != nil {
+		return fmt.Errorf("error decoding response data: %w", err)
+	}
+
+	err = auth.StoreTokens(login, c.ConfigFP)
+	if err != nil {
+		return fmt.Errorf("error storing auth tokens: %w", err)
+	}
+
+	itemsRes, err := c.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
+	if err != nil {
+		return fmt.Errorf("error making request: %w", err)
+	}
+	defer itemsRes.Body.Close()
+
+	if itemsRes.StatusCode >= 500 {
+		fmt.Println("Server error")
+		return nil 
+	}
+
+	if itemsRes.StatusCode == 200 {
+		var items []models.ItemName
+		if err = json.NewDecoder(itemsRes.Body).Decode(&items); err != nil {
+			 return fmt.Errorf("error decoding response data: %w", err)
+		}
+
+		fmt.Printf(" > Available items for user: %s\n", username)
+		fmt.Println(" ~~~~~")
+		for _, i := range items {
+			fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
+		}
+		return nil
+	}
 	
+	linkRes, err := c.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
+	if err != nil {
+		return fmt.Errorf("error making request: %w", err)
+	}
+	defer linkRes.Body.Close()
+
+	if linkRes.StatusCode >= 500 {
+		fmt.Println("Server error")
+		return nil 
+	}
+
+	if linkRes.StatusCode >= 400 {
+		fmt.Printf("Bad request - %s", linkRes.Status)
+		return nil
+	}
+	
+	var link models.LinkResponse
+	if err = json.NewDecoder(linkRes.Body).Decode(&link); err != nil {
+		return fmt.Errorf("error decoding response data: %w", err)
+	}
+
+	
+}
+
+func commandUserLogout(c *config.Config, args []string) error {
+	return nil 
+}
+
+func commandDeleteUser(c *config.Config, args []string) error {
+	return nil
 }

@@ -5,13 +5,16 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	mySQL "github.com/jms-guy/greed/cli/sql"
+	"github.com/jms-guy/greed/cli/internal/database"
 )
 
 //CLI config struct
 type Config struct {
-	Client				*Client			//Http client for handling server requests
-	LocalDatabase 		string 			//Filepath for accessing local database
-	OperatingSystem 	string 			//Local operating system
+	Client				*Client				//Http client for handling server requests
+	Db 					*database.Queries	//Local database queries
+	ConfigFP			string 				//Config file path
+	OperatingSystem 	string 				//Local operating system
 }
 
 //Initializes configuration struct 
@@ -40,16 +43,29 @@ func LoadConfig() (*Config, error) {
 		localDb = filepath.Join(homeDir, localDatabase)
 	}
 
+	queries, err := mySQL.OpenLocalDatabase(localDb)
+	if err != nil {
+		return nil, fmt.Errorf("error opening local database connection: %w", err)
+	}
+
+	cFP := os.Getenv("CONFIG_FILEPATH")
+	if cFP == "" {
+		cFP = ".config/greed" //Default
+	}
+
 	os := runtime.GOOS
 
 
 	config := Config{
 		Client: 			client,
-		LocalDatabase: 		localDb,
+		Db: 				queries,
+		ConfigFP: 			cFP,
 		OperatingSystem: 	os,
 	}
 
 	return &config, nil
 }
+
+
 
 

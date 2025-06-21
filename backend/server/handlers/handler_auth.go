@@ -176,6 +176,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	user := models.User{
 		ID: newUser.ID,
 		Name: newUser.Name,
+		HashedPassword: hash,
 		CreatedAt: newUser.CreatedAt,
 		UpdatedAt: newUser.UpdatedAt,
 		Email: newUser.Email,
