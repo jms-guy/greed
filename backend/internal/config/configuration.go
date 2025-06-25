@@ -11,6 +11,7 @@ type Config struct {
 	ServerAddress 			string
 	Environment 			string
 	DatabaseURL				string
+	StaticAssetsPath 		string
 	JWTSecret				string
 	JWTIssuer				string
 	JWTAudience				string
@@ -40,6 +41,11 @@ func LoadConfig() (*Config, error) {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
+	}
+
+	staticPath := os.Getenv("STATIC_ASSETS_PATH")
+	if staticPath == "" {
+		return nil, fmt.Errorf("STATIC_ASSETS_PATH environment variable not set")
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -117,22 +123,23 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config := Config{
-		ServerAddress: serverAddress,
-		Environment: environment,
-		DatabaseURL: dbURL,
-		JWTSecret: jwtSecret,
-		JWTIssuer: jwtIssuer,
-		JWTAudience: jwtAudience,
-		JWTExpiration: jwtExpiration,
-		RefreshExpiration: refreshExpiration,
-		RateLimit: limit,
-		RateRefresh: refresh,
-		SendGridAPIKey: sendGridAPIKey,
-		GreedEmail: greedEmail,
-		PlaidClientID: plaidClientID,
-		PlaidSecret: plaidSecret,
-		PlaidHost: plaidHost,
-		AESKey: aesKey,
+		ServerAddress: 				serverAddress,
+		Environment: 				environment,
+		DatabaseURL:				dbURL,
+		StaticAssetsPath: 			staticPath,
+		JWTSecret: 					jwtSecret,
+		JWTIssuer: 					jwtIssuer,
+		JWTAudience: 				jwtAudience,
+		JWTExpiration: 				jwtExpiration,
+		RefreshExpiration: 			refreshExpiration,
+		RateLimit: 					limit,
+		RateRefresh: 				refresh,
+		SendGridAPIKey: 			sendGridAPIKey,
+		GreedEmail: 				greedEmail,
+		PlaidClientID: 				plaidClientID,
+		PlaidSecret: 				plaidSecret,
+		PlaidHost: 					plaidHost,
+		AESKey: 					aesKey,
 	}
 
 	return &config, nil

@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/cli/internal/database"
@@ -124,6 +126,9 @@ func commandRegisterUser(c *config.Config, args []string) error {
 
 	fmt.Println(" < A verification email has been sent to the provided email address. > ")
 	fmt.Println(" < Please enter the verification code provided within the email below. > ")
+	fmt.Println(" < It can take up to a couple of minutes for the email to be received. If no email has been received, you can type 'resend' to try again. > ")
+	fmt.Println(" < Or you can type 'continue' to continue without a verified email address. > ")
+	fmt.Println(" < Please note, if your address has not been verified, you will be unable to change your password, or recover your account in case the password has been forgotten. > ")
 	for {
 		fmt.Print(" > ")
 		scanner.Scan()
@@ -132,6 +137,40 @@ func commandRegisterUser(c *config.Config, args []string) error {
 		if len(code) == 0 {
 			fmt.Println(" < Please enter the verification code provided within the email below. > ")
 			continue
+		}
+
+		if code == "resend" {
+			emailRes, err := c.MakeBasicRequest("POST", sendURL, "", emailData)
+			if err != nil {
+				return fmt.Errorf("error making http request: %w", err)
+			}
+
+			if emailRes.StatusCode >= 400 {
+				return fmt.Errorf("server returned error: %s", res.Status)
+			}
+
+			fmt.Printf(" < Another verification code has been sent to email: %s > \n", email)
+			continue
+		}
+
+		if code == "continue" {
+			params := database.CreateUserParams{
+				ID: user.ID.String(),
+				Name: username,
+				CreatedAt: user.CreatedAt.Format("2006-01-02"),
+				UpdatedAt: user.UpdatedAt.Format("2006-01-02"),
+				HashedPassword: user.HashedPassword,
+				Email: user.Email,
+				IsVerified: sql.NullBool{Bool: false, Valid: true},
+			}
+		
+			_, err = c.Db.CreateUser(context.Background(), params)
+			if err != nil {
+				return fmt.Errorf("error creating local record of user: %w", err)	
+			}
+		
+			fmt.Printf("User: %s has been successfully registered!\n", username)
+			return nil
 		}
 		break
 	}
@@ -180,6 +219,7 @@ func commandUserLogin(c *config.Config, args []string) error {
 	loginURL := c.Client.BaseURL + "/api/auth/login"
 	itemsURL := c.Client.BaseURL + "/api/items"
 	linkURL := c.Client.BaseURL + "/plaid/get-link-token"
+	redirectURL := c.Client.BaseURL + "/link"
 
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
@@ -229,17 +269,22 @@ func commandUserLogin(c *config.Config, args []string) error {
 	}
 
 	if itemsRes.StatusCode == 200 {
-		var items []models.ItemName
-		if err = json.NewDecoder(itemsRes.Body).Decode(&items); err != nil {
-			 return fmt.Errorf("error decoding response data: %w", err)
+		var itemsResp struct {
+			Items []models.ItemName `json:"items"`
 		}
-
-		fmt.Printf(" > Available items for user: %s\n", username)
-		fmt.Println(" ~~~~~")
-		for _, i := range items {
-			fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
+		if err = json.NewDecoder(itemsRes.Body).Decode(&itemsResp); err != nil {
+			return fmt.Errorf("error decoding response data: %w", err)
 		}
-		return nil
+		
+		if len(itemsResp.Items) != 0 {
+			fmt.Printf(" > Available items for user: %s\n", username)
+			fmt.Println(" ~~~~~")
+			for _, i := range itemsResp.Items {
+				fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
+			}
+			return nil
+		}
+	
 	}
 	
 	linkRes, err := c.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
@@ -263,7 +308,12 @@ func commandUserLogin(c *config.Config, args []string) error {
 		return fmt.Errorf("error decoding response data: %w", err)
 	}
 
-	
+	err = utils.OpenLink(c.OperatingSystem, redirectURL)
+	if err != nil {
+		return fmt.Errorf("error opening redirect link: %w", err)
+	}
+
+	return nil
 }
 
 func commandUserLogout(c *config.Config, args []string) error {

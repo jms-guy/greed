@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
@@ -86,6 +87,19 @@ func Run() error {
 
 	r.Use(handlers.LoggingMiddleware(kitLogger))
 	r.Use(app.RateLimitMiddleware)
+
+	//FileServer Operations
+	r.Group(func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Index"))
+		})
+
+		workDir, _ := os.Getwd()
+		staticPath := filepath.Join(workDir, app.Config.StaticAssetsPath)
+		r.Get("/link", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, filepath.Join(staticPath, "link.html"))
+		})
+	})
 
 	//Authentication and authorization operations
 	r.Group(func(r chi.Router) {

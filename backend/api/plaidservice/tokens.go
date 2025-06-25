@@ -23,7 +23,7 @@ func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (
 		DaysRequested: plaid.PtrInt32(730),
 	  }
 
-	request.SetProducts([]plaid.Products{plaid.PRODUCTS_BALANCE, plaid.PRODUCTS_TRANSACTIONS})
+	request.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
 	request.SetLinkCustomizationName("default")
 	request.SetTransactions(transactions)
 	request.SetAccountFilters(plaid.LinkTokenAccountFilters{

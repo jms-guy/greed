@@ -11,6 +11,7 @@ import (
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/models"
+	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 //Endpoint gets a Link token from Plaid and serves it to the client
@@ -26,8 +27,13 @@ func (app *AppServer) HandlerGetLinkToken(w http.ResponseWriter, r *http.Request
 
 	linkToken, err := plaidservice.GetLinkToken(app.PClient, ctx, id.String())
 	if err != nil {
+		if plaidErr, ok := err.(plaid.GenericOpenAPIError); ok {
+			fmt.Printf("Plaid error: %s\n", string(plaidErr.Body()))
+		} else {
+			fmt.Println("Error:", err.Error())
+		}
 		app.respondWithError(w, 500, "Error getting link token from Plaid", err)
-		return 
+    	return 
 	}
 
 	response := models.LinkResponse{

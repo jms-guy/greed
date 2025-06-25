@@ -2,11 +2,17 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"strings"
 )
 
 //Automatically opens Link URL from client
 func OpenLink(system, link string) error {
+	if system == "linux" && isWSL() {
+		// Use Windows default browser for WSL
+		return exec.Command("cmd.exe", "/c", "start", link).Run()
+	}
 
 	switch system {
 	case "linux":
@@ -18,4 +24,13 @@ func OpenLink(system, link string) error {
 	default:
 		return fmt.Errorf("operating system %q not supported for automatic link flow", system)
 	}
+}
+
+//Detects WSL running
+func isWSL() bool {
+    data, err := os.ReadFile("/proc/version")
+    if err != nil {
+        return false
+    }
+    return strings.Contains(strings.ToLower(string(data)), "microsoft")
 }

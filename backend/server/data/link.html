@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Plaid Link</title>
+    <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+</head>
+
+<body>
+    <h2>Bank Connection</h2>
+    <button id="link-btn">Connect Your Account</button>
+
+    <script>
+        // Get link_token from ?token=... in the URL
+        function getLinkToken() {
+            const url = new URL(window.location.href);
+            return url.searchParams.get('token');
+        }
+
+        document.getElementById('link-btn').onclick = function () {
+            const linkToken = getLinkToken();
+            if (!linkToken) {
+                alert('No link token found in URL!');
+                return;
+            }
+
+            const handler = Plaid.create({
+                token: linkToken,
+                onSuccess: function (public_token, metadata) {
+                    alert('Success! Token: ' + public_token);
+                    // You might want to send this to your backend here.
+                },
+                onExit: function (err, metadata) {
+                    alert('Exited Plaid Link.');
+                }
+            });
+
+            handler.open();
+        };
+    </script>
+</body>
+
+</html>
