@@ -308,6 +308,7 @@ func commandUserLogin(c *config.Config, args []string) error {
 		return fmt.Errorf("error decoding response data: %w", err)
 	}
 
+	redirectURL = redirectURL + "?token=" + link.LinkToken
 	err = utils.OpenLink(c.OperatingSystem, redirectURL)
 	if err != nil {
 		return fmt.Errorf("error opening redirect link: %w", err)

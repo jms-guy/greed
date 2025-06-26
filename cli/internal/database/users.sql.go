@@ -10,6 +10,15 @@ import (
 	"database/sql"
 )
 
+const clearUsers = `-- name: ClearUsers :exec
+DELETE FROM users
+`
+
+func (q *Queries) ClearUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, clearUsers)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users(id, name, created_at, updated_at, hashed_password, email, is_verified)
 VALUES (
@@ -55,4 +64,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.IsVerified,
 	)
 	return i, err
+}
+
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users
+WHERE name = ?
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, name)
+	return err
 }

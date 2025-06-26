@@ -10,3 +10,10 @@ VALUES (
     ?
 )
 RETURNING *;
+
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE name = ?;
+
+-- name: ClearUsers :exec
+DELETE FROM users;

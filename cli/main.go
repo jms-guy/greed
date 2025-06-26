@@ -45,6 +45,15 @@ func main() {
 		if err != nil {
 			log.Fatalf("%s\n", err)
 		}
-	} 
+	} else if registry == "admin" {
+		cmd, ok := adminRegistry[command]
+		if !ok {
+			log.Fatalf("Command not found")
+		}
+		err = cmd.callback(cfg, args[3:])
+		if err != nil {
+			log.Fatalf("%s\n", err)
+		}
+	}
 
 }

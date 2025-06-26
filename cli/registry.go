@@ -13,7 +13,8 @@ type cliCommand struct {
 	callback		func(c *config.Config, args []string) error
 }
 
-var userRegistry map[string]cliCommand
+var userRegistry 	map[string]cliCommand
+var adminRegistry 	map[string]cliCommand
 
 func init() {
 	userRegistry = map[string]cliCommand{
@@ -36,6 +37,14 @@ func init() {
 			name: "user-delete",
 			description: "Deletes a user from the database",
 			callback: commandDeleteUser,
+		},
+	}
+
+	adminRegistry = map[string]cliCommand{
+		"clear": {
+			name: "clear",
+			description: "Clear local database",
+			callback: commandAdminClear,
 		},
 	}
 }
