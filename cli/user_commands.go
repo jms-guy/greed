@@ -12,6 +12,7 @@ import (
 	"time"
 
 	//"github.com/jms-guy/greed/cli/internal/utils"
+	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/cli/internal/database"
@@ -792,5 +793,135 @@ func commandUpdatePassword(c *config.Config, args []string) error {
 	}
 
 	fmt.Println("Password updated successfully")
+	return nil
+}
+
+//Resets a user's forgotten password, allowing for account recovery
+func commandResetPassword(c *config.Config, args []string) error {
+	if len(args) != 1 {
+		fmt.Println("Incorrect number of arguments - type --help for more details")
+		return nil 
+	}
+
+	email := args[0]
+
+	sendURL := c.Client.BaseURL + "/api/auth/email/send"
+	resetURL := c.Client.BaseURL + "/api/auth/reset-password"
+
+	user, err := c.Db.GetUserByEmail(context.Background(), email)
+	if err != nil {
+		return fmt.Errorf("error getting user record: %w", err)
+	}
+
+	var password string
+
+	for {
+		pw, err := auth.ReadPassword("Please enter a new password for your user > ")
+		if err != nil {
+			return fmt.Errorf("error getting password: %w", err)
+		}
+
+		if len(pw) < 8 {
+			fmt.Println("Password must be greater than 8 characters")
+			continue
+		} else {
+			for {
+				confirmPw, err := auth.ReadPassword("Confirm password > ")
+				if err != nil {
+					return fmt.Errorf("error reading confirmed password: %w", err)
+				}
+
+				if confirmPw == pw {
+					password = pw
+					break
+				} else {
+					fmt.Println("Password does not match")
+					continue
+				}
+			}
+			break
+		}
+	}
+
+	request := models.EmailVerification{
+		UserID: uuid.MustParse(user.ID),
+		Email: user.Email,
+	}
+
+	emailResp, err := c.MakeBasicRequest("POST", sendURL, "", request)
+	if err != nil {
+		return fmt.Errorf("error making http request: %w", err)
+	}
+	defer emailResp.Body.Close()
+
+	if emailResp.StatusCode >= 500 {
+		fmt.Println("Server error")
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	var code string
+
+	fmt.Println(" < An email with a verification code has been sent to user's email. Please type in the code to continue > ")
+		for {
+		fmt.Print(" > ")
+		scanner.Scan()
+		code = scanner.Text()
+
+		if len(code) == 0 {
+			fmt.Println(" < Please enter the verification code provided within the email below. > ")
+			continue
+		}
+
+		if code == "resend" {
+			emailRes, err := c.MakeBasicRequest("POST", sendURL, "", request)
+			if err != nil {
+				return fmt.Errorf("error making http request: %w", err)
+			}
+
+			if emailRes.StatusCode >= 400 {
+				return fmt.Errorf("server returned error: %s", emailRes.Status)
+			}
+
+			fmt.Printf(" < Another verification code has been sent to email: %s > \n",user.Email)
+			continue
+		}
+		break
+	}
+
+	resetReq := models.ResetPassword{
+		Email: user.Email,
+		Code: code,
+		NewPassword: password,
+	}
+
+	resetResp, err := c.MakeBasicRequest("POST", resetURL, "", resetReq)
+	if err != nil {
+		return fmt.Errorf("error making http request: %w", err)
+	}
+	defer resetResp.Body.Close()
+
+	if resetResp.StatusCode >= 500 {
+		fmt.Println("Server error")
+		return nil 
+	}
+
+	var updated models.UpdatedPassword
+
+	if err = json.NewDecoder(resetResp.Body).Decode(&updated); err != nil {
+		return fmt.Errorf("error decoding response data: %w", err)
+	}
+
+	params := database.UpdatePasswordParams{
+		HashedPassword: updated.HashPassword,
+		UpdatedAt: time.Now().Format("2006-01-02"),
+		Name: user.Name,
+	}
+
+	err = c.Db.UpdatePassword(context.Background(), params)
+	if err != nil {
+		return fmt.Errorf("error updating local user record: %w", err)
+	}
+
+	fmt.Println("Password successfully reset")
 	return nil
 }

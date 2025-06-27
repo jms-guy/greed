@@ -54,10 +54,19 @@ func init() {
 			description: "Updates a user's password",
 			callback: commandUpdatePassword,
 		},
+		"resetpw": 	{
+			name: "resetpw",
+			description: "Resets a user's forgotten password",
+			callback: commandResetPassword,
+		},
 	}
 
 	accountRegistry = map[string]cliCommand{
-
+		"accounts": {
+			name: "accounts",
+			description: "Lists accounts for given item",
+			callback: commandListAccounts,
+		},
 	}
 
 	adminRegistry = map[string]cliCommand{

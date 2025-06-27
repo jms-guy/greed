@@ -360,5 +360,9 @@ func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Reques
 		return 
 	}
 
-	app.respondWithJSON(w, 200, "User password reset successfully")
+	updated := models.UpdatedPassword{
+		HashPassword: hashedPass,
+	}
+
+	app.respondWithJSON(w, 200, updated)
 }
