@@ -11,6 +11,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+//Don't forget, update bufio scanners to handle sigInt
+
 func main() {
 
 	err := godotenv.Load()
@@ -28,7 +30,7 @@ func main() {
 	if len(args) < 3 {
 		fmt.Println("Command Usage: greed [registry] <subcommand> {arguments}")
 		fmt.Println("Example Command: greed user register James")
-		fmt.Println("Type {greed help} for more details")
+		fmt.Println("Type {greed --help} for more details")
 		os.Exit(1)
 	}
 

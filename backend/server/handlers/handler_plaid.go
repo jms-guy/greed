@@ -14,6 +14,49 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
+func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
+
+	accessToken, err := plaidservice.GetSandboxToken(app.PClient, ctx)
+	if err != nil {
+		app.respondWithError(w, 500, "Service error", fmt.Errorf("error getting sandbox token: %w", err))
+		return
+	}
+
+	encryptedAccessToken, err := encrypt.EncryptAccessToken([]byte(accessToken.AccessToken), app.Config.AESKey)
+	if err != nil {
+		app.respondWithError(w, 500, "Error encrypting access token", err)
+		return
+	}
+
+	nickName := sql.NullString{String: "Test", Valid: true}
+
+	cursor := sql.NullString{String: "", Valid: true}
+
+	params := database.CreateItemParams{
+		ID: accessToken.ItemId,
+		UserID: id,
+		AccessToken: encryptedAccessToken,
+		InstitutionName: "Plaid Banking",
+		Nickname: nickName,
+		TransactionSyncCursor: cursor,
+	}
+		
+	_, err = app.Db.CreateItem(ctx, params)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error creating item record: %w", err))
+		return
+	}
+
+	app.respondWithJSON(w, 201, "Item created")
+}
+
 //Endpoint gets a Link token from Plaid and serves it to the client
 func (app *AppServer) HandlerGetLinkToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

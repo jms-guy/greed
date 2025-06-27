@@ -75,3 +75,57 @@ func (q *Queries) DeleteUser(ctx context.Context, name string) error {
 	_, err := q.db.ExecContext(ctx, deleteUser, name)
 	return err
 }
+
+const getUser = `-- name: GetUser :one
+SELECT id, name, created_at, updated_at, hashed_password, email, is_verified FROM users
+WHERE name = ?
+`
+
+func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, name)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.HashedPassword,
+		&i.Email,
+		&i.IsVerified,
+	)
+	return i, err
+}
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE users
+SET hashed_password = ?, updated_at = ?
+WHERE name = ?
+`
+
+type UpdatePasswordParams struct {
+	HashedPassword string
+	UpdatedAt      string
+	Name           string
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updatePassword, arg.HashedPassword, arg.UpdatedAt, arg.Name)
+	return err
+}
+
+const verifyEmail = `-- name: VerifyEmail :exec
+UPDATE users
+SET is_verified = ?, updated_at = ?
+WHERE name = ?
+`
+
+type VerifyEmailParams struct {
+	IsVerified sql.NullBool
+	UpdatedAt  string
+	Name       string
+}
+
+func (q *Queries) VerifyEmail(ctx context.Context, arg VerifyEmailParams) error {
+	_, err := q.db.ExecContext(ctx, verifyEmail, arg.IsVerified, arg.UpdatedAt, arg.Name)
+	return err
+}

@@ -2,9 +2,38 @@ package plaidservice
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
+
+//Sandbox access token generation
+func GetSandboxToken(client *plaid.APIClient, ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
+	sandboxPublicTokenResp, _, err := client.PlaidApi.SandboxPublicTokenCreate(ctx).SandboxPublicTokenCreateRequest(
+		*plaid.NewSandboxPublicTokenCreateRequest(
+			"ins_109508",
+			[]plaid.Products{plaid.PRODUCTS_TRANSACTIONS},
+		),
+	).Execute()
+	if err != nil {
+		if apiErr, ok := err.(plaid.GenericOpenAPIError); ok {
+			fmt.Println("Plaid error body:", string(apiErr.Body()))
+		}
+		return plaid.ItemPublicTokenExchangeResponse{}, err
+	}
+	exchangePublicTokenResp, _, err := client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
+		*plaid.NewItemPublicTokenExchangeRequest(sandboxPublicTokenResp.GetPublicToken()),
+	  ).Execute()
+	if err != nil {
+		if apiErr, ok := err.(plaid.GenericOpenAPIError); ok {
+			fmt.Println("Plaid error body:", string(apiErr.Body()))
+		}
+		return plaid.ItemPublicTokenExchangeResponse{}, err 
+	}
+
+	return exchangePublicTokenResp, nil
+}
 
 //Requests Plaid API for a Link token for client use
 func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (string, error) {

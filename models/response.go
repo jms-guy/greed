@@ -88,6 +88,13 @@ type LinkResponse struct {
 }
 
 /*
+	/api/users/update-password
+*/
+type UpdatedPassword struct{
+	HashPassword 	string 	`json:"hash_password"`
+}
+
+/*
 	/auth/refresh
 */
 type RefreshResponse struct{
@@ -99,7 +106,7 @@ type RefreshResponse struct{
 /*
 	/auth/login
 */
-type LoginResponse struct{
+type Credentials struct{
 	User 			User	`json:"user"`
 	RefreshToken	string	`json:"refresh_token"`
 	AccessToken		string	`json:"access_token"`

@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
 )
 
@@ -49,4 +51,15 @@ func ReadPassword(prompt string) (string, error) {
 		os.Exit(1)
 		return "", nil
 	}
+}
+
+func ValidatePasswordHash(hash, password string) error {
+	pass := []byte(password)
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), pass)
+	if err != nil {
+		return fmt.Errorf("error comparing password against hash: %w", err)
+	}
+
+	return nil
 }

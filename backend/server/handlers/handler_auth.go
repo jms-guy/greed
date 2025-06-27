@@ -108,7 +108,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	response := models.LoginResponse{
+	response := models.Credentials{
 		User: models.User{
 			ID: user.ID,
 			Name: user.Name,

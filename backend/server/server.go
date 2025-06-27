@@ -121,6 +121,7 @@ func Run() error {
 	r.Group(func(r chi.Router) {
 		r.Use(app.DevAuthMiddleware)
 		r.Get("/admin/users", app.HandlerGetListOfUsers)									//Get list of users
+		r.With(app.AuthMiddleware).Post("/admin/sandbox", app.HandlerGetSandboxToken)
 
 		r.Route("/admin/reset", func(r chi.Router) {										//Methods reset the respective database tables
 			r.Post("/users", app.HandlerResetUsers)

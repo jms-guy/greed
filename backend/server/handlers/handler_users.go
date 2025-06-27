@@ -144,6 +144,10 @@ func (app *AppServer) HandlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 		return 
 	}
 
-	app.respondWithJSON(w, 200, "Password updated successfully")
+	updatedResponse := models.UpdatedPassword{
+		HashPassword: hashedPassword,
+	}
+
+	app.respondWithJSON(w, 200, updatedResponse)
 }
 
