@@ -53,6 +53,7 @@ func ReadPassword(prompt string) (string, error) {
 	}
 }
 
+//Validates a password against local database hash
 func ValidatePasswordHash(hash, password string) error {
 	pass := []byte(password)
 

@@ -12,6 +12,7 @@ import (
 )
 
 //Don't forget, update bufio scanners to handle sigInt
+//Deal with missing closing quotation marks in arguments
 
 func main() {
 
@@ -38,42 +39,9 @@ func main() {
  	registry := args[1]
 	command := args[2]
 
-	if registry == "user" {
-		cmd, ok := userRegistry[command]
-		if !ok {
-			log.Fatalf("Command not found")
-		}
-		err = cmd.callback(cfg, args[3:])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-		}
-	}  else if  registry == "item" {
-		cmd, ok := itemRegistry[command]
-		if !ok {
-			log.Fatalf("Command not found")
-		}
-		err = cmd.callback(cfg, args[3:])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-		}
-	}  else if  registry == "account" {
-		cmd, ok := accountsRegistry[command]
-		if !ok {
-			log.Fatalf("Command not found")
-		}
-		err = cmd.callback(cfg, args[3:])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-		}
-	} else if registry == "admin" {
-		cmd, ok := adminRegistry[command]
-		if !ok {
-			log.Fatalf("Command not found")
-		}
-		err = cmd.callback(cfg, args[3:])
-		if err != nil {
-			log.Fatalf("%s\n", err)
-		}
+	err = FindRegistry(cfg, registry, command, args[3:])
+	if err != nil {
+		log.Fatalf("%s\n", err)
 	}
 
 }

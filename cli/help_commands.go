@@ -15,7 +15,7 @@ func commandHelp(c *config.Config, args []string) error {
 
 	//Too many arguments
 	if len(args) > 1 {
-		log.Println("Too many arguments given - type help for more details")
+		log.Println("Too many arguments given - type --help for more details")
 		return nil
 	}
 

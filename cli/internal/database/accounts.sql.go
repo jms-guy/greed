@@ -110,6 +110,38 @@ func (q *Queries) DeleteAccounts(ctx context.Context, arg DeleteAccountsParams) 
 	return err
 }
 
+const getAccount = `-- name: GetAccount :one
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, institution_name, user_id FROM accounts
+WHERE name = ?
+AND user_id = ?
+`
+
+type GetAccountParams struct {
+	Name   string
+	UserID string
+}
+
+func (q *Queries) GetAccount(ctx context.Context, arg GetAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, arg.Name, arg.UserID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Type,
+		&i.Subtype,
+		&i.Mask,
+		&i.OfficialName,
+		&i.AvailableBalance,
+		&i.CurrentBalance,
+		&i.IsoCurrencyCode,
+		&i.InstitutionName,
+		&i.UserID,
+	)
+	return i, err
+}
+
 const getAllAccounts = `-- name: GetAllAccounts :many
 SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, institution_name, user_id FROM accounts
 WHERE user_id = ?

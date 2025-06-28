@@ -30,7 +30,7 @@ func DoWithAutoRefresh(c *config.Config, doRequest func(string) (*http.Response,
 	return resp, err
 }
 
-//Refreshs JWT and refresh token for user
+//Refreshs JWT and refresh token for user - logs user out automatically if session is expired
 func refreshCreds(c *config.Config) error {
 	refreshURL := c.Client.BaseURL + "/api/auth/refresh"
 
@@ -55,9 +55,19 @@ func refreshCreds(c *config.Config) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s", resp.Status)
+		fmt.Printf("Bad request - %s\n", resp.Status)
 		body, _ := io.ReadAll(resp.Body)
-		fmt.Printf("Error details: %s\n", string(body))
+		var errResp struct {
+			Error string `json:"error"`
+		}
+		if err := json.Unmarshal(body, &errResp); err == nil {
+			if errResp.Error == "Token is expired" {
+				fmt.Println(" < User's session is expired, please re-login. > ")
+				if err := commandUserLogout(c, []string{}); err != nil {
+					return fmt.Errorf("error logging user out: %w", err)
+				}
+			}
+		}
 		return nil
 	}
 
