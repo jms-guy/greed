@@ -21,6 +21,7 @@ type Account struct {
 	CurrentBalance   sql.NullFloat64
 	IsoCurrencyCode  sql.NullString
 	InstitutionName  sql.NullString
+	UserID           string
 }
 
 type Transaction struct {

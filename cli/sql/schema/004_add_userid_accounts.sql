@@ -1,0 +1,4 @@
+-- +goose Up
+ALTER TABLE accounts
+ADD user_id TEXT NOT NULL REFERENCES users(id)
+ON DELETE CASCADE;

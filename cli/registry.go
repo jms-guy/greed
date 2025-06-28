@@ -15,6 +15,7 @@ type cliCommand struct {
 
 var userRegistry 	map[string]cliCommand
 var accountRegistry map[string]cliCommand
+var itemRegistry   map[string]cliCommand
 var adminRegistry 	map[string]cliCommand
 
 func init() {
@@ -58,6 +59,24 @@ func init() {
 			name: "resetpw",
 			description: "Resets a user's forgotten password",
 			callback: commandResetPassword,
+		},
+	}
+
+	itemRegistry = map[string]cliCommand{
+		"accounts": {
+			name: "accounts",
+			description: "Gets list of accounts for user",
+			callback: commandGetAccounts,
+		},
+		"rename": {
+			name: "rename",
+			description: "Rename an item",
+			callback: commandRenameItem,
+		},
+		"delete": {
+			name: "delete",
+			description: "Delete an item record",
+			callback: commandDeleteItem,
 		},
 	}
 
