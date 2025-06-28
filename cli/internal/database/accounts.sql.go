@@ -23,8 +23,10 @@ INSERT INTO accounts(
     available_balance, 
     current_balance, 
     iso_currency_code, 
-    institution_name)
+    institution_name,
+    user_id)
 VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -54,6 +56,7 @@ type CreateAccountParams struct {
 	CurrentBalance   sql.NullFloat64
 	IsoCurrencyCode  sql.NullString
 	InstitutionName  sql.NullString
+	UserID           string
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
@@ -70,6 +73,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		arg.CurrentBalance,
 		arg.IsoCurrencyCode,
 		arg.InstitutionName,
+		arg.UserID,
 	)
 	var i Account
 	err := row.Scan(
@@ -104,4 +108,46 @@ type DeleteAccountsParams struct {
 func (q *Queries) DeleteAccounts(ctx context.Context, arg DeleteAccountsParams) error {
 	_, err := q.db.ExecContext(ctx, deleteAccounts, arg.InstitutionName, arg.UserID)
 	return err
+}
+
+const getAllAccounts = `-- name: GetAllAccounts :many
+SELECT id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, institution_name, user_id FROM accounts
+WHERE user_id = ?
+`
+
+func (q *Queries) GetAllAccounts(ctx context.Context, userID string) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAccounts, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Type,
+			&i.Subtype,
+			&i.Mask,
+			&i.OfficialName,
+			&i.AvailableBalance,
+			&i.CurrentBalance,
+			&i.IsoCurrencyCode,
+			&i.InstitutionName,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

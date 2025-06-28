@@ -14,7 +14,7 @@ type cliCommand struct {
 }
 
 var userRegistry 	map[string]cliCommand
-var accountRegistry map[string]cliCommand
+var accountsRegistry map[string]cliCommand
 var itemRegistry   map[string]cliCommand
 var adminRegistry 	map[string]cliCommand
 
@@ -63,11 +63,6 @@ func init() {
 	}
 
 	itemRegistry = map[string]cliCommand{
-		"accounts": {
-			name: "accounts",
-			description: "Gets list of accounts for user",
-			callback: commandGetAccounts,
-		},
 		"rename": {
 			name: "rename",
 			description: "Rename an item",
@@ -80,11 +75,26 @@ func init() {
 		},
 	}
 
-	accountRegistry = map[string]cliCommand{
-		"accounts": {
-			name: "accounts",
-			description: "Lists accounts for given item",
+	accountsRegistry = map[string]cliCommand{
+		"get": {
+			name: "get",
+			description: "Get all accounts for an item",
+			callback: commandGetAccounts,
+		},
+		"list": {
+			name: "list",
+			description: "List all accounts for item",
 			callback: commandListAccounts,
+		},
+		"listall": {
+			name: "listall",
+			description: "Lists all accounts for user",
+			callback: commandListAllAccounts,
+		},
+		"info": {
+			name: "info",
+			description: "Lists account information for given account name",
+			callback: commandAccountInfo,
 		},
 	}
 

@@ -11,8 +11,10 @@ INSERT INTO accounts(
     available_balance, 
     current_balance, 
     iso_currency_code, 
-    institution_name)
+    institution_name,
+    user_id)
 VALUES (
+    ?,
     ?,
     ?,
     ?,
@@ -27,6 +29,10 @@ VALUES (
     ?
 )
 RETURNING *; 
+
+-- name: GetAllAccounts :many
+SELECT * FROM accounts
+WHERE user_id = ?;
 
 -- name: DeleteAccounts :exec
 DELETE FROM accounts

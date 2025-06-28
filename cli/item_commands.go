@@ -8,17 +8,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
 )
-
-//Gets all accounts for user
-func commandGetAccounts(c *config.Config, args []string) error {
-	
-}
 
 //Rename an item
 func commandRenameItem(c *config.Config, args []string) error {
