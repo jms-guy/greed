@@ -11,7 +11,8 @@ INSERT INTO accounts(
     available_balance,
     current_balance,
     iso_currency_code, 
-    item_id)
+    item_id,
+    user_id)
 VALUES (
     $1,
     NOW(),
@@ -24,7 +25,8 @@ VALUES (
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11
 )
 RETURNING *;
 

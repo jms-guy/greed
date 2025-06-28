@@ -3,6 +3,7 @@ module github.com/jms-guy/greed
 go 1.24.0
 
 require (
+	github.com/fatih/color v1.18.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-kit/log v0.2.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
@@ -11,6 +12,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/plaid/plaid-go/v36 v36.0.0
 	github.com/pressly/goose/v3 v3.24.3
+	github.com/rodaine/table v1.3.0
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	golang.org/x/crypto v0.38.0
 	golang.org/x/term v0.32.0
@@ -21,6 +23,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect

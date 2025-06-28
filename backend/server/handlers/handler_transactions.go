@@ -73,6 +73,8 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 			&t.MerchantName,
 			&t.PaymentChannel,
 			&t.PersonalFinanceCategory,
+			&t.CreatedAt,
+			&t.UpdatedAt,
 		); err != nil {
 			app.respondWithError(w, 500, "Error parsing transaction rows", err)
 			return 

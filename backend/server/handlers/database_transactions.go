@@ -84,11 +84,16 @@ func ApplyTransactionUpdates(app *AppServer, ctx context.Context, added, modifie
 		}
 		txnDate, _ := time.Parse("2006-01-02", txn.Date)
 
+		pfCategory := ""
+		if txn.PersonalFinanceCategory.IsSet() {
+			pfCategory = txn.PersonalFinanceCategory.Get().Primary
+		}
+
 		n := i*8
 		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			n+1, n+2, n+3, n+4, n+5, n+6, n+7, n+8))
 		valueArgs = append(valueArgs,
-			txn.TransactionId, txn.AccountId, txn.Amount, curCode, txnDate, merchant, txn.PaymentChannel, txn.PersonalFinanceCategory,)
+			txn.TransactionId, txn.AccountId, txn.Amount, curCode, txnDate, merchant, txn.PaymentChannel, pfCategory,)
 	}
 
 	insertStmt := fmt.Sprintf(`

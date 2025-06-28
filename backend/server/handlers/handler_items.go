@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
@@ -15,6 +16,12 @@ import (
 //Handler populates accounts table in database with account records grabbed from Plaid item ID attached to user
 func (app *AppServer) HandlerCreateAccounts(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
 
 	itemID := chi.URLParam(r, "item-id")
 	
@@ -82,6 +89,7 @@ func (app *AppServer) HandlerCreateAccounts(w http.ResponseWriter, r *http.Reque
 			CurrentBalance: accBalCur,
 			IsoCurrencyCode: curCode,
 			ItemID: itemID,
+			UserID: id,
 		}
 
 		dbAcc, err := app.Db.CreateAccount(ctx, params)
@@ -209,7 +217,7 @@ func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) 
 	app.respondWithJSON(w, 200, "Item deleted successfully")
 }
 
-//Function to populate database with transaction data for a given account
+//Function to populate database with transaction data for a given item
 func (app *AppServer) HandlerSyncTransactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -227,11 +235,7 @@ func (app *AppServer) HandlerSyncTransactions(w http.ResponseWriter, r *http.Req
 		AccessToken: accessToken,
 	}
 	cursor, err := app.Db.GetCursor(ctx, params)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			app.respondWithError(w, 400, "No record found", nil)
-			return 
-		}
+	if err != nil && err != sql.ErrNoRows{
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting cursor: %w", err))
 		return 
 	}

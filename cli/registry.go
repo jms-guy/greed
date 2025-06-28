@@ -180,7 +180,7 @@ func init() {
 	transactionsRegistry = map[string]cliCommand{
 		"get": {
 			name: "get",
-			description: "Gets list of transactions for account",
+			description: "Gets list of transactions for account. Takes many optional arguments, type [--help transactions] for more details",
 			usage: "greed transactions get {account name}",
 			callback: commandGetTxnsAccount,
 		},

@@ -25,7 +25,8 @@ INSERT INTO accounts(
     available_balance,
     current_balance,
     iso_currency_code, 
-    item_id)
+    item_id,
+    user_id)
 VALUES (
     $1,
     NOW(),
@@ -38,7 +39,8 @@ VALUES (
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11
 )
 RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id
 `
@@ -54,6 +56,7 @@ type CreateAccountParams struct {
 	CurrentBalance   sql.NullString
 	IsoCurrencyCode  sql.NullString
 	ItemID           string
+	UserID           uuid.UUID
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
@@ -68,6 +71,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		arg.CurrentBalance,
 		arg.IsoCurrencyCode,
 		arg.ItemID,
+		arg.UserID,
 	)
 	var i Account
 	err := row.Scan(
