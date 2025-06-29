@@ -1,19 +1,17 @@
-package main
+package cmd
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-
 	"github.com/jms-guy/greed/cli/internal/auth"
-	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/models"
 )
 
 //Wrapper function for refreshing JWT token logic
-func DoWithAutoRefresh(c *config.Config, doRequest func(string) (*http.Response, error)) (*http.Response, error) {
-	creds, _ := auth.GetCreds(c.ConfigFP)
+func DoWithAutoRefresh(app *CLIApp, doRequest func(string) (*http.Response, error)) (*http.Response, error) {
+	creds, _ := auth.GetCreds(app.Config.ConfigFP)
 	resp, err := doRequest(creds.AccessToken)
 	if err != nil {
 		return nil, err 
@@ -21,20 +19,20 @@ func DoWithAutoRefresh(c *config.Config, doRequest func(string) (*http.Response,
 
 	if resp.StatusCode == 401 {
 		resp.Body.Close()
-		if err := refreshCreds(c); err != nil {
+		if err := refreshCreds(app); err != nil {
 			return nil, err 
 		}
-		creds, _  = auth.GetCreds(c.ConfigFP)
+		creds, _  = auth.GetCreds(app.Config.ConfigFP)
 		resp, err = doRequest(creds.AccessToken)
 	}
 	return resp, err
 }
 
 //Refreshs JWT and refresh token for user - logs user out automatically if session is expired
-func refreshCreds(c *config.Config) error {
-	refreshURL := c.Client.BaseURL + "/api/auth/refresh"
+func refreshCreds(app *CLIApp) error {
+	refreshURL := app.Config.Client.BaseURL + "/api/auth/refresh"
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return err
 	}
@@ -43,7 +41,7 @@ func refreshCreds(c *config.Config) error {
 		RefreshToken: creds.RefreshToken,
 	}
 
-	resp, err := c.MakeBasicRequest("POST", refreshURL, "", request)
+	resp, err := app.Config.MakeBasicRequest("POST", refreshURL, "", request)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -63,7 +61,7 @@ func refreshCreds(c *config.Config) error {
 		if err := json.Unmarshal(body, &errResp); err == nil {
 			if errResp.Error == "Token is expired" {
 				fmt.Println(" < User's session is expired, please re-login. > ")
-				if err := commandUserLogout(c, []string{}); err != nil {
+				if err := app.commandUserLogout([]string{}); err != nil {
 					return fmt.Errorf("error logging user out: %w", err)
 				}
 			}
@@ -80,7 +78,7 @@ func refreshCreds(c *config.Config) error {
 	creds.AccessToken = response.AccessToken
 	creds.RefreshToken = response.RefreshToken
 
-	err = auth.StoreTokens(creds, c.ConfigFP)
+	err = auth.StoreTokens(creds, app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error storing new tokens: %w", err)
 	}

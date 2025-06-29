@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bufio"
@@ -11,26 +11,21 @@ import (
 	"os"
 	"strconv"
 	"time"
-
+	"github.com/jms-guy/greed/cli/internal/tables"
 	"github.com/jms-guy/greed/cli/internal/auth"
-	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
 )
 
 //Fetches all transaction records for accounts attached to given item
-func commandGetTransactions(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandGetTransactions(args []string) error {
 
 	itemName := args[0]
 
-	itemsURL := c.Client.BaseURL + "/api/items"
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
-	res, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("GET", itemsURL, token, nil)
+	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -66,10 +61,10 @@ func commandGetTransactions(c *config.Config, args []string) error {
 		return nil 
 	}
 
-	txnsURL := c.Client.BaseURL + "/api/items/" + itemID + "/access/transactions"
+	txnsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/transactions"
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("POST", txnsURL, token, nil)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("POST", txnsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -92,28 +87,24 @@ func commandGetTransactions(c *config.Config, args []string) error {
 }
 
 //Gets all accounts for item
-func commandGetAccounts(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandGetAccounts(args []string) error {
 
 	itemName := args[0]
 
-	itemsURL := c.Client.BaseURL + "/api/items"
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := c.Db.GetUser(context.Background(), creds.User.Name)
+	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
 	if err != nil {
 		return fmt.Errorf("error getting local user record: %w", err)
 	}
 
-	res, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("GET", itemsURL, token, nil)
+	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -151,10 +142,10 @@ func commandGetAccounts(c *config.Config, args []string) error {
 		return nil 
 	}
 
-	accountsURL := c.Client.BaseURL + "/api/items/" + itemID + "/access/accounts"
+	accountsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/accounts"
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("POST", accountsURL, token, nil)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("POST", accountsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -209,33 +200,29 @@ func commandGetAccounts(c *config.Config, args []string) error {
 			UserID: user.ID,
 		}
 
-		_, err := c.Db.CreateAccount(context.Background(), params)
+		_, err := app.Config.Db.CreateAccount(context.Background(), params)
 		if err != nil {
 			return fmt.Errorf("error creating local account record: %w", err)
 		}
 
 	}
 
-	tbl := MakeAccountsTable(response.Accounts, itemInst)
+	tbl := tables.MakeAccountsTable(response.Accounts, itemInst)
 	tbl.Print()
 
 	return nil
 }
 
 //Rename an item
-func commandRenameItem(c *config.Config, args []string) error {
-	if len(args) != 2 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil
-	}
+func (app *CLIApp) commandRenameItem(args []string) error {
 
 	itemCurrent := args[0]
 	itemRename := args[1]
 
-	itemsURL := c.Client.BaseURL + "/api/items"
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
-	res, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("GET", itemsURL, token, nil)
+	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -271,14 +258,14 @@ func commandRenameItem(c *config.Config, args []string) error {
 		return nil 
 	}
 
-	renameURL := c.Client.BaseURL + "/api/items/" + itemID + "/name"
+	renameURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/name"
 
 	request := models.UpdateItemName{
 		Nickname: itemRename,
 	}
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("PUT", renameURL, token, request)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("PUT", renameURL, token, request)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -298,18 +285,14 @@ func commandRenameItem(c *config.Config, args []string) error {
 }
 
 //Deletes an item record for user
-func commandDeleteItem(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandDeleteItem(args []string) error {
 
 	itemName := args[0]
 
-	itemsURL := c.Client.BaseURL + "/api/items"
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
-	res, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("GET", itemsURL, token, nil)
+	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -352,12 +335,12 @@ func commandDeleteItem(c *config.Config, args []string) error {
 		return fmt.Errorf("error getting password: %w", err)
 	}
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := c.Db.GetUser(context.Background(), creds.User.Name)
+	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
 	if err != nil {
 		return fmt.Errorf("error getting local user record: %w", err)
 	}
@@ -386,10 +369,10 @@ func commandDeleteItem(c *config.Config, args []string) error {
 		}
 	}
 
-	deleteURL := c.Client.BaseURL + "/api/items/" + itemID 
+	deleteURL := app.Config.Client.BaseURL + "/api/items/" + itemID 
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("DELETE", deleteURL, token, nil)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("DELETE", deleteURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -409,7 +392,7 @@ func commandDeleteItem(c *config.Config, args []string) error {
 		InstitutionName: sql.NullString{String: itemInst, Valid: true},
 		UserID: user.ID,
 	}
-	err = c.Db.DeleteAccounts(context.Background(), params)
+	err = app.Config.Db.DeleteAccounts(context.Background(), params)
 	if err != nil {
 		return fmt.Errorf("error deleting local records: %w", err)
 	}

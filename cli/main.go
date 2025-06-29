@@ -2,12 +2,7 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
-	"log"
-	"os"
-
-	"github.com/jms-guy/greed/cli/internal/config"
-	"github.com/joho/godotenv"
+	"github.com/jms-guy/greed/cli/cmd"
 	_ "modernc.org/sqlite"
 )
 
@@ -17,33 +12,5 @@ import (
 //Make tables nicer
 
 func main() {
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
-
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("Error loading configuration: %s", err)
-	}
-
-	args := os.Args
-
-	if len(args) < 3 {
-		fmt.Println("Command Usage: greed [registry] <subcommand> {arguments}")
-		fmt.Println("Example Command: greed user register James")
-		fmt.Println("Type {greed --help} for more details")
-		os.Exit(1)
-	}
-
-	//args[0] = program name, args[1] = registry name, args[2] = command name, args[3:] = arguments/flags
- 	registry := args[1]
-	command := args[2]
-
-	err = FindRegistry(cfg, registry, command, args[3:])
-	if err != nil {
-		log.Fatalf("%s\n", err)
-	}
-
+	cmd.Execute()
 }

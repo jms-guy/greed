@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bufio"
@@ -14,23 +14,18 @@ import (
 	//"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
-	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
 )
 
 //Function registers a new user with the server
-func commandRegisterUser(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Printf("Incorrect number of arguments given - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	username := args[0]
 
-	registerURL := c.Client.BaseURL + "/api/auth/register"
-	sendURL := c.Client.BaseURL + "/api/auth/email/send"
-	verifyURL := c.Client.BaseURL + "/api/auth/email/verify"
+	registerURL := app.Config.Client.BaseURL + "/api/auth/register"
+	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
+	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
 
 	var password string
 
@@ -93,7 +88,7 @@ func commandRegisterUser(c *config.Config, args []string) error {
 		Email: email,
 	}
 
-	res, err := c.MakeBasicRequest("POST", registerURL, "", reqData)
+	res, err := app.Config.MakeBasicRequest("POST", registerURL, "", reqData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -116,7 +111,7 @@ func commandRegisterUser(c *config.Config, args []string) error {
 		Email: user.Email,
 	}
 
-	emailRes, err := c.MakeBasicRequest("POST", sendURL, "", emailData)
+	emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -145,7 +140,7 @@ func commandRegisterUser(c *config.Config, args []string) error {
 		}
 
 		if code == "resend" {
-			emailRes, err := c.MakeBasicRequest("POST", sendURL, "", emailData)
+			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
 			if err != nil {
 				return fmt.Errorf("error making http request: %w", err)
 			}
@@ -169,7 +164,7 @@ func commandRegisterUser(c *config.Config, args []string) error {
 				IsVerified: sql.NullBool{Bool: false, Valid: true},
 			}
 		
-			_, err = c.Db.CreateUser(context.Background(), params)
+			_, err = app.Config.Db.CreateUser(context.Background(), params)
 			if err != nil {
 				return fmt.Errorf("error creating local record of user: %w", err)	
 			}
@@ -184,7 +179,7 @@ func commandRegisterUser(c *config.Config, args []string) error {
 		Code: code,
 	}
 
-	verifyRes, err := c.MakeBasicRequest("POST", verifyURL, "", verifyData)
+	verifyRes, err := app.Config.MakeBasicRequest("POST", verifyURL, "", verifyData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -204,7 +199,7 @@ func commandRegisterUser(c *config.Config, args []string) error {
 		IsVerified: sql.NullBool{Bool: true, Valid: true},
 	}
 
-	_, err = c.Db.CreateUser(context.Background(), params)
+	_, err = app.Config.Db.CreateUser(context.Background(), params)
 	if err != nil {
 		return fmt.Errorf("error creating local record of user: %w", err)	
 	}
@@ -215,19 +210,15 @@ func commandRegisterUser(c *config.Config, args []string) error {
 
 //Function creates a login session for user, getting auth tokens
 //Currently using sandbox flow
-func commandUserLogin(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Printf("Incorrect number of arguments given - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandUserLogin(args []string) error {
 
 	username := args[0]
 
-	loginURL := c.Client.BaseURL + "/api/auth/login"
-	itemsURL := c.Client.BaseURL + "/api/items"
-	linkURL := c.Client.BaseURL + "/plaid/get-link-token"
-	//redirectURL := c.Client.BaseURL + "/link"
-	sandboxURL := c.Client.BaseURL + "/admin/sandbox"
+	loginURL := app.Config.Client.BaseURL + "/api/auth/login"
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
+	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token"
+	//redirectURL := app.Config.Client.BaseURL + "/link"
+	sandboxURL := app.Config.Client.BaseURL + "/admin/sandbox"
 
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
@@ -239,7 +230,7 @@ func commandUserLogin(c *config.Config, args []string) error {
 		Password: pw,
 	}
 
-	res, err := c.MakeBasicRequest("POST", loginURL, "", req)
+	res, err := app.Config.MakeBasicRequest("POST", loginURL, "", req)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -260,12 +251,12 @@ func commandUserLogin(c *config.Config, args []string) error {
 		return fmt.Errorf("error decoding response data: %w", err)
 	}
 
-	err = auth.StoreTokens(login, c.ConfigFP)
+	err = auth.StoreTokens(login, app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error storing auth tokens: %w", err)
 	}
 
-	itemsRes, err := c.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
+	itemsRes, err := app.Config.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -294,7 +285,7 @@ func commandUserLogin(c *config.Config, args []string) error {
 		}
 	}
 	
-	linkRes, err := c.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
+	linkRes, err := app.Config.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -317,13 +308,13 @@ func commandUserLogin(c *config.Config, args []string) error {
 
 	/*
 	redirectURL = redirectURL + "?token=" + link.LinkToken
-	err = utils.OpenLink(c.OperatingSystem, redirectURL)
+	err = utils.OpenLink(app.Config.OperatingSystem, redirectURL)
 	if err != nil {
 		return fmt.Errorf("error opening redirect link: %w", err)
 	}
 	*/
 
-	tokenRes, err := c.MakeBasicRequest("POST", sandboxURL, login.AccessToken, nil)
+	tokenRes, err := app.Config.MakeBasicRequest("POST", sandboxURL, login.AccessToken, nil)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -342,7 +333,7 @@ func commandUserLogin(c *config.Config, args []string) error {
 	}
 	fmt.Println("Item record created!")
 
-	itemsResp, err := c.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
+	itemsResp, err := app.Config.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -376,15 +367,11 @@ func commandUserLogin(c *config.Config, args []string) error {
 }
 
 //Logs a user out, by deleting their local credentials file, and expiring their session delegation server side
-func commandUserLogout(c *config.Config, args []string) error {
-	if len(args) > 0 {
-		fmt.Println("Incorrect number of arguments given - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandUserLogout(args []string) error {
 
-	logoutURL := c.Client.BaseURL + "/api/auth/logout"
+	logoutURL := app.Config.Client.BaseURL + "/api/auth/logout"
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		fmt.Printf("File error: %s\n", err)
 		return nil
@@ -394,7 +381,7 @@ func commandUserLogout(c *config.Config, args []string) error {
 		RefreshToken: creds.RefreshToken,
 	}
 
-	resp, err := c.MakeBasicRequest("POST", logoutURL, "", request)
+	resp, err := app.Config.MakeBasicRequest("POST", logoutURL, "", request)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -410,7 +397,7 @@ func commandUserLogout(c *config.Config, args []string) error {
 		return nil 
 	}
 
-	err = auth.RemoveCreds(c.ConfigFP)
+	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
 		fmt.Printf("Error logging out - %s\n", err)
 		return nil 
@@ -421,15 +408,11 @@ func commandUserLogout(c *config.Config, args []string) error {
 }
 
 //Delete a user's records locally, and server side
-func commandDeleteUser(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Println("Incorrect number of arguments given - type --help for more details")
-		return nil
-	}
+func (app *CLIApp) commandDeleteUser(args []string) error {
 
 	username := args[0]
 
-	deleteURL := c.Client.BaseURL + "/api/users/me"
+	deleteURL := app.Config.Client.BaseURL + "/api/users/me"
 
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
@@ -453,7 +436,7 @@ func commandDeleteUser(c *config.Config, args []string) error {
 		}
 	}
 
-	user, err := c.Db.GetUser(context.Background(), username)
+	user, err := app.Config.Db.GetUser(context.Background(), username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No user found on machine with that name")
@@ -468,8 +451,8 @@ func commandDeleteUser(c *config.Config, args []string) error {
 		return nil
 	}
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("DELETE", deleteURL, token, nil)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("DELETE", deleteURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
@@ -486,12 +469,12 @@ func commandDeleteUser(c *config.Config, args []string) error {
 		return nil 
 	}
 
-	err = c.Db.DeleteUser(context.Background(), username)
+	err = app.Config.Db.DeleteUser(context.Background(), username)
 	if err != nil {
 		return fmt.Errorf("error deleting local user record: %w", err)
 	}
 
-	err = auth.RemoveCreds(c.ConfigFP)
+	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
 		fmt.Printf("Error removing credentials - %s\n", err)
 		return nil 
@@ -502,22 +485,18 @@ func commandDeleteUser(c *config.Config, args []string) error {
 }
 
 //Verifies a user's email address
-func commandVerifyEmail(c *config.Config, args []string) error {
-	if len(args) != 0 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandVerifyEmail(args []string) error {
 
-	sendURL := c.Client.BaseURL + "/api/auth/email/send"
-	verifyURL := c.Client.BaseURL + "/api/auth/email/verify"
+	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
+	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		fmt.Printf("Error getting credentials - %s\n", err)
 		return nil
 	}
 
-	user, err := c.Db.GetUser(context.Background(), creds.User.Name)
+	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
 	if err != nil {
 		return fmt.Errorf("error getting local user record: %w", err)
 	}
@@ -532,7 +511,7 @@ func commandVerifyEmail(c *config.Config, args []string) error {
 		Email: user.Email,
 	}
 
-	sendResp, err := c.MakeBasicRequest("POST", sendURL, "", sendReq)
+	sendResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", sendReq)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
@@ -559,7 +538,7 @@ func commandVerifyEmail(c *config.Config, args []string) error {
 		}
 
 		if code == "resend" {
-			emailRes, err := c.MakeBasicRequest("POST", sendURL, "", sendReq)
+			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", sendReq)
 			if err != nil {
 				return fmt.Errorf("error making http request: %w", err)
 			}
@@ -578,7 +557,7 @@ func commandVerifyEmail(c *config.Config, args []string) error {
 		Code: code,
 	}
 
-	verifyRes, err := c.MakeBasicRequest("POST", verifyURL, "", verifyData)
+	verifyRes, err := app.Config.MakeBasicRequest("POST", verifyURL, "", verifyData)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -594,7 +573,7 @@ func commandVerifyEmail(c *config.Config, args []string) error {
 		Name: user.Name,
 	}
 
-	err = c.Db.VerifyEmail(context.Background(), verifyParams)
+	err = app.Config.Db.VerifyEmail(context.Background(), verifyParams)
 	if err != nil {
 		return fmt.Errorf("error verifying email in user record: %w", err)
 	}
@@ -605,21 +584,17 @@ func commandVerifyEmail(c *config.Config, args []string) error {
 }
 
 //Lists a user's items
-func commandUserItems(c *config.Config, args []string) error {
-	if len(args) != 0 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandUserItems(args []string) error {
 
-	itemsURL := c.Client.BaseURL + "/api/items"
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("GET", itemsURL, token, nil)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
@@ -652,21 +627,17 @@ func commandUserItems(c *config.Config, args []string) error {
 }
 
 //Updates a user's password
-func commandUpdatePassword(c *config.Config, args []string) error {
-	if len(args) != 0 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandUpdatePassword(args []string) error {
 
-	sendURL := c.Client.BaseURL + "/api/auth/email/send"
-	updateURL := c.Client.BaseURL + "/api/users/update-password"
+	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
+	updateURL := app.Config.Client.BaseURL + "/api/users/update-password"
 
-	creds, err := auth.GetCreds(c.ConfigFP)
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := c.Db.GetUser(context.Background(), creds.User.Name)
+	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
 	if err != nil {
 		return fmt.Errorf("error getting local user record: %w", err)
 	}
@@ -717,7 +688,7 @@ func commandUpdatePassword(c *config.Config, args []string) error {
 		Email: creds.User.Email,
 	}
 
-	emailResp, err := c.MakeBasicRequest("POST", sendURL, "", request)
+	emailResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -742,7 +713,7 @@ func commandUpdatePassword(c *config.Config, args []string) error {
 		}
 
 		if code == "resend" {
-			emailRes, err := c.MakeBasicRequest("POST", sendURL, "", request)
+			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
 			if err != nil {
 				return fmt.Errorf("error making http request: %w", err)
 			}
@@ -762,8 +733,8 @@ func commandUpdatePassword(c *config.Config, args []string) error {
 		Code: code,
 	}
 
-	resp, err := DoWithAutoRefresh(c, func(token string) (*http.Response, error) {
-		return c.MakeBasicRequest("PUT", updateURL, token, updateReq)
+	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("PUT", updateURL, token, updateReq)
 	})
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
@@ -787,7 +758,7 @@ func commandUpdatePassword(c *config.Config, args []string) error {
 		Name: creds.User.Name,
 	}
 
-	err = c.Db.UpdatePassword(context.Background(), params)
+	err = app.Config.Db.UpdatePassword(context.Background(), params)
 	if err != nil {
 		return fmt.Errorf("error updating local user record: %w", err)
 	}
@@ -797,18 +768,14 @@ func commandUpdatePassword(c *config.Config, args []string) error {
 }
 
 //Resets a user's forgotten password, allowing for account recovery
-func commandResetPassword(c *config.Config, args []string) error {
-	if len(args) != 1 {
-		fmt.Println("Incorrect number of arguments - type --help for more details")
-		return nil 
-	}
+func (app *CLIApp) commandResetPassword(args []string) error {
 
 	email := args[0]
 
-	sendURL := c.Client.BaseURL + "/api/auth/email/send"
-	resetURL := c.Client.BaseURL + "/api/auth/reset-password"
+	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
+	resetURL := app.Config.Client.BaseURL + "/api/auth/reset-password"
 
-	user, err := c.Db.GetUserByEmail(context.Background(), email)
+	user, err := app.Config.Db.GetUserByEmail(context.Background(), email)
 	if err != nil {
 		return fmt.Errorf("error getting user record: %w", err)
 	}
@@ -848,7 +815,7 @@ func commandResetPassword(c *config.Config, args []string) error {
 		Email: user.Email,
 	}
 
-	emailResp, err := c.MakeBasicRequest("POST", sendURL, "", request)
+	emailResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -873,7 +840,7 @@ func commandResetPassword(c *config.Config, args []string) error {
 		}
 
 		if code == "resend" {
-			emailRes, err := c.MakeBasicRequest("POST", sendURL, "", request)
+			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
 			if err != nil {
 				return fmt.Errorf("error making http request: %w", err)
 			}
@@ -894,7 +861,7 @@ func commandResetPassword(c *config.Config, args []string) error {
 		NewPassword: password,
 	}
 
-	resetResp, err := c.MakeBasicRequest("POST", resetURL, "", resetReq)
+	resetResp, err := app.Config.MakeBasicRequest("POST", resetURL, "", resetReq)
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
@@ -917,7 +884,7 @@ func commandResetPassword(c *config.Config, args []string) error {
 		Name: user.Name,
 	}
 
-	err = c.Db.UpdatePassword(context.Background(), params)
+	err = app.Config.Db.UpdatePassword(context.Background(), params)
 	if err != nil {
 		return fmt.Errorf("error updating local user record: %w", err)
 	}
