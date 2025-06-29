@@ -26,14 +26,7 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-	}
+	checkResponseStatus(res)
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
@@ -67,14 +60,7 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
-		return nil 
-	}
+	checkResponseStatus(resp)
 
 	var response []models.Account
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
@@ -88,7 +74,7 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 }
 
 //List all accounts for user
-func (app *CLIApp) commandListAllAccounts(args []string) error {
+func (app *CLIApp) commandListAllAccounts() error {
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {

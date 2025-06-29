@@ -94,17 +94,13 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 400 {
-		return fmt.Errorf("server returned error: %s", res.Status)
-	}
+	checkResponseStatus(res)
 
 	var user models.User
 
 	if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
 		return fmt.Errorf("error decoding response data: %w", err)
 	}
-
-	res.Body.Close()
 
 	emailData := models.EmailVerification{
 		UserID: user.ID,
@@ -117,10 +113,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	}
 	defer emailRes.Body.Close()
 
-	if emailRes.StatusCode >= 400 {
-		return fmt.Errorf("server returned error: %s", emailRes.Status)
-	}
-
+	checkResponseStatus(emailRes)
 
 	var code string
 
@@ -144,10 +137,9 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 			if err != nil {
 				return fmt.Errorf("error making http request: %w", err)
 			}
+			defer emailRes.Body.Close()
 
-			if emailRes.StatusCode >= 400 {
-				return fmt.Errorf("server returned error: %s", res.Status)
-			}
+			checkResponseStatus(emailRes)
 
 			fmt.Printf(" < Another verification code has been sent to email: %s > \n", email)
 			continue
@@ -185,9 +177,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	}
 	defer verifyRes.Body.Close()
 	
-	if verifyRes.StatusCode >= 400 {
-		return fmt.Errorf("server returned error: %s", verifyRes.Status)
-	}
+	checkResponseStatus(verifyRes)
 
 	params := database.CreateUserParams{
 		ID: user.ID.String(),
@@ -236,14 +226,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil
-	}
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-		return nil
-	}
+	checkResponseStatus(res)
 
 	var login models.Credentials
 
@@ -262,10 +245,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	}
 	defer itemsRes.Body.Close()
 
-	if itemsRes.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
+	checkResponseStatus(itemsRes)
 
 	if itemsRes.StatusCode == 200 {
 		var itemsResp struct {
@@ -291,15 +271,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	}
 	defer linkRes.Body.Close()
 
-	if linkRes.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if linkRes.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s", linkRes.Status)
-		return nil
-	}
+	checkResponseStatus(linkRes)
 	
 	var link models.LinkResponse
 	if err = json.NewDecoder(linkRes.Body).Decode(&link); err != nil {
@@ -320,10 +292,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	}
 	defer tokenRes.Body.Close()
 
-	if tokenRes.StatusCode > 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
+	checkResponseStatus(tokenRes)
 
 	if tokenRes.StatusCode >= 400 {
 		fmt.Printf("Request failed with code %d\n", tokenRes.StatusCode)
@@ -339,10 +308,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	}
 	defer itemsResp.Body.Close()
 
-	if itemsResp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
+	checkResponseStatus(itemsRes)
 
 	if itemsResp.StatusCode == 200 {
 		var itemsResponse struct {
@@ -367,7 +333,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 }
 
 //Logs a user out, by deleting their local credentials file, and expiring their session delegation server side
-func (app *CLIApp) commandUserLogout(args []string) error {
+func (app *CLIApp) commandUserLogout() error {
 
 	logoutURL := app.Config.Client.BaseURL + "/api/auth/logout"
 
@@ -387,15 +353,7 @@ func (app *CLIApp) commandUserLogout(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
-		return nil 
-	}
+	checkResponseStatus(resp)
 
 	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
@@ -459,15 +417,7 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
-		return nil 
-	}
+	checkResponseStatus(resp)
 
 	err = app.Config.Db.DeleteUser(context.Background(), username)
 	if err != nil {
@@ -485,7 +435,7 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 }
 
 //Verifies a user's email address
-func (app *CLIApp) commandVerifyEmail(args []string) error {
+func (app *CLIApp) commandVerifyEmail() error {
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
@@ -517,9 +467,7 @@ func (app *CLIApp) commandVerifyEmail(args []string) error {
 	}
 	defer sendResp.Body.Close()
 
-	if sendResp.StatusCode >= 400 {
-		return fmt.Errorf("server returned error: %s", sendResp.Status)
-	}
+	checkResponseStatus(sendResp)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	var code string
@@ -563,9 +511,7 @@ func (app *CLIApp) commandVerifyEmail(args []string) error {
 	}
 	defer verifyRes.Body.Close()
 	
-	if verifyRes.StatusCode >= 400 {
-		return fmt.Errorf("server returned error: %s", verifyRes.Status)
-	}
+	checkResponseStatus(verifyRes)
 
 	verifyParams := database.VerifyEmailParams{
 		IsVerified: sql.NullBool{Bool: true, Valid: true},
@@ -584,7 +530,7 @@ func (app *CLIApp) commandVerifyEmail(args []string) error {
 }
 
 //Lists a user's items
-func (app *CLIApp) commandUserItems(args []string) error {
+func (app *CLIApp) commandUserItems() error {
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
@@ -601,11 +547,7 @@ func (app *CLIApp) commandUserItems(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
+	checkResponseStatus(resp)
 	if resp.StatusCode == 200 {
 		var itemsResponse struct {
 			Items []models.ItemName `json:"items"`
@@ -627,7 +569,7 @@ func (app *CLIApp) commandUserItems(args []string) error {
 }
 
 //Updates a user's password
-func (app *CLIApp) commandUpdatePassword(args []string) error {
+func (app *CLIApp) commandUpdatePassword() error {
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	updateURL := app.Config.Client.BaseURL + "/api/users/update-password"
@@ -694,9 +636,7 @@ func (app *CLIApp) commandUpdatePassword(args []string) error {
 	}
 	defer emailResp.Body.Close()
 
-	if emailResp.StatusCode >= 500 {
-		fmt.Println("Server error")
-	}
+	checkResponseStatus(emailResp)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	var code string
@@ -741,10 +681,7 @@ func (app *CLIApp) commandUpdatePassword(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
+	checkResponseStatus(resp)
 
 	var updated models.UpdatedPassword
 
@@ -821,9 +758,7 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 	}
 	defer emailResp.Body.Close()
 
-	if emailResp.StatusCode >= 500 {
-		fmt.Println("Server error")
-	}
+	checkResponseStatus(emailResp)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	var code string
@@ -844,10 +779,9 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 			if err != nil {
 				return fmt.Errorf("error making http request: %w", err)
 			}
+			defer emailRes.Body.Close()
 
-			if emailRes.StatusCode >= 400 {
-				return fmt.Errorf("server returned error: %s", emailRes.Status)
-			}
+			checkResponseStatus(emailRes)
 
 			fmt.Printf(" < Another verification code has been sent to email: %s > \n",user.Email)
 			continue
@@ -867,10 +801,7 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 	}
 	defer resetResp.Body.Close()
 
-	if resetResp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
+	checkResponseStatus(resetResp)
 
 	var updated models.UpdatedPassword
 

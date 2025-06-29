@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -32,14 +31,7 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-	}
+	checkResponseStatus(res)
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
@@ -71,16 +63,7 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Printf("%s\n", string(body))
-		return nil 
-	}
+	checkResponseStatus(resp)
 
 	fmt.Printf("Transaction data successfully generated for %s\n", itemName)
 	return nil
@@ -111,14 +94,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-	}
+	checkResponseStatus(res)
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
@@ -151,6 +127,8 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 		return fmt.Errorf("error making http request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	checkResponseStatus(resp)
 
 	var response models.Accounts
 
@@ -229,14 +207,7 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-	}
+	checkResponseStatus(res)
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
@@ -272,13 +243,7 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
-	}
+	checkResponseStatus(resp)
 
 	fmt.Printf("Item name successfully updated from %s to %s\n", itemCurrent, itemRename)
 	return nil
@@ -299,14 +264,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-	}
+	checkResponseStatus(res)
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
@@ -379,14 +337,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
-		return nil 
-	}
+	checkResponseStatus(resp)
 
 	params := database.DeleteAccountsParams{
 		InstitutionName: sql.NullString{String: itemInst, Valid: true},

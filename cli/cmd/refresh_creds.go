@@ -53,7 +53,6 @@ func refreshCreds(app *CLIApp) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", resp.Status)
 		body, _ := io.ReadAll(resp.Body)
 		var errResp struct {
 			Error string `json:"error"`
@@ -61,7 +60,7 @@ func refreshCreds(app *CLIApp) error {
 		if err := json.Unmarshal(body, &errResp); err == nil {
 			if errResp.Error == "Token is expired" {
 				fmt.Println(" < User's session is expired, please re-login. > ")
-				if err := app.commandUserLogout([]string{}); err != nil {
+				if err := app.commandUserLogout(); err != nil {
 					return fmt.Errorf("error logging user out: %w", err)
 				}
 			}

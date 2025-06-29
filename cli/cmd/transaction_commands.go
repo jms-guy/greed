@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/tables"
@@ -14,22 +15,10 @@ import (
 
 //Get transaction records for given account
 //Currently basic, add query arguments, create local txn records
-func (app *CLIApp) commandGetTxnsAccount(args []string) error {
-	if len(args) < 1 {
-		fmt.Println("Missing account argument - type --help for more details")
-		return nil
-	}
+func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit int) error {
 
 	var err error
-	queryString := ""
-	accountName := args[0]
-	if len(args) > 1 {
-		queries := args[1:]
-		queryString, err = utils.BuildQueries(queries)
-		if err != nil {
-			return fmt.Errorf("error building query string: %w", err)
-		}
-	}	
+	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, order, min, max, limit)
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
@@ -51,7 +40,7 @@ func (app *CLIApp) commandGetTxnsAccount(args []string) error {
 	}
 
 	txnsURL := app.Config.Client.BaseURL + "/api/accounts/" + account.ID + "/transactions"
-	if queryString != "" {
+	if queryString != "?" {
 		txnsURL = txnsURL + queryString
 	}
 
@@ -63,15 +52,8 @@ func (app *CLIApp) commandGetTxnsAccount(args []string) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 {
-		fmt.Println("Server error")
-		return nil 
-	}
-	if res.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", res.Status)
-		return nil 
-	}
-
+	checkResponseStatus(res)
+	
 	var txns []models.Transaction
 	if err = json.NewDecoder(res.Body).Decode(&txns); err != nil {
 		return fmt.Errorf("decoding error: %w", err)
