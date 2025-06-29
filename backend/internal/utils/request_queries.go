@@ -127,30 +127,30 @@ func BuildSqlQuery(queries map[string]string, accountID string) (string, []any, 
 		}
 	}
 	if val, ok := queries["date"]; ok {
-		date, err := time.Parse("2006-01-02", val)
+		_, err := time.Parse("2006-01-02", val)
 		if err != nil {
 			return "", args, err 
 		}
-		query += fmt.Sprintf(" AND date = $%d", paramCount)
-		args = append(args, date)
+		query += fmt.Sprintf(" AND DATE(date) = $%d", paramCount)
+		args = append(args, val)
 		paramCount++
 	} else {
 		if start, exists := queries["start"]; exists {
-			sDate, err := time.Parse("2006-01-02", start)
+			_, err := time.Parse("2006-01-02", start)
 			if err != nil {
 				return "", args, err 
 			}
-			query += fmt.Sprintf(" AND date >= $%d", paramCount)
-			args = append(args, sDate)
+			query += fmt.Sprintf(" AND DATE(date) >= $%d", paramCount)
+			args = append(args, start)
 			paramCount++
 		}
 		if end, exists := queries["end"]; exists {
-			eDate, err := time.Parse("2006-01-02", end)
+			_, err := time.Parse("2006-01-02", end)
 			if err != nil {
 				return "", args, err
 			}
-			query += fmt.Sprintf(" AND date <= $%d", paramCount)
-			args = append(args, eDate)
+			query += fmt.Sprintf(" AND DATE(date) <= $%d", paramCount)
+			args = append(args, end)
 			paramCount++
 		}
 	}
