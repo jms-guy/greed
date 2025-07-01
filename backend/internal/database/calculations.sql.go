@@ -7,9 +7,118 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
-const getDataForAllMonths = `-- name: GetDataForAllMonths :many
+const getMerchantSummary = `-- name: GetMerchantSummary :many
+SELECT
+  merchant_name AS merchant,
+  COUNT(*) AS txn_count,
+  personal_finance_category AS category,
+  SUM(amount)::float AS total_amount,
+  TO_CHAR(DATE_TRUNC('month', date), 'YYYY-MM') AS month
+FROM transactions
+WHERE account_id = $1
+GROUP BY merchant, category, month
+ORDER BY month DESC, txn_count DESC
+`
+
+type GetMerchantSummaryRow struct {
+	Merchant    sql.NullString
+	TxnCount    int64
+	Category    string
+	TotalAmount float64
+	Month       string
+}
+
+func (q *Queries) GetMerchantSummary(ctx context.Context, accountID string) ([]GetMerchantSummaryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMerchantSummary, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMerchantSummaryRow
+	for rows.Next() {
+		var i GetMerchantSummaryRow
+		if err := rows.Scan(
+			&i.Merchant,
+			&i.TxnCount,
+			&i.Category,
+			&i.TotalAmount,
+			&i.Month,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMerchantSummaryByMonth = `-- name: GetMerchantSummaryByMonth :many
+SELECT
+  merchant_name AS merchant,
+  COUNT(*) AS txn_count,
+  personal_finance_category AS category,
+  SUM(amount)::float AS total_amount,
+  TO_CHAR(DATE_TRUNC('month', date), 'YYYY-MM') AS month
+FROM transactions
+WHERE account_id = $1
+  AND date >= make_date($2, $3, 1)
+  AND date < (make_date($2, $3, 1) + interval '1 month')
+GROUP BY merchant, category, month
+ORDER BY month DESC, txn_count DESC
+`
+
+type GetMerchantSummaryByMonthParams struct {
+	AccountID string
+	Year      int32
+	Month     int32
+}
+
+type GetMerchantSummaryByMonthRow struct {
+	Merchant    sql.NullString
+	TxnCount    int64
+	Category    string
+	TotalAmount float64
+	Month       string
+}
+
+func (q *Queries) GetMerchantSummaryByMonth(ctx context.Context, arg GetMerchantSummaryByMonthParams) ([]GetMerchantSummaryByMonthRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMerchantSummaryByMonth, arg.AccountID, arg.Year, arg.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMerchantSummaryByMonthRow
+	for rows.Next() {
+		var i GetMerchantSummaryByMonthRow
+		if err := rows.Scan(
+			&i.Merchant,
+			&i.TxnCount,
+			&i.Category,
+			&i.TotalAmount,
+			&i.Month,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMonetaryDataForAllMonths = `-- name: GetMonetaryDataForAllMonths :many
 SELECT
   EXTRACT(YEAR FROM date)::int AS year,
   EXTRACT(MONTH FROM date)::int AS month,
@@ -22,7 +131,7 @@ GROUP BY year, month
 ORDER BY year, month
 `
 
-type GetDataForAllMonthsRow struct {
+type GetMonetaryDataForAllMonthsRow struct {
 	Year      int32
 	Month     int32
 	Income    string
@@ -30,15 +139,15 @@ type GetDataForAllMonthsRow struct {
 	NetIncome string
 }
 
-func (q *Queries) GetDataForAllMonths(ctx context.Context, accountID string) ([]GetDataForAllMonthsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getDataForAllMonths, accountID)
+func (q *Queries) GetMonetaryDataForAllMonths(ctx context.Context, accountID string) ([]GetMonetaryDataForAllMonthsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMonetaryDataForAllMonths, accountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetDataForAllMonthsRow
+	var items []GetMonetaryDataForAllMonthsRow
 	for rows.Next() {
-		var i GetDataForAllMonthsRow
+		var i GetMonetaryDataForAllMonthsRow
 		if err := rows.Scan(
 			&i.Year,
 			&i.Month,
@@ -59,7 +168,7 @@ func (q *Queries) GetDataForAllMonths(ctx context.Context, accountID string) ([]
 	return items, nil
 }
 
-const getDataForMonth = `-- name: GetDataForMonth :one
+const getMonetaryDataForMonth = `-- name: GetMonetaryDataForMonth :one
 SELECT
     CAST(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) AS NUMERIC(16, 2)) AS income,
     CAST(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) AS NUMERIC(16, 2)) AS expenses,
@@ -70,21 +179,21 @@ WHERE date >= make_date($1, $2, 1)
   AND account_id = $3
 `
 
-type GetDataForMonthParams struct {
+type GetMonetaryDataForMonthParams struct {
 	Year      int32
 	Month     int32
 	AccountID string
 }
 
-type GetDataForMonthRow struct {
+type GetMonetaryDataForMonthRow struct {
 	Income    string
 	Expenses  string
 	NetIncome string
 }
 
-func (q *Queries) GetDataForMonth(ctx context.Context, arg GetDataForMonthParams) (GetDataForMonthRow, error) {
-	row := q.db.QueryRowContext(ctx, getDataForMonth, arg.Year, arg.Month, arg.AccountID)
-	var i GetDataForMonthRow
+func (q *Queries) GetMonetaryDataForMonth(ctx context.Context, arg GetMonetaryDataForMonthParams) (GetMonetaryDataForMonthRow, error) {
+	row := q.db.QueryRowContext(ctx, getMonetaryDataForMonth, arg.Year, arg.Month, arg.AccountID)
+	var i GetMonetaryDataForMonthRow
 	err := row.Scan(&i.Income, &i.Expenses, &i.NetIncome)
 	return i, err
 }

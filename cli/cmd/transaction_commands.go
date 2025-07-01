@@ -15,10 +15,10 @@ import (
 
 //Get transaction records for given account
 //Currently basic, add query arguments, create local txn records
-func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit int) error {
+func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit int, summary bool) error {
 
 	var err error
-	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, order, min, max, limit)
+	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, order, min, max, limit, summary)
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
@@ -54,6 +54,18 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 
 	checkResponseStatus(res)
 	
+	if summary {
+		var summaries []models.MerchantSummary
+		if err = json.NewDecoder(res.Body).Decode(&summaries); err != nil {
+			return fmt.Errorf("decoding error: %w", err)
+		}
+
+		tbl := tables.MakeTableForSummaries(summaries, accountName)
+		tbl.Print()
+
+		return nil
+	}
+
 	var txns []models.Transaction
 	if err = json.NewDecoder(res.Body).Decode(&txns); err != nil {
 		return fmt.Errorf("decoding error: %w", err)

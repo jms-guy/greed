@@ -49,6 +49,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	gCmd := app.getCmd()
 	gCmd.AddCommand(app.getAccountsCmd())
 	gCmd.AddCommand(app.getTransactionsCmd())
+	gCmd.AddCommand(app.getIncomeData())
 
 	rootCmd.AddCommand(dCmd)
 	rootCmd.AddCommand(gCmd)

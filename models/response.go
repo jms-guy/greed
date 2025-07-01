@@ -136,8 +136,17 @@ type MonetaryData struct {
 	Income 			string 		`json:"income"`
 	Expenses 		string 		`json:"expenses"`
 	NetIncome 		string 		`json:"net_income"`
-	Year 			int 		`json:"year"`
-	Month 			int 		`json:"month"`
+	Date			string 		`json:"date"`
 }
 
-
+/*
+	/api/accounts/{account-id}/transactions
+*/
+//For getting merchant summaries on transactions call
+type MerchantSummary struct {
+	Merchant       string 		`json:"merchant"`
+	TxnCount       int64		`json:"txn_count"`
+	Category       string		`json:"category"`
+	TotalAmount    string		`json:"total_amount"`
+	Month          string		`json:"month"`
+}

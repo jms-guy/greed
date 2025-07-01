@@ -8,6 +8,7 @@ import (
 
 //Don't forget, update bufio scanners to handle sigInt
 //Make tables nicer
+//Aggregates
 
 func main() {
 	cmd.Execute()

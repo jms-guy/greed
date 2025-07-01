@@ -7,8 +7,8 @@ import (
 )
 
 //Builds query string for URL
-func BuildQueries(merchant, category, channel, date, start, end, order string, min, max, limit int) string {
-	
+func BuildQueries(merchant, category, channel, date, start, end, order string, min, max, limit int, summary bool) string {
+
 	queries := map[string]string{
 		"merchant": merchant,
 		"category": category,
@@ -26,6 +26,9 @@ func BuildQueries(merchant, category, channel, date, start, end, order string, m
 	}
 	if limit != 100 { // only if not default
 		queries["limit"] = strconv.Itoa(limit)
+	}
+	if summary {
+		queries["summary"] = "true"
 	}
 
 	q := url.Values{}

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/utils"
@@ -24,6 +26,7 @@ func makeQueryRules() map[string]string {
 		"max":			"number",
 		"limit":		"number",
 		"order":		"string",
+		"summary":		"string",
 	}
 	return rules
 }
@@ -48,6 +51,72 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 		return 
 	}
 
+	//If summary flag was used
+	date, ok := queries["date"]	//Date being a string in format ("2006-01-02")
+	if queries["summary"] == "true" && ok {	
+		vals := strings.Split(date, "-")
+		year, month := vals[0], vals[1]
+
+		yearVal, err := strconv.Atoi(year)
+		if err != nil {
+			app.respondWithError(w, 500, fmt.Sprintf("Error converting date value: %s", err), err)
+			return
+		}
+		monthVal, err := strconv.Atoi(month)
+		if err != nil {
+			app.respondWithError(w, 500, fmt.Sprintf("Error converting date value: %s", err), err)
+			return
+		}
+
+		params := database.GetMerchantSummaryByMonthParams{
+			AccountID: acc.ID,
+			Year: int32(yearVal),
+			Month: int32(monthVal),
+		}
+		summaries, err := app.Db.GetMerchantSummaryByMonth(ctx, params)
+		if err != nil {
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error executing query: %w", err))
+			return
+		}
+
+		var responseSummary []models.MerchantSummary
+		for _, sum := range summaries {
+			total := strconv.FormatFloat(sum.TotalAmount, 'f', 2, 64)
+			s := models.MerchantSummary{
+				Merchant: sum.Merchant.String,
+				TxnCount: sum.TxnCount,
+				Category: sum.Category,
+				TotalAmount: total,
+				Month: sum.Month,
+			}
+			responseSummary = append(responseSummary, s)
+		}
+		app.respondWithJSON(w, 200, responseSummary)
+		return 
+	} else if queries["summary"] == "true" {	//Summary flag, but no date flag
+		summary, err := app.Db.GetMerchantSummary(ctx, acc.ID)
+		if err != nil {
+			app.respondWithError(w, 500, "Datebase error", fmt.Errorf("error executing query: %w", err))
+			return 
+		}
+
+		var responseSummary []models.MerchantSummary
+		for _, sum := range summary {
+			total := strconv.FormatFloat(sum.TotalAmount, 'f', 2, 64)
+			s := models.MerchantSummary{
+				Merchant: sum.Merchant.String,
+				TxnCount: sum.TxnCount,
+				Category: sum.Category,
+				TotalAmount: total,
+				Month: sum.Month,
+			}
+			responseSummary = append(responseSummary, s)
+		}
+		app.respondWithJSON(w, 200, responseSummary)
+		return  
+	}
+
+	//No summary flag, continue with query
 	dbQuery, args, err := utils.BuildSqlQuery(queries, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, fmt.Sprintf("Error building database query: %s", err), err)
@@ -138,7 +207,7 @@ func (app *AppServer) HandlerGetMonetaryDataForMonth(w http.ResponseWriter, r *h
 		return
     }
 
-	incAmount, err := app.Db.GetDataForMonth(ctx, database.GetDataForMonthParams{
+	incAmount, err := app.Db.GetMonetaryDataForMonth(ctx, database.GetMonetaryDataForMonthParams{
 		Year: int32(y),
 		Month: int32(m),
 		AccountID: acc.ID,
@@ -148,12 +217,13 @@ func (app *AppServer) HandlerGetMonetaryDataForMonth(w http.ResponseWriter, r *h
 		return
 	}
 
+	date := fmt.Sprintf("%s-%s", strconv.Itoa(int(y)), strconv.Itoa(int(y)))
+
 	income := models.MonetaryData{
 		Income: incAmount.Income,
 		Expenses: incAmount.Expenses,
 		NetIncome: incAmount.NetIncome,
-		Year: y,
-		Month: m,
+		Date: date,
 	}
 
 	app.respondWithJSON(w, 200, income)
@@ -174,7 +244,7 @@ func (app *AppServer) HandlerGetMonetaryData(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	data, err := app.Db.GetDataForAllMonths(ctx, acc.ID)
+	data, err := app.Db.GetMonetaryDataForAllMonths(ctx, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting income/expense data: %w", err))
 		return 
@@ -182,13 +252,13 @@ func (app *AppServer) HandlerGetMonetaryData(w http.ResponseWriter, r *http.Requ
 
 	var response []models.MonetaryData
 	for _, record := range data {
+		date := fmt.Sprintf("%s-%s", strconv.Itoa(int(record.Year)), strconv.Itoa(int(record.Month)))
 
 		incData := models.MonetaryData{
 			Income: record.Income,
 			Expenses: record.Expenses,
 			NetIncome: record.NetIncome,
-			Year: int(record.Year),
-			Month: int(record.Month),
+			Date: date,
 		}
 
 		response = append(response, incData)

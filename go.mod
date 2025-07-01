@@ -14,6 +14,7 @@ require (
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rodaine/table v1.3.0
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
+	github.com/spf13/cobra v1.9.1
 	golang.org/x/crypto v0.38.0
 	golang.org/x/term v0.32.0
 	modernc.org/sqlite v1.38.0
@@ -23,6 +24,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
@@ -30,6 +32,7 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/net v0.40.0 // indirect

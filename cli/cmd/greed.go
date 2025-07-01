@@ -208,8 +208,9 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 			max, _ := cmd.Flags().GetInt("max")
 			limit, _ := cmd.Flags().GetInt("limit")
 			order, _ := cmd.Flags().GetString("order")
+			summary, _ := cmd.Flags().GetBool("summary")
 
-			return app.commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order, min, max, limit)
+			return app.commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order, min, max, limit, summary)
 		},
 	}
 
@@ -223,6 +224,23 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 	cmd.Flags().Int("max", math.MaxInt64, "Filters transactions by a maximum amount")
 	cmd.Flags().Int("limit", 100, "Filters transactions by limiting the number shown")
 	cmd.Flags().String("order", "", "Filters transactions by re-ordering by date [ASC | DESC]")
+	cmd.Flags().Bool("summary", false, "Provides a summary of transactions. Overrides most other flags. Useful with the [date] flag")
+
+	return cmd
+}
+
+func (app *CLIApp) getIncomeData() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "income",
+		Aliases: []string{"Income", "INCOME", "inc", "INC"},
+		Short: "Returns aggregate income/expenses data for account history",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			accountName := args[0]
+
+			return app.commandGetIncome(accountName)
+		},
+	}
 
 	return cmd
 }
