@@ -1,6 +1,7 @@
 package tables
 
 import (
+	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/jms-guy/greed/cli/internal/database"
@@ -14,24 +15,36 @@ func MakeTableForTransactions(txns []models.Transaction, accountName string) tab
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New(
-		"Account",
+		"|Account",
+		"  |  ",
 		"Amount",
+		"  |  ",
 		"Date",
+		"  |  ",
 		"Merchant Name",
+		"  |  ",
 		"Payment Channel",
+		"  |  ",
 		"Category",
+		"  |  ",
 		"Currency Code",
 	)
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, txn := range txns {
 		tbl.AddRow(
-			accountName,
+			fmt.Sprintf("|%s", accountName),
+			"  |  ",
 			txn.Amount,
+			"  |  ",
 			txn.Date.Format("2006-01-02"),
+			"  |  ",
 			txn.MerchantName,
+			"  |  ",
 			txn.PaymentChannel,
+			"  |  ",
 			txn.PersonalFinanceCategory,
+			"  |  ",
 			txn.IsoCurrencyCode,
 		)
 	}
@@ -45,33 +58,55 @@ func MakeSingleAccountTable(acc database.Account) table.Table {
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New(
-		"Institution",
+		"|Institution",
+		"  |  ",
 	 	"ID", 
+		"  |  ",
 	 	"Name",
+		"  |  ",
 	  	"Type",
+		"  |  ",
 	  	"Subtype",
+		"  |  ",
 		"Mask",
+		"  |  ",
 		"Official Name",
+		"  |  ",
 	    "Available Bal.",
+		"  |  ",
 		"Current Bal.",
+		"  |  ",
 		"Currency Code",
+		"  |  ",
 		"Created at",
+		"  |  ",
 		"Updated at",
 	)
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	tbl.AddRow(
-	acc.InstitutionName.String,
+	fmt.Sprintf("|%s", acc.InstitutionName.String),
+	"  |  ",
 	acc.ID,
+	"  |  ",
 	acc.Name,
+	"  |  ",
 	acc.Type,
+	"  |  ",
 	acc.Subtype.String,
+	"  |  ",
 	acc.Mask.String,
+	"  |  ",
 	acc.OfficialName.String,
+	"  |  ",
 	acc.AvailableBalance.Float64,
+	"  |  ",
 	acc.CurrentBalance.Float64,
+	"  |  ",
 	acc.IsoCurrencyCode.String,
+	"  |  ",
 	acc.CreatedAt,
+	"  |  ",
 	acc.UpdatedAt,
 	)
 

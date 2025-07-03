@@ -1,32 +1,43 @@
 package tables
 
 import (
+	"fmt"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/jms-guy/greed/models"
 	"github.com/rodaine/table"
 )
+
 //Make monetary data aggregate table
 func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName string) table.Table {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New(
-		"Account",
+		"|Account",
+		"  |  ",
 		"Date",
+		"  |  ",
 		"Income",
+		"  |  ",
 		"Expenses",
+		"  |  ",
 		"Net Income",
 	)
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, m := range data {
 		tbl.AddRow(
-			accountName,
+			fmt.Sprintf("|%s", accountName),
+			"  |  ",
 			m.Date,
-			m.Income,
-			m.Expenses,
-			m.NetIncome,
+			"  |  ",
+			strings.TrimPrefix(m.Income, "-"),
+			"  |  ",
+			strings.TrimPrefix(m.Expenses, "-"),
+			"  |  ",
+			strings.TrimPrefix(m.NetIncome, "-"),
 		)
 	}
 
@@ -39,22 +50,32 @@ func MakeTableForSummaries(summaries []models.MerchantSummary, accountName strin
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New(
-		"Account",
+		"|Account",
+		"  |  ",
 		"Month",
+		"  |  ",
 		"Merchant",
+		"  |  ",
 		"Transaction Count",
+		"  |  ",
 		"Total Amount",
+		"  |  ",
 		"Category",
 	)
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, s := range summaries {
 		tbl.AddRow(
-			accountName,
+			fmt.Sprintf("|%s", accountName),
+			"  |  ",
 			s.Month,
+			"  |  ",
 			s.Merchant,
+			"  |  ",
 			s.TxnCount,
+			"  |  ",
 			s.TotalAmount,
+			"  |  ",
 			s.Category,
 		)
 	}
