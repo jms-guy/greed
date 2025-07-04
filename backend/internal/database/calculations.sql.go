@@ -128,7 +128,7 @@ SELECT
 FROM transactions
 WHERE account_id = $1
 GROUP BY year, month
-ORDER BY year, month
+ORDER BY year DESC, month DESC
 `
 
 type GetMonetaryDataForAllMonthsRow struct {
