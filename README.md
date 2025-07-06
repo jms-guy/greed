@@ -3,9 +3,29 @@
 
 ## Overview
 
-Greed is a financial application, used to view/track data easily across financial institutions/accounts. It utilizes the third-party API [Plaid](https://plaid.com/docs/) to connect your account with your financial institutions, and obtain your account and transactional history. This data can then be viewed in a user friendly format, which can be used to track past expenditures and plan future ones. It is comprised of two parts: a server, and a CLI .
+Greed is a financial application written almost entirely in Golang, used to view/track data easily across financial institutions/accounts. It utilizes the third-party API [Plaid](https://plaid.com) to connect your account with your financial institutions, and obtain your account and transactional history. This data can then be viewed in a user friendly format, which can be used to track past expenditures and plan future ones.
 
-### Server
+### Server Features
 
 - RESTful API
-- [Endpoints]
+- [Endpoints](https://github.com/jms-guy/greed/blob/main/docs/endpoints.md)
+- Postgres database
+- No storing of sensitive personal or financial information, with the exception of Plaid Access Tokens, which are encrypted at rest
+- Simple server IP-based rate limiter
+- JWT authentication
+- Integration with financial data aggregator [Plaid](https://plaid.com/)
+- Account-email verification utilizing [SendGrid](https://sendgrid.com/en-us)
+
+### CLI Features
+
+- [Cobra](https://github.com/spf13/cobra)-based CLI tool
+- Client SQLite database
+- Allows for registering, logging in/out, and deleting users
+- Basic reporting of account information for financial institutions
+- In-depth transactional history reporting 
+    - Utilizing tables
+    - Extensive sorting through amount, date, merchant, etc.
+    - Allows summary reporting as well (ex. All transactions for merchant 'A' for month 'X' summed, showing count, total amount, etc.)
+- Income/Expense viewing
+    - View 24-month history of Income vs. Expenses per account
+    - Viewable through tables, bar charts, or graphs
