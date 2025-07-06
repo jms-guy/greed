@@ -35,7 +35,7 @@ API endpoints are grouped by operation types
 | Endpoint | Http Method | Request JSON Struct | Response JSON Struct | Description |
 | :----:  | :----:  | :----:  | :----:  | :----:  |
 | `/` | `GET` | | | Returns a list of Plaid items for user |
-| `/{item-id}/name` | `PUT` | [UpdateItemName](https://github.com/jms-guy/greed/blob/main/models/request.go#L12) | Updates an item's name in record |
+| `/{item-id}/name` | `PUT` | [UpdateItemName](https://github.com/jms-guy/greed/blob/main/models/request.go#L12) | | Updates an item's name in record |
 | `/{item-id}/` | `DELETE` | | | Deletes an item's records from database |
 | `/{item-id}/accounts` | `GET` | | [Accounts](https://github.com/jms-guy/greed/blob/main/models/response.go#L22) | Returns list of accounts for a user's specified item |
 | `/{item-id}/access/accounts` | `POST` | | | Creates/Updates account records for Plaid item |

@@ -21,6 +21,7 @@ import (
 /* Notes & To-Do
 -For bulk database queries, track success/failures and log as such
 -Add log management system
+-Change transactions endpoint to return a single struct, instead of 2 different ones
 */
 
 func Run() error {
