@@ -13,7 +13,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-func (app *CLIApp) commandGetIncome(accountName string) error {
+func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {

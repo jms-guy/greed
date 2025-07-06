@@ -237,10 +237,13 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			accountName := args[0]
+			mode, _ := cmd.Flags().GetString("mode")
 
-			return app.commandGetIncome(accountName)
+			return app.commandGetIncome(accountName, mode)
 		},
 	}
+
+	cmd.Flags().String("mode", "table" , "Change visual output of data [graph | chart]")
 
 	return cmd
 }

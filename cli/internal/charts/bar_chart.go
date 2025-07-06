@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jms-guy/greed/models"
 	zone "github.com/lrstanley/bubblezone"
+	"golang.org/x/term"
 )
 
 var defaultStyle = lipgloss.NewStyle().
@@ -177,20 +179,38 @@ func (m model) View() string {
 }
 
 func MakeIncomeChart(data []models.MonetaryData) error {
-	if len(data) == 0 {
+    if len(data) == 0 {
         fmt.Println("No data available to display")
         return nil
     }
-	
+
+    // Get terminal dimensions
+    width, height, err := term.GetSize(int(os.Stdout.Fd()))
+    if err != nil {
+        // Fallback to reasonable defaults if we can't get terminal size
+        width = 80
+        height = 24
+    }
+
+    // Calculate chart dimensions based on terminal size
+    // Leave some margin for borders and other UI elements
+    chartWidth := width - 20  // Leave 20 columns for margins and other elements
+    chartHeight := height / 2 // Use half the terminal height for the chart
+
+    // Ensure minimum dimensions
+    if chartWidth < 40 {
+        chartWidth = 40 // Minimum width to display a readable chart
+    }
+    if chartHeight < 10 {
+        chartHeight = 10 // Minimum height for a useful chart
+    }
+
+    // Create your bar chart with the dynamic dimensions
     var monthlyData []barchart.BarData
-    // Create the parallel slice for original values
     var originalValues []struct {
         Income   float64
         Expenses float64
     }
-    
-    width := 300
-    height := 50
     
     for _, month := range data {
         i := strings.TrimPrefix(month.Income, "-")
@@ -261,13 +281,13 @@ func MakeIncomeChart(data []models.MonetaryData) error {
     zoneManager := zone.New()
 
     m := model{
-        barchart.New(width, height,
+        barchart.New(chartWidth, chartHeight, // Use dynamic dimensions
             barchart.WithZoneManager(zoneManager),
             barchart.WithDataSet(monthlyData),
             barchart.WithStyles(axisStyle, labelStyle)),
         monthlyData,
         zoneManager,
-        originalValues, // Add the parallel slice to the model
+        originalValues,
     }
 
     if _, err := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run(); err != nil {

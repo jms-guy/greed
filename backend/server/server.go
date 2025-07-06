@@ -20,7 +20,6 @@ import (
 
 /* Notes & To-Do
 -For bulk database queries, track success/failures and log as such
--(avg income/expenses per month)
 -Add log management system
 */
 
@@ -66,6 +65,7 @@ func Run() error {
 	//Create mail service instance
 	service := sgrid.NewSGMailService(kitLogger)
 
+	//Create Plaid client
 	plaidClient := plaidservice.NewPlaidClient(config.PlaidClientID, config.PlaidSecret)
 
 	//Create rate limiter

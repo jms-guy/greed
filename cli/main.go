@@ -6,7 +6,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-//Don't forget, update bufio scanners to handle sigInt
 //Make tables nicer
 //Aggregates
 

@@ -1,6 +1,11 @@
 
-# greed
+# GREED
 
-A work in progress, this will be a financial tracker/planner web application. A backend web server build in Go, utilizing a Postgresql database,
-I'm planning to build a RESTful api that works with a third-party banking aggregator service to obtain financial data, will securely store that
-data, and send that data to a frontend web client.
+## Overview
+
+Greed is a financial application, used to view/track data easily across financial institutions/accounts. It utilizes the third-party API [Plaid](https://plaid.com/docs/) to connect your account with your financial institutions, and obtain your account and transactional history. This data can then be viewed in a user friendly format, which can be used to track past expenditures and plan future ones. It is comprised of two parts: a server, and a CLI .
+
+### Server
+
+- RESTful API
+- [Endpoints]

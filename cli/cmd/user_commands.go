@@ -64,6 +64,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	fmt.Println(" < Please enter a valid email address for your account. > ")
 	fmt.Println(" < Email verification will be used for resetting your password, and recovering your account in case of a forgotten password. > ")
+	fmt.Println(" < Type 'exit' to cancel > ")
 	for {
 		fmt.Print(" > ")
 		scanner.Scan()
@@ -72,6 +73,10 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 		if len(email) == 0 {
 			fmt.Println("Please enter an email address")
 			continue
+		}
+
+		if email == "exit" {
+			return nil
 		}
 		
 		if auth.EmailValidation(email) {
@@ -122,6 +127,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	fmt.Println(" < It can take up to a couple of minutes for the email to be received. If no email has been received, you can type 'resend' to try again. > ")
 	fmt.Println(" < Or you can type 'continue' to continue without a verified email address. > ")
 	fmt.Println(" < Please note, if your address has not been verified, you will be unable to change your password, or recover your account in case the password has been forgotten. > ")
+	fmt.Println(" < Type 'exit' to cancel > ")
 	for {
 		fmt.Print(" > ")
 		scanner.Scan()
@@ -130,6 +136,10 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 		if len(code) == 0 {
 			fmt.Println(" < Please enter the verification code provided within the email below. > ")
 			continue
+		}
+
+		if code == "exit" {
+			return nil
 		}
 
 		if code == "resend" {
@@ -475,6 +485,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 	fmt.Println(" < A verification email has been sent to the provided email address. > ")
 	fmt.Println(" < Please enter the verification code provided within the email below. > ")
 	fmt.Println(" < It can take up to a couple of minutes for the email to be received. If no email has been received, you can type 'resend' to try again. > ")
+	fmt.Println(" < Type 'exit' to cancel > ")
 	for {
 		fmt.Print(" > ")
 		scanner.Scan()
@@ -483,6 +494,10 @@ func (app *CLIApp) commandVerifyEmail() error {
 		if len(code) == 0 {
 			fmt.Println(" < Please enter the verification code provided within the email below. > ")
 			continue
+		}
+
+		if code == "exit" {
+			return nil
 		}
 
 		if code == "resend" {
@@ -642,14 +657,18 @@ func (app *CLIApp) commandUpdatePassword() error {
 	var code string
 
 	fmt.Println(" < An email with a verification code has been sent to user's email. Please type in the code to continue > ")
-		for {
+	fmt.Println(" < Type 'exit' to cancel > ")
+	for {
 		fmt.Print(" > ")
 		scanner.Scan()
 		code = scanner.Text()
-
 		if len(code) == 0 {
 			fmt.Println(" < Please enter the verification code provided within the email below. > ")
 			continue
+		}
+
+		if code == "exit" {
+			return nil
 		}
 
 		if code == "resend" {
@@ -764,7 +783,8 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 	var code string
 
 	fmt.Println(" < An email with a verification code has been sent to user's email. Please type in the code to continue > ")
-		for {
+	fmt.Println(" < Type 'exit' to cancel > ")
+	for {
 		fmt.Print(" > ")
 		scanner.Scan()
 		code = scanner.Text()
@@ -772,6 +792,10 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 		if len(code) == 0 {
 			fmt.Println(" < Please enter the verification code provided within the email below. > ")
 			continue
+		}
+
+		if code == "exit" {
+			return nil
 		}
 
 		if code == "resend" {
