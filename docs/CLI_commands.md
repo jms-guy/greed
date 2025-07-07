@@ -1,0 +1,56 @@
+## Commands for CLI Use
+
+`register <name>`
+Register a new user account with the server
+
+`login <name>`
+Create a new user session with the server
+
+`logout <name>`
+Exits current user session
+
+`delete <user | item> <username_or_item_name>`
+Deletes a specified user/item record from database. Must be logged in to use
+
+`verify`
+Verifies a user's submitted email address, if verification was skipped during user registration 
+
+`items` 
+Lists a user's item records. An item is a link to a financial institution, containing all account records for that institution
+
+`updatepw`
+Updates a user's password. Must have a verified email address
+
+`resetpw <email>`
+Resets a user's forgotten password. Must have a verified email address
+
+`fetch <item-name>`
+Retrieves all account and transaction data for item from third party, populating database with records
+
+`rename <current-item-name> <new-item-name>`
+Rename an item 
+
+`info <account-name>`
+View extended information for a given account
+
+### Get
+
+The most useful function, it has several subcommands, and many flags.
+- `get accounts [item-name]`
+    - Returns a list of accounts. If an item name is specified, it will return accounts only for that item. Otherwise it will return all accounts for user
+- `get transactions <account-name>`
+    - Returns transactions for an account, takes many optional flags that can be used to sort and display transaction data
+    - Flags
+        - Merchant: Filter transactions by merchant name (--merchant <merchant-name>)
+        - Category: Filter transactions by category (--category <category-type>)
+        - Channel: Filter transactions by payment channel (--channel <channel-type>)
+        - Date: Filter transactions for a specific date (--date <date>)(date format 'year-month-day')
+        - Start/End: Filter transactions based on a given start and/or end date (--start <date>, --end <date>)
+        - Min/Max: Filter transactions with a given minimum/maximum dollar amount (--min <amount>, --max <amount>)
+        - Limit: Filters transactions by limiting the number shown (--limit <number>)
+        - Order: Reorder the transactions shown by date (--order <ASC | DESC>)
+        - Summary: Provides a summary of transactions. Overrides most other flags. Useful with the [date] flag (--summary [date])
+- `get income <account-name>`
+    - Returns aggregate income/expenses data for account history
+    - Flags
+        -Mode: Change visual output of data (--mode <graph | chart>)

@@ -63,6 +63,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	rootCmd.AddCommand(app.fetchCmd())
 	rootCmd.AddCommand(app.renameCmd())
 	rootCmd.AddCommand(app.infoCmd())
+	rootCmd.AddCommand(app.exportData())
 
 	return rootCmd
 }

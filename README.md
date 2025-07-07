@@ -22,10 +22,12 @@ Greed is a financial application written almost entirely in Golang, used to view
 - Client SQLite database
 - Allows for registering, logging in/out, and deleting users
 - Basic reporting of account information for financial institutions
+- 24 months of account financial history
 - In-depth transactional history reporting 
     - Utilizing tables
     - Extensive sorting through amount, date, merchant, etc.
     - Allows summary reporting as well (ex. All transactions for merchant 'A' for month 'X' summed, showing count, total amount, etc.)
 - Income/Expense viewing
-    - View 24-month history of Income vs. Expenses per account
+    - View Income vs. Expenses per account
     - Viewable through tables, bar charts, or graphs
+- Export data into a .csv file

@@ -5,31 +5,17 @@ import (
 	"github.com/google/uuid"
 )
 
-//Structs used in http responses
-
-/*
-	/api/items
-*/
 type ItemName struct {
 	Nickname		string 	`json:"nickname"`
 	ItemId 			string 	`json:"item_id"`
 	InstitutionName string 	`json:"institution_name"`
 }
 
-/*
-	/api/items/accounts
-*/
 type Accounts struct {
 	Accounts 		[]Account`json:"accounts"`
 	RequestID		string 	`json:"request_id"`	//This field is the request ID returned from the Plaid API call
 }
 
-/*
-	/api/items/accounts
-	/api/accounts
-	/api/accounts/{item-id}
-	/api/accounts/{account-id}/data
-*/
 type Account struct {
 	Id 				string 	`json:"id"`
 	CreatedAt 		time.Time 	`json:"created_at"`
@@ -45,9 +31,7 @@ type Account struct {
 	ItemId 			string 	`json:"item_id"`
 }
 
-/*
-	/api/accounts/{account-id}/transactions
-*/
+
 type Transaction struct {
 	Id 							string 		`json:"id"`
 	AccountId 					string 		`json:"account_id"`
@@ -59,9 +43,7 @@ type Transaction struct {
 	PersonalFinanceCategory 	string 		`json:"personal_finance_category"`
 }
 
-/*
-	/api/accounts/balance
-*/
+
 type UpdatedBalance struct {
 	Id 				string 	`json:"id"`
 	AvailableBalance string `json:"available_balance"`
@@ -70,9 +52,7 @@ type UpdatedBalance struct {
 	RequestID 		string 	`json:"request_id"`
 }
 
-/*
-	/plaid/get-access-token
-*/
+
 type AccessResponse struct {
 	AccessToken 	string 	`json:"access_token"`
 	ItemID			string  `json:"item_id"`
@@ -80,32 +60,24 @@ type AccessResponse struct {
 	RequestID 		string  `json:"request_id"`	//Request ID returned from Plaid API call
 }
 
-/*
-	/plaid/get-link-token
-*/
+
 type LinkResponse struct {
 	LinkToken		string 	`json:"link_token"`
 }
 
-/*
-	/api/users/update-password
-*/
+
 type UpdatedPassword struct{
 	HashPassword 	string 	`json:"hash_password"`
 }
 
-/*
-	/auth/refresh
-*/
+
 type RefreshResponse struct{
 	RefreshToken	string	`json:"refresh_token"`
 	AccessToken		string	`json:"access_token"`
 	TokenType		string	`json:"token_type"`
 }
 
-/*
-	/auth/login
-*/
+
 type Credentials struct{
 	User 			User	`json:"user"`
 	RefreshToken	string	`json:"refresh_token"`
@@ -114,9 +86,7 @@ type Credentials struct{
 	ExpiresIn		int		`json:"expires_in"`
 }
 
-/*
-	/auth/register
-*/
+
 type User struct{
 	ID				uuid.UUID 	`json:"id"`
 	Name			string 		`json:"name"`
@@ -126,10 +96,6 @@ type User struct{
 	UpdatedAt		time.Time 	`json:"updated_at"`	
 }
 
-/*
-	/api/accounts/{account-id}/transactions/income
-	/api/accounts/{account-id}/transactions/income/{year}-{month}
-*/
 //For credit/debit account types, fields are straightforward. For loan accounts, income =  
 //loan payments, expenses = interest, netincome = income - expenses
 type MonetaryData struct {
@@ -139,9 +105,6 @@ type MonetaryData struct {
 	Date			string 		`json:"date"`
 }
 
-/*
-	/api/accounts/{account-id}/transactions
-*/
 //For getting merchant summaries on transactions call
 type MerchantSummary struct {
 	Merchant       string 		`json:"merchant"`

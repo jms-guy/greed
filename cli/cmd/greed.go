@@ -231,7 +231,7 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 
 func (app *CLIApp) getIncomeData() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "income",
+		Use: "income <account-name>",
 		Aliases: []string{"Income", "INCOME", "inc", "INC"},
 		Short: "Returns aggregate income/expenses data for account history",
 		Args: cobra.ExactArgs(1),
@@ -246,4 +246,16 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 	cmd.Flags().String("mode", "table" , "Change visual output of data [graph | chart]")
 
 	return cmd
+}
+
+func (app *CLIApp) exportData() *cobra.Command {
+	return &cobra.Command{
+		Use: "export <account-name> [filepath]",
+		Aliases: []string{"Export", "EXPORT"},
+		Short: "Export an account's transaction data into a .csv file",
+		Args: cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandExportData(args)
+		},
+	}
 }
