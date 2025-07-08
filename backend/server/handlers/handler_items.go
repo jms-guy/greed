@@ -251,6 +251,33 @@ func (app *AppServer) HandlerSyncTransactions(w http.ResponseWriter, r *http.Req
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error completing database txn on transactional data: %w", err))
 		return
 	}
+	
+	item, err := app.Db.GetItemByID(ctx, itemID)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting item item record: %w", err))
+		return 
+	}
 
-	app.respondWithJSON(w, 200, "Item transaction data synced successfully")
+	txns, err := app.Db.GetTransactionsForUser(ctx, item.UserID)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting transaction records: %w", err))
+		return 
+	}
+
+	var response []models.Transaction
+	for _, t := range txns {
+		newT := models.Transaction{
+			Id: t.ID,
+			AccountId: t.AccountID,
+			Amount: t.Amount,
+			IsoCurrencyCode: t.IsoCurrencyCode.String,
+			Date: t.Date.Time,
+			MerchantName: t.MerchantName.String,
+			PaymentChannel: t.PaymentChannel,
+			PersonalFinanceCategory: t.PersonalFinanceCategory,
+		}
+		response = append(response, newT)
+	}
+
+	app.respondWithJSON(w, 200, response)
 }

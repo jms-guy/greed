@@ -24,6 +24,10 @@ WHERE nickname = $1;
 SELECT * FROM plaid_items
 WHERE user_id = $1;
 
+-- name: GetItemByID :one
+SELECT * FROM plaid_items
+WHERE id = $1;
+
 -- name: UpdateNickname :exec
 UPDATE plaid_items
 SET nickname = $1, updated_at = NOW()

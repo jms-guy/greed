@@ -33,8 +33,6 @@ type Transaction struct {
 	MerchantName            sql.NullString
 	PaymentChannel          string
 	PersonalFinanceCategory string
-	CreatedAt               sql.NullString
-	UpdatedAt               sql.NullString
 }
 
 type User struct {

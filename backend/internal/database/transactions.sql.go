@@ -8,6 +8,8 @@ package database
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const clearTransactionsTable = `-- name: ClearTransactionsTable :exec
@@ -116,6 +118,47 @@ WHERE account_id = $1
 
 func (q *Queries) GetTransactions(ctx context.Context, accountID string) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, getTransactions, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transaction
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.Amount,
+			&i.IsoCurrencyCode,
+			&i.Date,
+			&i.MerchantName,
+			&i.PaymentChannel,
+			&i.PersonalFinanceCategory,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTransactionsForUser = `-- name: GetTransactionsForUser :many
+SELECT t.id, t.account_id, t.amount, t.iso_currency_code, t.date, t.merchant_name, t.payment_channel, t.personal_finance_category, t.created_at, t.updated_at 
+FROM transactions AS t
+INNER JOIN accounts AS a ON t.account_id = a.id
+WHERE a.user_id = $1
+`
+
+func (q *Queries) GetTransactionsForUser(ctx context.Context, userID uuid.UUID) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, getTransactionsForUser, userID)
 	if err != nil {
 		return nil, err
 	}

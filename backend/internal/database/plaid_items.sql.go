@@ -112,6 +112,27 @@ func (q *Queries) GetCursor(ctx context.Context, arg GetCursorParams) (sql.NullS
 	return transaction_sync_cursor, err
 }
 
+const getItemByID = `-- name: GetItemByID :one
+SELECT id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at FROM plaid_items
+WHERE id = $1
+`
+
+func (q *Queries) GetItemByID(ctx context.Context, id string) (PlaidItem, error) {
+	row := q.db.QueryRowContext(ctx, getItemByID, id)
+	var i PlaidItem
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.AccessToken,
+		&i.InstitutionName,
+		&i.Nickname,
+		&i.TransactionSyncCursor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getItemByName = `-- name: GetItemByName :one
 SELECT id, user_id, access_token, institution_name, nickname, transaction_sync_cursor, created_at, updated_at FROM plaid_items
 WHERE nickname = $1

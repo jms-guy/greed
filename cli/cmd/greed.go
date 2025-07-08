@@ -5,6 +5,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func (app *CLIApp) pingCmd() *cobra.Command {
+	return &cobra.Command{
+		Use: "ping",
+		Aliases: []string{"Ping", "PING"},
+		Short: "Pings the server, checking connection health",
+		Args: cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandPing()
+		},
+	}
+}
+
 func (app *CLIApp) registerCmd() *cobra.Command {
     return &cobra.Command{
         Use:   		"register <name>",
@@ -135,6 +147,18 @@ func (app *CLIApp) fetchCmd() *cobra.Command {
 				return err 
 			}
 			return app.commandGetTransactions(args)
+		},
+	}
+}
+
+func (app *CLIApp) syncCmd() *cobra.Command {
+	return &cobra.Command{
+		Use: "sync <item-name>",
+		Aliases: []string{"Sync", "SYNC"},
+		Short: "Updates account and transaction data for an item, providing real-time data",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandSync(args)
 		},
 	}
 }

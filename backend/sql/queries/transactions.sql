@@ -38,3 +38,10 @@ WHERE id = $1 AND account_id = $2;
 -- name: DeleteTransactionsForAccount :exec
 DELETE FROM transactions
 WHERE account_id = $1;
+
+
+-- name: GetTransactionsForUser :many
+SELECT t.* 
+FROM transactions AS t
+INNER JOIN accounts AS a ON t.account_id = a.id
+WHERE a.user_id = $1;

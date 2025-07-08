@@ -183,3 +183,26 @@ func (q *Queries) GetAllAccounts(ctx context.Context, userID string) ([]Account,
 	}
 	return items, nil
 }
+
+const updateAcc = `-- name: UpdateAcc :exec
+UPDATE accounts
+SET available_balance = ?, current_balance = ?
+WHERE id = ? AND user_id = ?
+`
+
+type UpdateAccParams struct {
+	AvailableBalance sql.NullFloat64
+	CurrentBalance   sql.NullFloat64
+	ID               string
+	UserID           string
+}
+
+func (q *Queries) UpdateAcc(ctx context.Context, arg UpdateAccParams) error {
+	_, err := q.db.ExecContext(ctx, updateAcc,
+		arg.AvailableBalance,
+		arg.CurrentBalance,
+		arg.ID,
+		arg.UserID,
+	)
+	return err
+}

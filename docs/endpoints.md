@@ -34,13 +34,13 @@ API endpoints are grouped by operation types
 
 | Endpoint | Http Method | Request JSON Struct | Response JSON Struct | Description |
 | :----:  | :----:  | :----:  | :----:  | :----:  |
-| `/` | `GET` | | | Returns a list of Plaid items for user |
+| `/` | `GET` | | [ItemName](https://github.com/jms-guy/greed/blob/main/models/response.go#L8) | Returns a list of Plaid items for user |
 | `/{item-id}/name` | `PUT` | [UpdateItemName](https://github.com/jms-guy/greed/blob/main/models/request.go#L9) | | Updates an item's name in record |
 | `/{item-id}/` | `DELETE` | | | Deletes an item's records from database |
 | `/{item-id}/accounts` | `GET` | | [Accounts](https://github.com/jms-guy/greed/blob/main/models/response.go#L14) | Returns list of accounts for a user's specified item |
-| `/{item-id}/access/accounts` | `POST` | | | Creates/Updates account records for Plaid item |
-| `/{item-id}/access/balances` | `PUT` | | | Update accounts database records with real-time balances |
-| `/{item-id}/access/transactions` | `POST` | | | Sync database transaction records for item with Plaid |
+| `/{item-id}/access/accounts` | `POST` | | [Accounts](https://github.com/jms-guy/greed/blob/main/models/response.go#L14) | Creates/Updates account records for Plaid item |
+| `/{item-id}/access/balances` | `PUT` | | [UpdatedBalance](https://github.com/jms-guy/greed/blob/main/models/response.go#L47) | Update accounts database records with real-time balances |
+| `/{item-id}/access/transactions` | `POST` | | [Transaction](https://github.com/jms-guy/greed/blob/main/models/response.go#L35) | Sync database transaction records for item with Plaid |
 
 ### Account Operations - /api/accounts
 

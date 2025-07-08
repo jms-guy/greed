@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"github.com/jms-guy/greed/cli/internal/tables"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
@@ -65,7 +64,40 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 
 	checkResponseStatus(resp)
 
-	fmt.Printf("Transaction data successfully generated for %s\n", itemName)
+	var txns []models.Transaction
+	if err = json.NewDecoder(resp.Body).Decode(&txns); err != nil {
+		return fmt.Errorf("decoding error: %w", err)
+	}
+
+	fmt.Println("Creating local records...")
+
+	for _, t := range txns {
+		a, err := strconv.ParseFloat(t.Amount, 64)
+		if err != nil {
+			return fmt.Errorf("error converting string value: %w", err)
+		}
+
+		params := database.CreateTransactionParams{
+			ID: t.Id,
+			AccountID: t.AccountId,
+			Amount: a,
+			IsoCurrencyCode: sql.NullString{String: t.IsoCurrencyCode, Valid: true},
+			Date: sql.NullString{String: t.Date.Format("2006-01-02"), Valid: true},
+			MerchantName: sql.NullString{String: t.MerchantName, Valid: true},
+			PaymentChannel: t.PaymentChannel,
+			PersonalFinanceCategory: t.PersonalFinanceCategory,
+		}
+
+		_, err = app.Config.Db.CreateTransaction(context.Background(), params)
+		if err != nil {
+			return fmt.Errorf("error creating local record: %w", err)
+		}
+
+		fmt.Printf("\r%v", t.Id)
+	}
+
+	fmt.Println(" > Transaction data fetched successfully.")
+
 	return nil
 }
 
@@ -185,8 +217,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 
 	}
 
-	tbl := tables.MakeAccountsTable(response.Accounts, itemInst)
-	tbl.Print()
+	fmt.Println(" > Account information fetched successfully.")
 
 	return nil
 }

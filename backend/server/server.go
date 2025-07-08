@@ -2,6 +2,7 @@ package server
 
 import (
 	"database/sql"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -100,6 +101,13 @@ func Run() error {
 		r.Get("/link", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, filepath.Join(staticPath, "link.html"))
 		})
+	})
+
+	//Server health																			//Returns a basic server ping
+	r.Get("/api/health", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")	
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, "OK")
 	})
 
 	//Authentication and authorization operations

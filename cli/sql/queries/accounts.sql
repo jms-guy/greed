@@ -43,3 +43,8 @@ WHERE user_id = ?;
 DELETE FROM accounts
 WHERE institution_name = ?
 AND user_id = ?;
+
+-- name: UpdateAcc :exec 
+UPDATE accounts
+SET available_balance = ?, current_balance = ?
+WHERE id = ? AND user_id = ?;

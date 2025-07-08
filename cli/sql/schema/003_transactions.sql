@@ -8,9 +8,7 @@ CREATE TABLE transactions (
     date TEXT,
     merchant_name TEXT,
     payment_channel TEXT NOT NULL,
-    personal_finance_category TEXT NOT NULL,
-    created_at TEXT,
-    updated_at TEXT
+    personal_finance_category TEXT NOT NULL
 );
 
 -- +goose Down

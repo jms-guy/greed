@@ -53,6 +53,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 
 	rootCmd.AddCommand(dCmd)
 	rootCmd.AddCommand(gCmd)
+	rootCmd.AddCommand(app.pingCmd())
 	rootCmd.AddCommand(app.registerCmd())
 	rootCmd.AddCommand(app.loginCmd())
 	rootCmd.AddCommand(app.logoutCmd())
@@ -61,6 +62,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	rootCmd.AddCommand(app.updatepwCmd())
 	rootCmd.AddCommand(app.resetpwCmd())
 	rootCmd.AddCommand(app.fetchCmd())
+	rootCmd.AddCommand(app.syncCmd())
 	rootCmd.AddCommand(app.renameCmd())
 	rootCmd.AddCommand(app.infoCmd())
 	rootCmd.AddCommand(app.exportData())
