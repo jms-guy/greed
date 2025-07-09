@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+//Sends a simple ping to the server health endpoint, for checking server connection
 func (app *CLIApp) commandPing() error {
 	healthURL := app.Config.Client.BaseURL + "/api/health"
 

@@ -11,7 +11,7 @@ Greed is a financial application written almost entirely in Golang, used to view
 - [Endpoints](https://github.com/jms-guy/greed/blob/main/docs/endpoints.md)
 - Postgres database
 - No storing of sensitive personal or financial information, with the exception of Plaid Access Tokens, which are encrypted at rest
-- Simple server IP-based rate limiter
+- Simple IP-based rate limiter
 - JWT authentication
 - Integration with financial data aggregator [Plaid](https://plaid.com/)
 - Account-email verification utilizing [SendGrid](https://sendgrid.com/en-us)
@@ -31,4 +31,4 @@ Greed is a financial application written almost entirely in Golang, used to view
 - Income/Expense viewing
     - View Income vs. Expenses per account
     - Viewable through tables, bar charts, or graphs
-- Export data into a .csv file
+- Export data into a CSV file

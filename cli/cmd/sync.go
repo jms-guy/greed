@@ -105,7 +105,7 @@ func (app *CLIApp) commandSync(args []string) error {
 		}
 		err = app.Config.Db.UpdateAcc(context.Background(), params)
 		if err != nil {
-			fmt.Printf("Error updating balance of acc #%d: %s\n", acc.Id, err)
+			fmt.Printf("Error updating balance of acc #%v: %s\n", acc.Id, err)
 			continue
 		}
 	}

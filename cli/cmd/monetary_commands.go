@@ -13,6 +13,8 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
+//Gets an account's income/expense data through querying server database transaction data.
+//Displays data in a visual format based on flag value passed through mode
 func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)

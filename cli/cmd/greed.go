@@ -274,7 +274,7 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 
 func (app *CLIApp) exportData() *cobra.Command {
 	return &cobra.Command{
-		Use: "export <account-name> [filepath]",
+		Use: "export <account-name> [directory]",
 		Aliases: []string{"Export", "EXPORT"},
 		Short: "Export an account's transaction data into a .csv file",
 		Args: cobra.RangeArgs(1, 2),

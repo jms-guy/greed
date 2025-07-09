@@ -18,7 +18,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Function registers a new user with the server
+//Function creates a new user record on server, and in loca database 
 func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	username := args[0]
@@ -544,7 +544,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 	return nil
 }
 
-//Lists a user's items
+//Lists all items attached to a specific user
 func (app *CLIApp) commandUserItems() error {
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -583,7 +583,7 @@ func (app *CLIApp) commandUserItems() error {
 	return nil
 }
 
-//Updates a user's password
+//Updates a user's password in record. Requires verified email address to send code to
 func (app *CLIApp) commandUpdatePassword() error {
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
@@ -723,7 +723,7 @@ func (app *CLIApp) commandUpdatePassword() error {
 	return nil
 }
 
-//Resets a user's forgotten password, allowing for account recovery
+//Resets a user's forgotten password, allowing for account recovery. Requires a verified email address.
 func (app *CLIApp) commandResetPassword(args []string) error {
 
 	email := args[0]

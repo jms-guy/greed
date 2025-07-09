@@ -39,6 +39,9 @@
 - `info <account-name>`
     - View extended information for a given account
 
+- `export <account-name> [directory]`
+    - Export an account's transaction history into a CSV file. Specify a directory in the command, else a default directory will be used
+
 ### Get
 
 The most useful command, it has several subcommands, and many flags.
