@@ -96,7 +96,7 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 		fmt.Printf("\r%v", t.Id)
 	}
 
-	fmt.Println(" > Transaction data fetched successfully.")
+	fmt.Println("\r > Transaction data fetched successfully.")
 
 	return nil
 }

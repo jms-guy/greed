@@ -72,8 +72,10 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 		return fmt.Errorf("decoding error: %w", err)
 	}
 
-	tbl := tables.MakeTableForTransactions(txns, accountName)
-	tbl.Print()
+	err = tables.PaginateTransactionsTable(txns, accountName)
+	if err != nil {
+		return fmt.Errorf("error creating transactions table: %w", err)
+	}
 
 	return nil
 }
