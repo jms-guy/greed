@@ -42,3 +42,13 @@ WHERE id = $2;
 -- name: GetUserByEmail :one
 SELECT * FROM users
 WHERE email = $1;
+
+-- name: UpdateMember :exec
+UPDATE users
+SET is_member = true, updated_at = NOW()
+WHERE id = $1;
+
+-- name: UpdateFreeCalls :exec
+UPDATE users
+SET free_calls = free_calls - 1, updated_at = NOW()
+WHERE id = $1;

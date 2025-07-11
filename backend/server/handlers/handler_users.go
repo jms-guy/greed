@@ -11,18 +11,6 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Function returns list of all user names in database
-func (app *AppServer) HandlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	users, err := app.Db.GetAllUsers(ctx)
-	if err != nil {
-		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting users: %w", err))
-		return
-	}
-
-	app.respondWithJSON(w, 200, users)
-}
-
 //Gets current user database record
 func (app *AppServer) HandlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

@@ -3,7 +3,20 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"fmt"
 )
+
+//Function returns list of all user names in database
+func (app *AppServer) HandlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	users, err := app.Db.GetAllUsers(ctx)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting users: %w", err))
+		return
+	}
+
+	app.respondWithJSON(w, 200, users)
+}
 
 //Function to reset plaid_items database table
 func (app *AppServer) HandlerResetItems(w http.ResponseWriter, r *http.Request) {

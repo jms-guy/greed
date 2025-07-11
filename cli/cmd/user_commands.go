@@ -172,6 +172,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 			}
 		
 			fmt.Printf("User: %s has been successfully registered!\n", username)
+			fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
 			return nil
 		}
 		break
@@ -205,6 +206,8 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	}
 
 	fmt.Printf("User: %s has been successfully registered!\n", username)
+	fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
+	
 	return nil
 }
 

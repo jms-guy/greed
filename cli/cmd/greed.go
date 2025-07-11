@@ -233,8 +233,9 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 			limit, _ := cmd.Flags().GetInt("limit")
 			order, _ := cmd.Flags().GetString("order")
 			summary, _ := cmd.Flags().GetBool("summary")
+			pageSize, _ := cmd.Flags().GetInt("pgsize")
 
-			return app.commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order, min, max, limit, summary)
+			return app.commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order, min, max, limit, pageSize, summary)
 		},
 	}
 
@@ -247,6 +248,7 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 	cmd.Flags().Int("min", math.MinInt64, "Filters transactions by a minimum amount (negative means income)")
 	cmd.Flags().Int("max", math.MaxInt64, "Filters transactions by a maximum amount")
 	cmd.Flags().Int("limit", 100, "Filters transactions by limiting the number shown")
+	cmd.Flags().Int("pgsize", 30, "Specify the number of records to show on the table at any one time")
 	cmd.Flags().String("order", "", "Filters transactions by re-ordering by date [ASC | DESC]")
 	cmd.Flags().Bool("summary", false, "Provides a summary of transactions. Overrides most other flags. Useful with the [date] flag")
 
@@ -258,6 +260,7 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 		Use: "income <account-name>",
 		Aliases: []string{"Income", "INCOME", "inc", "INC"},
 		Short: "Returns aggregate income/expenses data for account history",
+		Long: "Returns aggregate income/expenses data for account history. Can display data in table, or chart mode. To display properly in chart mode, a terminal screen with a height:width of at least 50:260 is required, else the chart will distort.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			accountName := args[0]

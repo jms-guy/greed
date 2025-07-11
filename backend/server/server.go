@@ -19,10 +19,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-/* Notes & To-Do
+/* Future enhancements
 -For bulk database queries, track success/failures and log as such
 -Add log management system
--Change transactions endpoint to return a single struct, instead of 2 different ones
+-Add way for users to upgrade to member(maybe)
 */
 
 func Run() error {
@@ -176,9 +176,9 @@ func Run() error {
 			r.Route("/access", func(r chi.Router) {
 				r.Use(app.AccessTokenMiddleware)
 
-				r.Post("/accounts", app.HandlerCreateAccounts)									//Creates account records for Plaid item
-				r.Put("/balances", app.HandlerUpdateBalances)									//Update accounts database records with real-time balances
-				r.Post("/transactions", app.HandlerSyncTransactions)							//Sync database transaction records for item with Plaid
+				r.With(app.MemberMiddleware).Post("/accounts", app.HandlerCreateAccounts)			//Creates account records for Plaid item
+				r.With(app.MemberMiddleware).Put("/balances", app.HandlerUpdateBalances)			//Update accounts database records with real-time balances
+				r.With(app.MemberMiddleware).Post("/transactions", app.HandlerSyncTransactions)		//Sync database transaction records for item with Plaid
 			})
 		})
 	})

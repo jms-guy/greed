@@ -55,13 +55,17 @@ func NewQueryValidator() *QueryValidator {
 // - value: Value of parameter to validate
 // - expectedType: Expected data type of query parameter
 // Returns true if value passes validation or no validator exists for expected type
-func (qv *QueryValidator) validateParamValue(value, expectedType string) bool {
+func (qv *QueryValidator) validateParamValue(value, expectedType string) (bool, error) {
 	validator, exists := qv.typeValidators[expectedType]
 	if !exists {
-		return true
+		return true, nil
 	}
 
-	return validator(value)
+	if strings.Contains(value, ";") {
+		return false, fmt.Errorf("query value contains ';' character")
+	}
+
+	return validator(value), nil
 }
 
 //Validates query parameters based on predefined rules. 
@@ -87,7 +91,15 @@ func (qv *QueryValidator) ValidateQuery(queries url.Values, rules map[string]str
 			continue
 		}
 
-		if !qv.validateParamValue(value, expectedType) {
+		ok, err := qv.validateParamValue(value, expectedType)
+		if err != nil {
+			errors = append(errors, QueryValidationError{
+				Parameter: param,
+				Value: value,
+				Message: err.Error(),
+			})
+		}
+		if !ok {
 			errors = append(errors, QueryValidationError{
 				Parameter: param,
 				Value: value,

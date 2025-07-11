@@ -48,7 +48,7 @@ The most useful command, it has several subcommands, and many flags.
 - `get accounts [item-name]`
     - Returns a list of accounts. If an item name is specified, it will return accounts only for that item. Otherwise it will return all accounts for user
 - `get transactions <account-name> [flags]`
-    - Returns transactions for an account, takes many optional flags that can be used to sort and display transaction data
+    - Returns transactions for an account, takes many optional flags that can be used to sort and display transaction data on a paginated table
     - Flags
         - Merchant: Filter transactions by merchant name (`--merchant <merchant-name>`)
         - Category: Filter transactions by category (`--category <category-type>`)
@@ -57,6 +57,7 @@ The most useful command, it has several subcommands, and many flags.
         - Start/End: Filter transactions based on a given start and/or end date (`--start <date>`, `--end <date>`)
         - Min/Max: Filter transactions with a given minimum/maximum dollar amount (`--min <amount>`, `--max <amount>`)
         - Limit: Filters transactions by limiting the number shown (`--limit <number>`)
+        - Pgsize: Specify the number of records to show on the table at any one time (`--pgsize <number>`) 
         - Order: Reorder the transactions shown by date (`--order <ASC | DESC>`)
         - Summary: Provides a summary of transactions. Overrides most other flags. Useful with the [date] flag (`--summary [date]`)
 - `get income <account-name> [flag]`

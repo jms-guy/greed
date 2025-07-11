@@ -23,7 +23,7 @@ VALUES (
     $4,
     $5
 )
-RETURNING id, name, created_at, updated_at, hashed_password, email, is_verified
+RETURNING id, name, created_at, updated_at, hashed_password, email, is_verified, is_member, free_calls
 `
 
 type CreateUserParams struct {
@@ -51,6 +51,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.HashedPassword,
 		&i.Email,
 		&i.IsVerified,
+		&i.IsMember,
+		&i.FreeCalls,
 	)
 	return i, err
 }
@@ -93,7 +95,7 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]string, error) {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, created_at, updated_at, hashed_password, email, is_verified FROM users
+SELECT id, name, created_at, updated_at, hashed_password, email, is_verified, is_member, free_calls FROM users
 WHERE id = $1
 `
 
@@ -108,12 +110,14 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.HashedPassword,
 		&i.Email,
 		&i.IsVerified,
+		&i.IsMember,
+		&i.FreeCalls,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, created_at, updated_at, hashed_password, email, is_verified FROM users
+SELECT id, name, created_at, updated_at, hashed_password, email, is_verified, is_member, free_calls FROM users
 WHERE email = $1
 `
 
@@ -128,12 +132,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.HashedPassword,
 		&i.Email,
 		&i.IsVerified,
+		&i.IsMember,
+		&i.FreeCalls,
 	)
 	return i, err
 }
 
 const getUserByName = `-- name: GetUserByName :one
-SELECT id, name, created_at, updated_at, hashed_password, email, is_verified FROM users
+SELECT id, name, created_at, updated_at, hashed_password, email, is_verified, is_member, free_calls FROM users
 WHERE name = $1
 `
 
@@ -148,6 +154,8 @@ func (q *Queries) GetUserByName(ctx context.Context, name string) (User, error) 
 		&i.HashedPassword,
 		&i.Email,
 		&i.IsVerified,
+		&i.IsMember,
+		&i.FreeCalls,
 	)
 	return i, err
 }
@@ -158,6 +166,28 @@ DELETE FROM users
 
 func (q *Queries) ResetUsers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetUsers)
+	return err
+}
+
+const updateFreeCalls = `-- name: UpdateFreeCalls :exec
+UPDATE users
+SET free_calls = free_calls - 1, updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) UpdateFreeCalls(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateFreeCalls, id)
+	return err
+}
+
+const updateMember = `-- name: UpdateMember :exec
+UPDATE users
+SET is_member = true, updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) UpdateMember(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateMember, id)
 	return err
 }
 

@@ -5,6 +5,8 @@
 
 Greed is a financial application written almost entirely in Golang, used to view/track data easily across financial institutions/accounts. It utilizes the third-party API [Plaid](https://plaid.com) to connect your account with your financial institutions, and obtain your account and transaction history. This data can then be viewed in a user friendly format, which can be used to track past expenditures and plan future ones.
 
+Unless you are running your own server for this application, CLI users are restricted in a 'demo' mode. Since this app utilizes paid Plaid endpoints, users are restricted in the number of calls they can make to certain server endpoints, specifically those that talk to Plaid. 
+
 ### Server Features
 
 - RESTful API
@@ -25,10 +27,10 @@ Greed is a financial application written almost entirely in Golang, used to view
 - Basic reporting of account information for financial institutions
 - 24 months of account financial history
 - In-depth transaction history reporting 
-    - Utilizing tables
+    - Utilizing paginated tables in terminal
     - Extensive sorting through amount, date, merchant, etc.
     - Allows summary reporting as well (ex. All transactions for merchant 'A' for month 'X' summed, showing count, total amount, etc.)
 - Income/Expense viewing
     - View Income vs. Expenses per account
-    - Viewable through tables, bar charts, or graphs
+    - Viewable in tables or bar charts
 - Export data into a CSV file

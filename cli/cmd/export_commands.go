@@ -7,15 +7,23 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
+	"github.com/jms-guy/greed/cli/internal/utils"
 )
 
-//Function gets the export directory determined by operating system, retrieves transaction records from local database, 
-//and creates an exported .csv file containing those records 
+//Function gets the export directory determined by operating system, retrieves transaction records from local database,
+//and creates an exported .csv file containing those records
 func (app *CLIApp) commandExportData(args []string) error {
 	accountName := args[0]
+
+	//Trim quotes included in argument by shell
+	accountName = strings.TrimPrefix(accountName, "'")
+	accountName = strings.TrimSuffix(accountName, "'")
+	accountName = strings.TrimPrefix(accountName, "\"")
+	accountName = strings.TrimSuffix(accountName, "\"")
 
 	exportDirectory := app.getExportDirectory()
 	if len(args) == 2 {
@@ -51,7 +59,7 @@ func (app *CLIApp) commandExportData(args []string) error {
 		return nil 
 	}
 
-	filename := accountName + ".csv"
+	filename :=fmt.Sprintf("%s.csv", accountName)
 	exportFile := filepath.Join(exportDirectory, filename)
 
 	err = os.MkdirAll(exportDirectory, 0755)
@@ -92,6 +100,15 @@ func (app *CLIApp) commandExportData(args []string) error {
 //Gets the base export directory to send exported .csv files to. Directory is based on operating system
 func (app *CLIApp) getExportDirectory() string {
 	var baseDir string
+
+	if app.Config.OperatingSystem == "linux" && utils.IsWSL() {
+		baseDir = os.Getenv("CSV_EXPORT_BASE_DIR_LINUX_MAC")
+		if baseDir == "" {
+			baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
+		}
+		return baseDir
+	}
+
 	if app.Config.OperatingSystem == "windows" {
 		baseDir = os.Getenv("CSV_EXPORT_BASE_DIR_WINDOWS")
 	} else {

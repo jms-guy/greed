@@ -89,6 +89,41 @@ func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+//Middleware function that checks user's status as a member or non-member.
+//If user is a non-member, access to certain endpoints are restricted beyond a certain number of calls.
+func (app *AppServer) MemberMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userIDValue := ctx.Value(userIDKey)
+		userID, ok := userIDValue.(uuid.UUID)
+		if !ok {
+			app.respondWithError(w, 400, "Bad userID in context", nil)
+			return
+		}
+
+		user, err := app.Db.GetUser(ctx, userID)
+		if err != nil {
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
+			return 
+		}
+
+		if !user.IsMember {
+			if user.FreeCalls > 0 {
+				err = app.Db.UpdateFreeCalls(ctx, userID)
+				if err != nil {
+					app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user record: %w", err))
+					return 
+				}
+				next.ServeHTTP(w, r.WithContext(ctx))
+			} else {
+				app.respondWithError(w, 400, "Bad request", fmt.Errorf("user has no free calls left to access endpoint"))
+				return
+			}
+		}
+		
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
 
 //Middleware function to handle account authorization.
 //Serves following handlers with an account struct in context

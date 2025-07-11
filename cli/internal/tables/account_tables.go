@@ -9,6 +9,67 @@ import (
 	"github.com/rodaine/table"
 )
 
+//Format a table for a single account record
+func MakeSingleAccountTable(acc database.Account) table.Table {
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New(
+		"|Institution",
+		"  |  ",
+	 	"ID", 
+		"  |  ",
+	 	"Name",
+		"  |  ",
+	  	"Type",
+		"  |  ",
+	  	"Subtype",
+		"  |  ",
+		"Mask",
+		"  |  ",
+		"Official Name",
+		"  |  ",
+	    "Available Bal.",
+		"  |  ",
+		"Current Bal.",
+		"  |  ",
+		"Currency Code",
+		"  |  ",
+		"Created at",
+		"  |  ",
+		"Updated at",
+	)
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	tbl.AddRow(
+	fmt.Sprintf("|%s", acc.InstitutionName.String),
+	"  |  ",
+	acc.ID,
+	"  |  ",
+	acc.Name,
+	"  |  ",
+	acc.Type,
+	"  |  ",
+	acc.Subtype.String,
+	"  |  ",
+	acc.Mask.String,
+	"  |  ",
+	acc.OfficialName.String,
+	"  |  ",
+	acc.AvailableBalance.Float64,
+	"  |  ",
+	acc.CurrentBalance.Float64,
+	"  |  ",
+	acc.IsoCurrencyCode.String,
+	"  |  ",
+	acc.CreatedAt,
+	"  |  ",
+	acc.UpdatedAt,
+	)
+
+	return tbl
+}
+
 //Format a table of accounts data to display of single item record
 func MakeAccountsTable(accounts []models.Account, institutionName string) table.Table {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()

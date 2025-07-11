@@ -86,6 +86,8 @@ type User struct {
 	HashedPassword string
 	Email          string
 	IsVerified     sql.NullBool
+	IsMember       bool
+	FreeCalls      int32
 }
 
 type VerificationRecord struct {
