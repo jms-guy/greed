@@ -13,7 +13,7 @@ import (
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
-
+// Unused
 func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)

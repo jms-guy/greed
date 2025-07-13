@@ -18,7 +18,10 @@ func Display(accountName, mode string, data []models.MonetaryData) error {
 
 		return nil 
 	default:
-		tbl := tables.MakeTableForMonetaryAggregate(data, accountName)
+		tbl, err := tables.MakeTableForMonetaryAggregate(data, accountName)
+		if err != nil {
+			return err
+		}
 		tbl.Print()
 		return nil
 	}

@@ -143,6 +143,11 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		app.respondWithError(w, 400, "User already exists by that name", nil)
 		return
 	}
+	
+	if err != sql.ErrNoRows {
+		app.respondWithError(w, 500, "Database error checking user existence", err)
+		return
+	}
 
 	givenEmail := params.Email
 	if givenEmail != "" {

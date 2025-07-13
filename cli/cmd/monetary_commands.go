@@ -21,14 +21,9 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
-	if err != nil {
-		return fmt.Errorf("error getting local user record: %w", err)
-	}
-
 	params := database.GetAccountParams{
 		Name: accountName,
-		UserID: user.ID,
+		UserID: creds.User.ID.String(),
 	}
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
 	if err != nil {
@@ -58,7 +53,10 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 			return err
 		}
 	} else {
-		tbl := tables.MakeTableForMonetaryAggregate(response, accountName)
+		tbl, err := tables.MakeTableForMonetaryAggregate(response, accountName)
+		if err != nil {
+			return err
+		}
 		tbl.Print()
 	}
 

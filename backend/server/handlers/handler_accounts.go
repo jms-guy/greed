@@ -10,6 +10,7 @@ import (
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
+	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 //Function will get all accounts for user
@@ -165,6 +166,11 @@ func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Reque
 
 	accs, reqID, err := plaidservice.GetBalances(app.PClient, ctx, accessToken)
 	if err != nil {
+		if plaidErr, ok := err.(plaid.GenericOpenAPIError); ok {
+			fmt.Printf("Plaid error: %s\n", string(plaidErr.Body()))
+		} else {
+			fmt.Println("Error:", err.Error())
+		}
 		app.respondWithError(w, 500, "Service error", fmt.Errorf("plaid request id: %s, error getting updated account balances: %w", reqID, err))
 		return 
 	}

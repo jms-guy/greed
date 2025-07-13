@@ -11,7 +11,6 @@
     <button id="link-btn">Connect Your Account</button>
 
     <script>
-        // Get link_token from ?token=... in the URL
         function getLinkToken() {
             const url = new URL(window.location.href);
             return url.searchParams.get('token');
@@ -24,14 +23,22 @@
                 return;
             }
 
-            const handler = Plaid.create({
+             const handler = Plaid.create({
                 token: linkToken,
                 onSuccess: function (public_token, metadata) {
-                    alert('Success! Token: ' + public_token);
-                    // You might want to send this to your backend here.
+                    window.location.href = 'http://localhost:8080/plaid-callback?public_token=' + public_token;
                 },
                 onExit: function (err, metadata) {
-                    alert('Exited Plaid Link.');
+                    let exitUrl = 'http://localhost:8080/plaid-exit'; 
+
+                    if (err != null) {
+                        exitUrl += '?error_code=' + err.error_code + '&error_type=' + err.error_type;
+                        if (err.display_message) {
+                            exitUrl += '&display_message=' + encodeURIComponent(err.display_message);
+                        }
+                    }
+
+                    window.location.href = exitUrl;
                 }
             });
 

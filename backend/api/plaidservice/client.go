@@ -7,7 +7,7 @@ func NewPlaidClient(clientID, secret string) *plaid.APIClient {
 	config := plaid.NewConfiguration()
 	config.AddDefaultHeader("PLAID-CLIENT-ID", clientID)
 	config.AddDefaultHeader("PLAID-SECRET", secret)
-	config.UseEnvironment(plaid.Sandbox)
+	config.UseEnvironment(plaid.Production)
 	client := plaid.NewAPIClient(config)
 	return client
 }

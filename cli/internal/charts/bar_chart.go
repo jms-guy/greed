@@ -44,7 +44,7 @@ type model struct {
 }
 
 func title(m *barchart.Model) string {
-	return fmt.Sprintf("Max:%.1f, AutoMax:%t\nBarGap:%d, ShowAxis:%t\n", m.MaxValue(), m.AutoMaxValue, m.BarGap(), m.ShowAxis())
+	return fmt.Sprintf("Max:%.1f\nBarGap:%d\n", m.MaxValue(), m.BarGap())
 }
 
 func legend(bd barchart.BarData) (r string) {
@@ -82,7 +82,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
     s := "Same data values are pushed to all vertical bar charts, `q/ctrl+c` to quit\n"
-    s += "Click bar segment to select and display values\n"
     
     // Get the chart view first
     chartView := m.b1.View()

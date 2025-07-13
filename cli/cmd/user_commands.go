@@ -6,19 +6,17 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"time"
-
-	//"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
+	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
 )
 
-//Function creates a new user record on server, and in loca database 
+//Function creates a new user record on server, and in loca database
 func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	username := args[0]
@@ -212,7 +210,6 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 }
 
 //Function creates a login session for user, getting auth tokens
-//Currently using sandbox flow
 func (app *CLIApp) commandUserLogin(args []string) error {
 
 	username := args[0]
@@ -220,8 +217,8 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	loginURL := app.Config.Client.BaseURL + "/api/auth/login"
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
 	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token"
-	//redirectURL := app.Config.Client.BaseURL + "/link"
-	sandboxURL := app.Config.Client.BaseURL + "/admin/sandbox"
+	redirectURL := app.Config.Client.BaseURL + "/link"
+	accessURL := app.Config.Client.BaseURL + "/plaid/get-access-token"
 
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
@@ -245,11 +242,6 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 
 	if err = json.NewDecoder(res.Body).Decode(&login); err != nil {
 		return fmt.Errorf("error decoding response data: %w", err)
-	}
-
-	err = auth.StoreTokens(login, app.Config.ConfigFP)
-	if err != nil {
-		return fmt.Errorf("error storing auth tokens: %w", err)
 	}
 
 	itemsRes, err := app.Config.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
@@ -291,29 +283,34 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 		return fmt.Errorf("error decoding response data: %w", err)
 	}
 
-	/*
 	redirectURL = redirectURL + "?token=" + link.LinkToken
 	err = utils.OpenLink(app.Config.OperatingSystem, redirectURL)
 	if err != nil {
 		return fmt.Errorf("error opening redirect link: %w", err)
 	}
-	*/
 
-	tokenRes, err := app.Config.MakeBasicRequest("POST", sandboxURL, login.AccessToken, nil)
+	fmt.Println("Waiting for Plaid callback...")
+	token, err := auth.ListenForPlaidCallback()
+	if err != nil {
+		return fmt.Errorf("error getting public token: %w", err)
+	}
+	if token == "" {
+		return fmt.Errorf("error getting public token")
+	}
+
+	name := promptForItemName()
+
+	request := models.AccessTokenRequest{
+		PublicToken: token,
+		Nickname: name,
+	}
+	accessResponse, err := app.Config.MakeBasicRequest("POST", accessURL, login.AccessToken, request)
 	if err != nil {
 		return fmt.Errorf("error making request: %w", err)
 	}
-	defer tokenRes.Body.Close()
+	defer accessResponse.Body.Close()
 
-	checkResponseStatus(tokenRes)
-
-	if tokenRes.StatusCode >= 400 {
-		fmt.Printf("Request failed with code %d\n", tokenRes.StatusCode)
-		body, _ := io.ReadAll(tokenRes.Body)
-		fmt.Println("Response body:", string(body))
-		return nil
-	}
-	fmt.Println("Item record created!")
+	checkResponseStatus(accessResponse)
 
 	itemsResp, err := app.Config.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
 	if err != nil {
@@ -321,7 +318,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	}
 	defer itemsResp.Body.Close()
 
-	checkResponseStatus(itemsRes)
+	checkResponseStatus(itemsResp)
 
 	if itemsResp.StatusCode == 200 {
 		var itemsResponse struct {
@@ -337,9 +334,21 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 			for _, i := range itemsResponse.Items {
 				fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
 			}
+			
+			err = auth.StoreTokens(login, app.Config.ConfigFP)
+			if err != nil {
+				return fmt.Errorf("error storing auth tokens: %w", err)
+			}
+
 			return nil
 		}
 	
+	}
+
+	
+	err = auth.StoreTokens(login, app.Config.ConfigFP)
+	if err != nil {
+		return fmt.Errorf("error storing auth tokens: %w", err)
 	}
 
 	return nil
@@ -849,4 +858,40 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 
 	fmt.Println("Password successfully reset")
 	return nil
+}
+
+//Simple bufio scanner for getting an item nickname
+func promptForItemName() string {
+	scanner := bufio.NewScanner(os.Stdin)
+	var name string
+
+	Loop:
+		for {
+			fmt.Println("Please enter a name for this item: ")
+			fmt.Print(" > ")
+			scanner.Scan()
+
+			name = scanner.Text()
+
+			if name == "" {
+				fmt.Println("No input found")
+				continue 
+			}
+
+			fmt.Printf("Set item name to %s? (y/n)\n", name)
+			for {
+				scanner.Scan()
+				confirm := scanner.Text()
+
+				if confirm == "y" {
+					break Loop
+				} else if confirm == "n" {
+					break 
+				} else {
+					continue
+				}
+			}
+		}
+	
+		return name
 }

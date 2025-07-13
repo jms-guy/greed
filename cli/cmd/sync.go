@@ -25,10 +25,6 @@ func (app *CLIApp) commandSync(args []string) error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
-	if err != nil {
-		return fmt.Errorf("error getting local user record: %w", err)
-	}
 
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
@@ -101,7 +97,7 @@ func (app *CLIApp) commandSync(args []string) error {
 			AvailableBalance: avBalance,
 			CurrentBalance: curBalance,
 			ID: acc.Id,
-			UserID: user.ID,
+			UserID: creds.User.ID.String(),
 		}
 		err = app.Config.Db.UpdateAcc(context.Background(), params)
 		if err != nil {
@@ -130,7 +126,7 @@ func (app *CLIApp) commandSync(args []string) error {
 	fmt.Println(" > Syncing transaction records...")
 
 
-	err = app.Config.Db.DeleteTransactions(context.Background(), user.ID)
+	err = app.Config.Db.DeleteTransactions(context.Background(), creds.User.ID.String())
 	if err != nil {
 		return fmt.Errorf("error clearing local records: %w", err)
 	}

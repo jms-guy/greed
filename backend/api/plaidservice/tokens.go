@@ -53,7 +53,6 @@ func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (
 	  }
 
 	request.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
-	request.SetLinkCustomizationName("default")
 	request.SetTransactions(transactions)
 	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
 		Depository: &plaid.DepositoryFilter{

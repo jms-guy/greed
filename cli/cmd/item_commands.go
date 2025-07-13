@@ -113,11 +113,6 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
-	if err != nil {
-		return fmt.Errorf("error getting local user record: %w", err)
-	}
-
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
@@ -207,7 +202,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 			CurrentBalance: curBalance,
 			IsoCurrencyCode: sql.NullString{String: acc.IsoCurrencyCode, Valid: true},
 			InstitutionName: sql.NullString{String: itemInst, Valid: true},
-			UserID: user.ID,
+			UserID: creds.User.ID.String(),
 		}
 
 		_, err := app.Config.Db.CreateAccount(context.Background(), params)

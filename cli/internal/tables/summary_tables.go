@@ -2,6 +2,7 @@ package tables
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -10,7 +11,7 @@ import (
 )
 
 //Make monetary data aggregate table
-func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName string) table.Table {
+func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName string) (table.Table, error) {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
@@ -28,20 +29,35 @@ func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName strin
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, m := range data {
+		incomeStr := strings.TrimPrefix(m.Income, "-")
+		income, err := strconv.ParseFloat(incomeStr, 64)
+		if err != nil {
+			return tbl, fmt.Errorf("error parsing float value: %w", err)
+		}
+		expensesStr := strings.TrimPrefix(m.Expenses, "-")
+		expenses, err := strconv.ParseFloat(expensesStr, 64)
+		if err != nil {
+			return tbl, fmt.Errorf("error parsing float value: %w", err)
+		}
+
+		calculatedNetIncome := income - expenses
+		formattedNetIncome := fmt.Sprintf("%.2f", calculatedNetIncome)
+
+
 		tbl.AddRow(
 			fmt.Sprintf("|%s", accountName),
 			"  |  ",
 			m.Date,
 			"  |  ",
-			strings.TrimPrefix(m.Income, "-"),
+			income,
 			"  |  ",
-			strings.TrimPrefix(m.Expenses, "-"),
+			expenses,
 			"  |  ",
-			strings.TrimPrefix(m.NetIncome, "-"),
+			formattedNetIncome,
 		)
 	}
 
-	return tbl
+	return tbl, nil
 }
 
 //Make transaction summary table
