@@ -260,7 +260,7 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 		Use: "income <account-name>",
 		Aliases: []string{"Income", "INCOME", "inc", "INC"},
 		Short: "Returns aggregate income/expenses data for account history",
-		Long: "Returns aggregate income/expenses data for account history. Can display data in table, or chart mode. To display properly in chart mode, a terminal screen with a height:width of at least 50:260 is required, else the chart will distort.",
+		Long: "Returns aggregate income/expenses data for account history. Can display data in table, or chart mode. To display properly in graph mode, a terminal screen with a height:width of at least 50:210 is required, else the graph will distort.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			accountName := args[0]
@@ -270,7 +270,7 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("mode", "table" , "Change visual output of data [graph | chart]")
+	cmd.Flags().String("mode", "table" , "Change visual output of data [graph]")
 
 	return cmd
 }

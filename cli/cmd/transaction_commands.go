@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
+	"strconv"
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
@@ -13,13 +15,13 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Get transaction records for given account from the server database. 
+//Get transaction records for given account from the server database.
 //Takes into account optional flags, creating a dynamic query to retrieve and sort the data on.
 //If summary flag is present, overrides most other flags, and returns a transaction summary instead
 func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit, pageSize int, summary bool) error {
 
 	var err error
-	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, order, min, max, limit, summary)
+	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, min, max, limit, summary)
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
@@ -69,7 +71,26 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 		return fmt.Errorf("decoding error: %w", err)
 	}
 
-	err = tables.PaginateTransactionsTable(txns, accountName, pageSize)
+	currentBalance := account.CurrentBalance.Float64
+	var historicalBalances []float64
+
+	runningBalance := currentBalance 
+
+	for _, txn := range txns {
+
+		amountFloat, _ := strconv.ParseFloat(txn.Amount, 64) 
+		historicalBalances = append(historicalBalances, runningBalance)
+
+		runningBalance += amountFloat 
+	}
+
+	if order == "ASC" {
+		slices.Reverse(txns)
+		slices.Reverse(historicalBalances)
+	}
+
+
+	err = tables.PaginateTransactionsTable(txns, accountName, historicalBalances, pageSize)
 	if err != nil {
 		return fmt.Errorf("error creating transactions table: %w", err)
 	}

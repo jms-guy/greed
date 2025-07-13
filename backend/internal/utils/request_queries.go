@@ -38,11 +38,6 @@ func NewQueryValidator() *QueryValidator {
 		return v == "true" || v == "false" || v == "1" || v == "0" //Validator for boolean
 	}
 
-	qv.typeValidators["order"] = func(v string) bool {
-		v = strings.ToLower(v)
-		return v == "asc" || v == "desc"			//Validator for query ordering
-	}
-
 	qv.typeValidators["date"] = func(v string) bool {
 		_, err := time.Parse("2006-01-02", v)
 		return err == nil
@@ -188,17 +183,9 @@ func BuildSqlQuery(queries map[string]string, accountID string) (string, []any, 
 			paramCount++
 		}
 	}
-	if val, ok := queries["order"]; ok {
-		if val != "" {
-			order := "DESC" // default
-			if val, ok := queries["order"]; ok && (strings.ToLower(val) == "asc" || strings.ToLower(val) == "desc") {
-				order = strings.ToUpper(val)
-			}
-			query += fmt.Sprintf(" ORDER BY date %s", order)
-		}
-	} else {
-		query += " ORDER BY date DESC"
-	}
+
+	query += " ORDER BY date DESC"
+	
 	if val, ok := queries["limit"]; ok {
 		if val != "" {
 			limit, err := strconv.Atoi(val)

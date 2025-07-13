@@ -25,7 +25,6 @@ func makeQueryRules() map[string]string {
 		"min":			"number",
 		"max":			"number",
 		"limit":		"number",
-		"order":		"string",
 		"summary":		"string",
 	}
 	return rules

@@ -7,7 +7,7 @@ import (
 )
 
 //Builds query string for URL
-func BuildQueries(merchant, category, channel, date, start, end, order string, min, max, limit int, summary bool) string {
+func BuildQueries(merchant, category, channel, date, start, end string, min, max, limit int, summary bool) string {
 
 	queries := map[string]string{
 		"merchant": merchant,
@@ -16,7 +16,6 @@ func BuildQueries(merchant, category, channel, date, start, end, order string, m
 		"date": date,
 		"start": start,
 		"end": end,
-		"order": order,
 	}
 	if min != math.MinInt64 {
 		queries["min"] = strconv.Itoa(min)

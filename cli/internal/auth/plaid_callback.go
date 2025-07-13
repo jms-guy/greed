@@ -69,7 +69,7 @@ func ListenForPlaidCallback() (string, error) {
 		select {
 			case <-exitSignalChan:
 			case <-time.After(5 * time.Second): 
-				fmt.Println("Warning: Timed out waiting for exit signal after public token received.")
+				fmt.Println("Timed out waiting for exit signal after public token received.")
 		}
 		
 		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
@@ -84,7 +84,7 @@ func ListenForPlaidCallback() (string, error) {
 		return "", err
 
 	case <-exitSignalChan:
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
@@ -94,7 +94,7 @@ func ListenForPlaidCallback() (string, error) {
 		return "", fmt.Errorf("plaid Link flow was cancelled or encountered an error")
 
 	case <-timer.C:
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {

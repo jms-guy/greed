@@ -266,6 +266,12 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 			for _, i := range itemsResp.Items {
 				fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
 			}
+
+			err = auth.StoreTokens(login, app.Config.ConfigFP)
+			if err != nil {
+				return fmt.Errorf("error storing auth tokens: %w", err)
+			}
+			
 			return nil
 		}
 	}

@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/jms-guy/greed/cli/internal/auth"
-	"github.com/jms-guy/greed/cli/internal/charts"
 	"github.com/jms-guy/greed/cli/internal/database"
-	"github.com/jms-guy/greed/cli/internal/tables"
+	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -47,17 +46,9 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 		return fmt.Errorf("decoding error: %w", err)
 	}
 
-	if mode == "chart" {
-		err = charts.MakeIncomeChart(response)
-		if err != nil {
-			return err
-		}
-	} else {
-		tbl, err := tables.MakeTableForMonetaryAggregate(response, accountName)
-		if err != nil {
-			return err
-		}
-		tbl.Print()
+	err = utils.Display(accountName, mode, response)
+	if err != nil {
+		return err
 	}
 
 	return nil

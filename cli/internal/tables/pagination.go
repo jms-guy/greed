@@ -10,7 +10,7 @@ import (
 
 //Takes slice of transaction records, and paginates the results into a table, displaying a base number of 20 transaction records at a time.
 //Listens for pgUp/pgDown key presses to view through record pages
-func PaginateTransactionsTable(txns []models.Transaction, accountName string, pageSize int) error {
+func PaginateTransactionsTable(txns []models.Transaction, accountName string, balances []float64, pageSize int) error {
 
 	if len(txns) == 0 {
 		return fmt.Errorf("no results to display")
@@ -47,7 +47,14 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, pa
 			displayItems = txns[startIndex:endIndex]
 		}
 
-		CreateTable(screen, displayItems, accountName)
+		var displayBalances []float64
+
+		if !(startIndex >= len(balances)) {
+			endIndex = min(startIndex + pageSize, len(balances))
+			displayBalances = balances[startIndex:endIndex]
+		}
+
+		CreateTable(screen, displayItems, accountName, displayBalances)
 		screen.Show()
 		
 		event := screen.PollEvent()
@@ -73,16 +80,16 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, pa
 }
 
 //Draws a table of transaction data onto the tcell screen
-func CreateTable(screen tcell.Screen, displayItems []models.Transaction, accountName string) {
+func CreateTable(screen tcell.Screen, displayItems []models.Transaction, accountName string, balances []float64) {
 	//Define tcell screen styles and variables to create table
 	headerStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen).Underline(true)
 	columnStyle := tcell.StyleDefault.Foreground(tcell.ColorYellow)
 
-	columnHeaders := []string{"Account", "Amount", "Date", "Merchant Name", "Payment Channel", "Category", "Currency Code"}
-	columnWidths := []int{10, 10, 12, 20, 15, 15, 10} 
-	columnPadding := 3
+	columnHeaders := []string{"Account", "Date", "Balance", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code"}
+	columnWidths := []int{10, 12, 10, 10, 20, 15, 15, 10} 
+	columnPadding := 5
 
-	currentX, currentY := 0, 0
+	currentX, currentY := 10, 0
 
 	//Draw table headers
 	for i, header := range columnHeaders {
@@ -96,8 +103,8 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 	currentY += 2
 
 	//Draw transaction rows
-	for _, txn := range displayItems {
-		currentX = 0
+	for i, txn := range displayItems {
+		currentX = 10
 
 		accountStr := accountName 
 		if len(accountStr) > columnWidths[0] {
@@ -109,61 +116,71 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 		}
 		currentX += columnPadding
 
-		amountStr := txn.Amount
-		if len(amountStr) > columnWidths[1] {
-			amountStr = amountStr[:columnWidths[1]]
+		dateStr := txn.Date.Format("2006-01-02")
+		if len(dateStr) > columnWidths[1] {
+			dateStr = dateStr[:columnWidths[1]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[1], amountStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[1], dateStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
 		currentX += columnPadding
 
-		dateStr := txn.Date.Format("2006-01-02")
-		if len(dateStr) > columnWidths[2] {
-			dateStr = dateStr[:columnWidths[2]]
+		balanceStr := strconv.FormatFloat(balances[i], 'f', 2, 64)
+		if len(balanceStr) > columnWidths[2] {
+			balanceStr = balanceStr[:columnWidths[2]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[2], dateStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[2], balanceStr) {
+			screen.SetContent(currentX, currentY, r, nil, columnStyle)
+			currentX++
+		}
+		currentX += columnPadding
+
+		amountStr := txn.Amount
+		if len(amountStr) > columnWidths[3] {
+			amountStr = amountStr[:columnWidths[3]]
+		}
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[3], amountStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
 		currentX += columnPadding
 
 		merchantStr := txn.MerchantName
-		if len(merchantStr) > columnWidths[3] {
-			merchantStr = merchantStr[:columnWidths[3]]
+		if len(merchantStr) > columnWidths[4] {
+			merchantStr = merchantStr[:columnWidths[4]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[3], merchantStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[4], merchantStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
 		currentX += columnPadding
 
 		channelStr := txn.PaymentChannel
-		if len(channelStr) > columnWidths[4] {
-			channelStr = channelStr[:columnWidths[4]]
+		if len(channelStr) > columnWidths[5] {
+			channelStr = channelStr[:columnWidths[5]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[4], channelStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[5], channelStr) {
 			screen.SetContent(currentX, currentY, r , nil, columnStyle)
 			currentX++
 		}
 		currentX += columnPadding
 
 		categoryStr := txn.PersonalFinanceCategory
-		if len(categoryStr) > columnWidths[5] {
-			categoryStr = categoryStr[:columnWidths[5]]
+		if len(categoryStr) > columnWidths[6] {
+			categoryStr = categoryStr[:columnWidths[6]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[5], categoryStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[6], categoryStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
 		currentX += columnPadding
 
 		currencyStr := txn.IsoCurrencyCode
-		if len(currencyStr) > columnWidths[6] {
-			currencyStr = currencyStr[:columnWidths[6]]
+		if len(currencyStr) > columnWidths[7] {
+			currencyStr = currencyStr[:columnWidths[7]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[6], currencyStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[7], currencyStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
@@ -171,7 +188,8 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 		currentY++
 	}
 
-	currentX = 0
+	currentX = 10
+	currentY += 2
 	exitStr := "Press the 'esc' key to close table."
 	instructions := "Use the 'pageUp' and 'pageDown' keys to scroll table."
 	for _, r := range exitStr {
@@ -179,7 +197,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 		currentX++
 	}
 	currentY++
-	currentX = 0
+	currentX = 10
 	for _, r := range instructions {
 		screen.SetContent(currentX, currentY, r, nil, headerStyle)
 		currentX++
@@ -256,9 +274,9 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 
 	columnHeaders := []string{"Month", "Merchant", "Txn. Count", "Category", "Total Amount"}
 	columnWidths := []int{10, 10, 10, 15, 12} 
-	columnPadding := 3
+	columnPadding := 5
 
-	currentX, currentY := 0, 0
+	currentX, currentY := 10, 0
 
 	//Draw table headers
 	for i, header := range columnHeaders {
@@ -273,7 +291,7 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 
 	//Draw transaction rows
 	for _, sum := range displayItems {
-		currentX = 0
+		currentX = 10
 
 		monthStr := sum.Month
 		if len(monthStr) > columnWidths[0] {
@@ -327,7 +345,8 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 		currentY++
 	}
 
-	currentX = 0
+	currentX = 10
+	currentY += 2
 	exitStr := "Press the 'esc' key to close table."
 	instructions := "Use the 'pageUp' and 'pageDown' keys to scroll table."
 	for _, r := range exitStr {
@@ -335,7 +354,7 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 		currentX++
 	}
 	currentY++
-	currentX = 0
+	currentX = 10
 	for _, r := range instructions {
 		screen.SetContent(currentX, currentY, r, nil, headerStyle)
 		currentX++

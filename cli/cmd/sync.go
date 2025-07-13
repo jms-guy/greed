@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-
+	"io"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
@@ -67,8 +67,19 @@ func (app *CLIApp) commandSync(args []string) error {
 	defer resp.Body.Close()
 
 	var accUpdates []models.UpdatedBalance
+	if resp.StatusCode != http.StatusOK {
+		var serverErr map[string]string
+		if decodeErr := json.NewDecoder(resp.Body).Decode(&serverErr); decodeErr == nil && serverErr["error"] != "" {
+			return fmt.Errorf("server error updating balances (status %d): %s", resp.StatusCode, serverErr["error"])
+		}
+		return fmt.Errorf("server returned non-OK status for balances: %s", resp.Status)
+	}
+
 	if err = json.NewDecoder(resp.Body).Decode(&accUpdates); err != nil {
-		return fmt.Errorf("decoding error: %w", err)
+		if err == io.EOF {
+			return fmt.Errorf("decoding error: received an empty or incomplete response for account balances. This often indicates a temporary issue with Plaid or the financial institution. Please try syncing again later")
+		}
+		return fmt.Errorf("decoding error for account balances: %w. The response might be malformed or unexpected. Please try syncing again later", err)
 	}
 
 	fmt.Println(" > Syncing account balances...")
@@ -111,18 +122,29 @@ func (app *CLIApp) commandSync(args []string) error {
 	syncTxnsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/transactions"
 
 	response, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
-		return app.Config.MakeBasicRequest("PUT", syncTxnsURL, token, nil)
+		return app.Config.MakeBasicRequest("POST", syncTxnsURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
 	}
 	defer response.Body.Close()
 
-	var txns []models.Transaction
-	if err = json.NewDecoder(response.Body).Decode(&txns); err != nil {
-		return fmt.Errorf("decoding error: %w", err)
+	if response.StatusCode != http.StatusOK {
+		var serverErr map[string]string
+		if decodeErr := json.NewDecoder(response.Body).Decode(&serverErr); decodeErr == nil && serverErr["error"] != "" {
+			return fmt.Errorf("server error syncing transactions (status %d): %s", response.StatusCode, serverErr["error"])
+		}
+		return fmt.Errorf("server returned non-OK status for transactions: %s", response.Status)
 	}
 
+	var txns []models.Transaction
+	if err = json.NewDecoder(response.Body).Decode(&txns); err != nil {
+		if err == io.EOF {
+			return fmt.Errorf("decoding error: received an empty or incomplete response for transactions. This often indicates a temporary issue with Plaid or the financial institution. Please try syncing again later")
+		}
+		return fmt.Errorf("decoding error for transactions: %w. The response might be malformed or unexpected. Please try syncing again later", err)
+	}
+	
 	fmt.Println(" > Syncing transaction records...")
 
 
@@ -156,7 +178,7 @@ func (app *CLIApp) commandSync(args []string) error {
 		fmt.Printf("\r > %v", t.Id)
 	}
 
-	fmt.Println(" > Transaction records synced successfully.")
+	fmt.Println("\r > Transaction records synced successfully.")
 
 	return nil
 }
