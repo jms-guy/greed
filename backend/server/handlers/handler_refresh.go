@@ -46,7 +46,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	newJWT, err := auth.MakeJWT(app.Config, token.UserID)
+	newJWT, err := app.Auth.MakeJWT(app.Config, token.UserID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating JWT", err)
 		return 

@@ -78,7 +78,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Validate input password, against user record's hashed password
-	err = auth.ValidatePasswordHash(user.HashedPassword, params.Password)
+	err = app.Auth.ValidatePasswordHash(user.HashedPassword, params.Password)
 	if err != nil {
 		app.respondWithError(w, 400, "Password is incorrect", err)
 		return
@@ -96,7 +96,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	JWT, err := auth.MakeJWT(app.Config, user.ID)
+	JWT, err := app.Auth.MakeJWT(app.Config, user.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating JWT", err)
 		return 
@@ -151,7 +151,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 
 	givenEmail := params.Email
 	if givenEmail != "" {
-		if !auth.EmailValidation(params.Email) {
+		if !app.Auth.EmailValidation(params.Email) {
 			app.respondWithError(w, 400, "Email provided is invalid", nil)
 			return
 		}
@@ -160,7 +160,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Hash request password
-	hash, err := auth.HashPassword(params.Password)
+	hash, err := app.Auth.HashPassword(params.Password)
 	if err != nil {
 		app.respondWithError(w, 500, hash, err)
 		return
@@ -219,7 +219,7 @@ func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 
 	recordParams := database.CreateVerificationRecordParams{
 		UserID: request.UserID,
-		VerificationCode: auth.GenerateCode(),
+		VerificationCode: app.Auth.GenerateCode(),
 		ExpiryTime: time.Now().UTC().Add(time.Duration(verificationExpiryTime) * time.Hour),
 	}
 	
@@ -345,7 +345,7 @@ func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	hashedPass, err := auth.HashPassword(request.NewPassword)
+	hashedPass, err := app.Auth.HashPassword(request.NewPassword)
 	if err != nil {
 		app.respondWithError(w, 500, "Error hashing new password", err)
 		return

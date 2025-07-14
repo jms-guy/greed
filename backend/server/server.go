@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
+	auth_pkg "github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/config"
@@ -64,8 +65,11 @@ func Run() error {
 
 	dbQueries := database.New(db)
 
+	//Auth service interface
+	authService := &auth_pkg.Service{}
+
 	//Create mail service instance
-	service := sgrid.NewSGMailService(kitLogger)
+	mailService := sgrid.NewSGMailService(kitLogger)
 
 	//Create Plaid client
 	plaidClient := plaidservice.NewPlaidClient(config.PlaidClientID, config.PlaidSecret)
@@ -76,10 +80,11 @@ func Run() error {
 	//Initialize the server struct
 	app := &handlers.AppServer{
 		Db: 		dbQueries,
+		Auth: 		authService,
 		Database:   db,
 		Config:  	config,
 		Logger:     kitLogger,
-		SgMail:     service,
+		SgMail:     mailService,
 		Limiter:    limiter,
 		PClient: 	plaidClient,
 	}

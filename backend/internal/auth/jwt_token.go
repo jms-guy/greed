@@ -12,7 +12,7 @@ import (
 )
 
 //Function gets bearer authorization token from incoming request header
-func GetBearerToken(headers http.Header) (string, error) {
+func (s *Service) GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
     if authHeader == "" {
         return "", fmt.Errorf("no Authorization header found")
@@ -38,7 +38,7 @@ func GetBearerToken(headers http.Header) (string, error) {
 }
 
 //Function generates a JWT authorization token for a given userID
-func MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) {
+func (s *Service) MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) {
 
 	//Get expiration time variable from .env
 	expirationTime, err := strconv.Atoi(cfg.JWTExpiration)
@@ -59,16 +59,16 @@ func MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	s, err := token.SignedString([]byte(cfg.JWTSecret))
+	str, err := token.SignedString([]byte(cfg.JWTSecret))
 	if err != nil {
 		return "", fmt.Errorf("error creating JWT verification signature: %w", err)
 	}
 
-	return s, nil
+	return str, nil
 }
 
 //Validates a token input based off the secret string
-func ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error) {
+func (s *Service) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error) {
 	claims := &jwt.RegisteredClaims{}
 	//Parse token string into claims token
 	parsedToken, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {

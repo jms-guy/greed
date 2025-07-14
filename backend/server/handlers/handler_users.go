@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
 )
@@ -111,7 +110,7 @@ func (app *AppServer) HandlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 		return 
 	}
 
-	hashedPassword, err := auth.HashPassword(request.NewPassword)
+	hashedPassword, err := app.Auth.HashPassword(request.NewPassword)
 	if err != nil {
 		app.respondWithError(w, 500, "Error hashing password", err)
 		return 

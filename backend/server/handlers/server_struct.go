@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"net/http"
 
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
@@ -15,13 +16,14 @@ import (
 
 // Holds state of important server structs
 type AppServer struct {
-	Db       GreedDatabase      	//SQL database queries
-	Database *sql.DB                //SQL database
-	Config   *config.Config         //Environment variables configured from .env file
-	Logger   kitlog.Logger          //Logging interface
-	SgMail   *sgrid.SGMailService   //SendGrid mail service
-	Limiter  *limiter.IPRateLimiter //Rate limiter
-	PClient  *plaid.APIClient       //Client for Plaid integration
+	Db       	GreedDatabase      		//SQL database queries
+	Auth 		AuthService				//Auth service interface
+	Database 	*sql.DB                 //SQL database
+	Config   	*config.Config          //Environment variables configured from .env file
+	Logger   	kitlog.Logger           //Logging interface
+	SgMail   	*sgrid.SGMailService    //SendGrid mail service
+	Limiter  	*limiter.IPRateLimiter  //Rate limiter
+	PClient  	*plaid.APIClient        //Client for Plaid integration
 }
 
 //Database interface 
@@ -84,3 +86,13 @@ type GreedDatabase interface {
 	WithTx(tx *sql.Tx) *database.Queries
 }
 
+//Auth interface
+type AuthService interface {
+	EmailValidation(email string) bool
+	ValidatePasswordHash(hash, password string) error
+	HashPassword(password string) (string, error)
+	GenerateCode() string
+	GetBearerToken(headers http.Header) (string, error)
+	MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error)
+	ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error)
+}

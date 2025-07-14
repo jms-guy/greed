@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/encrypt"
 )
@@ -30,13 +29,13 @@ const (
 //Serves following handlers with UserID in context
 func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, err := auth.GetBearerToken(r.Header)
+		token, err := app.Auth.GetBearerToken(r.Header)
 		if err != nil {
 			app.respondWithError(w, 400, "Bad token", err)
 			return
 		}
 
-		id, err := auth.ValidateJWT(app.Config, token)
+		id, err := app.Auth.ValidateJWT(app.Config, token)
 		if err != nil {
 			app.respondWithError(w, 401, "Invalid JWT", err)
 			return

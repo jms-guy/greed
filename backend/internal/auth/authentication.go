@@ -8,8 +8,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+//Struct that holds auth functions as methods
+type Service struct {}
+
 //Function accepts a string password, and hashes it
-func HashPassword(password string) (string, error) {
+func (s *Service) HashPassword(password string) (string, error) {
 	pass := []byte(password)
 
 	hash, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
@@ -21,7 +24,7 @@ func HashPassword(password string) (string, error) {
 }
 
 //Compares hashed password input against stored password hash
-func ValidatePasswordHash(hash, password string) error {
+func (s *Service) ValidatePasswordHash(hash, password string) error {
 	pass := []byte(password)
 
 	err := bcrypt.CompareHashAndPassword([]byte(hash), pass)
@@ -33,7 +36,7 @@ func ValidatePasswordHash(hash, password string) error {
 }
 
 //Validates that a given string represents a valid email address
-func EmailValidation(email string) bool {
+func (s *Service) EmailValidation(email string) bool {
 	emailRegex := `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
 
 	re := regexp.MustCompile(emailRegex)
@@ -43,7 +46,7 @@ func EmailValidation(email string) bool {
 
 //Function generates a random 8 character string.
 //Creates a new UUID, and returns the first 8 characters of the converted string
-func GenerateCode() string {
+func (s *Service) GenerateCode() string {
 	initial := uuid.New()
 	code := initial.String()[:8]
 

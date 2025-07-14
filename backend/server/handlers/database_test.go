@@ -3,11 +3,18 @@ package handlers_test
 import (
 	"context"
 	"database/sql"
+	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 )
 
+type errorResponse struct {
+    Error string `json:"error"`
+}
+
+//Test database service
 type mockDatabaseService struct {
     GetUserByNameFunc           func(ctx context.Context, name string) (database.User, error)
     CreateUserFunc              func(ctx context.Context, params database.CreateUserParams) (database.User, error)
@@ -67,6 +74,12 @@ type mockDatabaseService struct {
     WithTxFunc                          func(tx *sql.Tx) *database.Queries
 }
 
+func (m *mockDatabaseService) WithTx(tx *sql.Tx) *database.Queries {
+    if m.WithTxFunc != nil {
+        return m.WithTxFunc(tx)
+    }
+    return &database.Queries{}
+}
 
 func (m *mockDatabaseService) GetUserByName(ctx context.Context, name string) (database.User, error) {
     if m.GetUserByNameFunc != nil {
@@ -451,4 +464,64 @@ func (m *mockDatabaseService) GetVerificationRecordByUser(ctx context.Context, u
         return m.GetVerificationRecordByUserFunc(ctx, userID)
     }
     return database.VerificationRecord{}, nil
+}
+
+//Test Auth service
+type mockAuthService struct {
+    EmailValidationFunc         func(email string) bool
+    HashPasswordFunc            func(password string) (string, error)
+    ValidatePasswordHashFunc    func(hash, password string) error
+    GenerateCodeFunc            func() string
+    GetBearerTokenFunc          func(headers http.Header) (string, error)
+	MakeJWTFunc                 func(cfg *config.Config, userID uuid.UUID) (string, error)
+	ValidateJWTFunc             func(cfg *config.Config, tokenString string) (uuid.UUID, error)
+}
+
+func (m *mockAuthService) EmailValidation(email string) bool {
+    if m.EmailValidationFunc != nil {
+        return m.EmailValidationFunc(email)
+    }
+    return true 
+}
+
+func (m *mockAuthService) HashPassword(password string) (string, error) {
+    if m.HashPasswordFunc != nil {
+        return m.HashPasswordFunc(password)
+    }
+    return password + "_hashed", nil
+}
+
+func (m *mockAuthService) ValidatePasswordHash(hash, password string) error {
+    if m.ValidatePasswordHashFunc != nil {
+        return m.ValidatePasswordHashFunc(hash, password)
+    }
+    return nil 
+}
+
+func (m *mockAuthService) GenerateCode() string {
+    if m.GenerateCodeFunc != nil {
+        return m.GenerateCodeFunc()
+    }
+    return "12345"
+}
+
+func (m *mockAuthService) GetBearerToken(headers http.Header) (string, error) {
+    if m.GetBearerTokenFunc != nil {
+        return m.GetBearerTokenFunc(headers)
+    }
+    return "token", nil
+}
+
+func (m *mockAuthService) MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) {
+    if m.MakeJWTFunc != nil {
+        return m.MakeJWTFunc(cfg, userID)
+    }
+    return "JWTtoken", nil 
+}
+
+func (m *mockAuthService) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error) {
+    if m.ValidateJWTFunc != nil {
+        return m.ValidateJWTFunc(cfg, tokenString)
+    }
+    return uuid.UUID{}, nil
 }
