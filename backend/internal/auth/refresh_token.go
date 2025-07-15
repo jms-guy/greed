@@ -17,13 +17,13 @@ type TokenStore interface {
 }
 
 //Function creates a new token string, hashes the token, and creates a record of it in the database
-func MakeRefreshToken(tokenStore TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error) {
+func (s *Service) MakeRefreshToken(tokenStore TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error) {
 	tokenString, err := generateRefreshToken()
 	if err != nil {
 		return "", err 
 	}
 
-	hashedToken := HashRefreshToken(tokenString)
+	hashedToken := s.HashRefreshToken(tokenString)
 
 	_, err = storeRefreshToken(tokenStore, hashedToken, userID, delegation)
 	if err != nil {
@@ -49,7 +49,7 @@ func generateRefreshToken() (string, error) {
 }
 
 //Hash a refresh token using sha256
-func HashRefreshToken(token string) string {
+func (s *Service) HashRefreshToken(token string) string {
 	hash := sha256.New()
 	hash.Write([]byte(token))
 

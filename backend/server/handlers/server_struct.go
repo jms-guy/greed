@@ -8,6 +8,7 @@ import (
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
+	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/limiter"
@@ -95,4 +96,6 @@ type AuthService interface {
 	GetBearerToken(headers http.Header) (string, error)
 	MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error)
 	ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error)
+	MakeRefreshToken(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error)
+	HashRefreshToken(token string) string
 }

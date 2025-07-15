@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func (app *AppServer) respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
 		app.Logger.Log(
@@ -14,10 +18,8 @@ func (app *AppServer) respondWithError(w http.ResponseWriter, code int, msg stri
 			"err", err,
 		)
 	}
-	type errorResponse struct {
-		Error string `json:"error"`
-	}
-	app.respondWithJSON(w, code, errorResponse{
+
+	app.respondWithJSON(w, code, ErrorResponse{
 		Error: msg,
 	})
 }

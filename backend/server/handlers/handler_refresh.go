@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -19,7 +18,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 		return 
 	}
 
-	tokenHash := auth.HashRefreshToken(params.RefreshToken)
+	tokenHash := app.Auth.HashRefreshToken(params.RefreshToken)
 
 	token, err := app.Db.GetToken(ctx, tokenHash)
 	if err != nil {
@@ -58,7 +57,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	newToken, err := auth.MakeRefreshToken(app.Db, token.UserID, del)
+	newToken, err := app.Auth.MakeRefreshToken(app.Db, token.UserID, del)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating new refresh token", err)
 		return

@@ -9,7 +9,6 @@ import (
 	"time"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
-	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
 )
@@ -29,7 +28,7 @@ func (app *AppServer) HandlerUserLogout(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	tokenHash := auth.HashRefreshToken(request.RefreshToken)
+	tokenHash := app.Auth.HashRefreshToken(request.RefreshToken)
 
 	token, err := app.Db.GetToken(ctx, tokenHash)
 	if err != nil {
@@ -73,7 +72,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	//Get user record from database
 	user, err := app.Db.GetUserByName(ctx, params.Name)
 	if err != nil {
-		app.respondWithError(w, 500, "Error getting user from database", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user: %w", err))
 		return
 	}
 
@@ -92,7 +91,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	delegation, err := app.Db.CreateDelegation(ctx, delegationParams)
 	if err != nil {
-		app.respondWithError(w, 500, "Error creating token delegation", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error creating delegation: %w", err))
 		return
 	}
 
@@ -102,7 +101,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return 
 	}
 
-	tokenString, err := auth.MakeRefreshToken(app.Db, user.ID, delegation)
+	tokenString, err := app.Auth.MakeRefreshToken(app.Db, user.ID, delegation)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating refresh token", err)
 		return
@@ -133,7 +132,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	params := models.UserDetails{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		app.respondWithError(w, 500, "Couldn't decode parameters", err)
+		app.respondWithError(w, 500, "Decoding error", err)
 		return
 	}
 
@@ -145,7 +144,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 	
 	if err != sql.ErrNoRows {
-		app.respondWithError(w, 500, "Database error checking user existence", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error checking user existence: %w", err))
 		return
 	}
 
@@ -174,7 +173,8 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		Email: givenEmail,
 	})
 	if err != nil {
-		app.respondWithError(w, 400, "Could not create user", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("could not create new user: %w", err))
+		return
 	}
 
 	//Creates return structure
