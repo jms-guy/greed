@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -464,4 +465,18 @@ func (m *mockAuthService) HashRefreshToken(token string) string {
         return m.HashRefreshTokenFunc(token)
     }
     return token + "_hash"
+}
+
+func (m *mockMailService) NewMail(from string, to string, subject string, body string, data *sgrid.MailData) *sgrid.Mail {
+    if m.NewMailFunc != nil {
+        return m.NewMailFunc(from, to, subject, body, data)
+    }
+    return &sgrid.Mail{}
+}
+
+func (m *mockMailService) SendMail(mailreq *sgrid.Mail) error {
+    if m.SendMailFunc != nil {
+        return m.SendMailFunc(mailreq)
+    }
+    return nil
 }

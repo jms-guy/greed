@@ -22,10 +22,12 @@ type AppServer struct {
 	Database 	*sql.DB                 //SQL database
 	Config   	*config.Config          //Environment variables configured from .env file
 	Logger   	kitlog.Logger           //Logging interface
-	SgMail   	*sgrid.SGMailService    //SendGrid mail service
+	SgMail   	MailService    			//SendGrid mail service
 	Limiter  	*limiter.IPRateLimiter  //Rate limiter
 	PClient  	*plaid.APIClient        //Client for Plaid integration
 }
+
+//Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
 
 //Database interface 
 type GreedDatabase interface {
@@ -98,4 +100,10 @@ type AuthService interface {
 	ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error)
 	MakeRefreshToken(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error)
 	HashRefreshToken(token string) string
+}
+
+//Sendgrid interface
+type MailService interface {
+	NewMail(from string, to string, subject string, body string, data *sgrid.MailData) *sgrid.Mail
+	SendMail(mailreq *sgrid.Mail) error
 }

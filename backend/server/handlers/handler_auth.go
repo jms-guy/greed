@@ -38,13 +38,13 @@ func (app *AppServer) HandlerUserLogout(w http.ResponseWriter, r *http.Request) 
 
 	err = app.Db.RevokeDelegationByID(ctx, token.DelegationID)
 	if err != nil {
-		app.respondWithError(w, 500, "Error revoking session delegation", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error revoking delegation: %w", err))
 		return
 	}
 
 	err = app.Db.ExpireAllDelegationTokens(ctx, token.DelegationID)
 	if err != nil {
-		app.respondWithError(w, 500, "Error expiring all session tokens", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error expiring all delegation tokens: %w", err))
 		return
 	}
 

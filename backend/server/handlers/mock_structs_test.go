@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -84,3 +85,8 @@ type mockAuthService struct {
 	HashRefreshTokenFunc        func(token string) string
 }
 
+//Test Mail service
+type mockMailService struct {
+	NewMailFunc 				func(from string, to string, subject string, body string, data *sgrid.MailData) *sgrid.Mail
+	SendMailFunc 				func(mailreq *sgrid.Mail) error
+}
