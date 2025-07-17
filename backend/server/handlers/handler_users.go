@@ -15,15 +15,20 @@ func (app *AppServer) HandlerGetCurrentUser(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
 
 	user, err := app.Db.GetUser(ctx, id)
 	if err != nil {
-		app.respondWithError(w, 400, "User not found in database", err)
-		return 
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "User not found in database", err)
+			return 
+		} else {
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
+			return
+		}
 	}
 
 	response := models.User{
@@ -42,7 +47,7 @@ func (app *AppServer) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok  || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -50,8 +55,13 @@ func (app *AppServer) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 	//Find user in database
 	_, err := app.Db.GetUser(ctx, id)
 	if err != nil {
-		app.respondWithError(w, 400, "User not found in database", err)
-		return
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "User not found in database", err)
+			return
+		} else {
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record"))
+			return 
+		}
 	}
 
 	//Delete user record from database
@@ -68,15 +78,18 @@ func (app *AppServer) HandlerUpdatePassword(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
 
 	user, err := app.Db.GetUser(ctx, id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No user record found", nil)
+			return
+		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
-		return
 	}
 
 	if !user.IsVerified.Bool {

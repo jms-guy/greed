@@ -1961,10 +1961,6 @@ func TestHandlerVerifyEmail(t *testing.T) {
     })
 }
 
-var (
-    testUserID = uuid.MustParse("a1b2c3d4-e5f6-7890-1234-567890abcdef")
-)
-
 func TestHandlerResetPassword(t *testing.T) {
     tests := []struct {
         name            string
@@ -1974,6 +1970,32 @@ func TestHandlerResetPassword(t *testing.T) {
         expectedStatus  int 
         expectedBody    string  
     }{
+        {
+            name: "should err, on decoding request",
+            requestBody: "",
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    t.Fatalf("should not be called on err")
+                    return database.User{}, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{}, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "Bad request",
+        },
         {
             name: "should reset password successfully",
             requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
@@ -2006,6 +2028,346 @@ func TestHandlerResetPassword(t *testing.T) {
             },
             expectedStatus: http.StatusOK,
             expectedBody: "hashed_new_pass",
+        },
+        {
+            name: "should err, no user found with that email",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{}, sql.ErrNoRows
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    t.Fatalf("should not be called when errs")
+                    return database.VerificationRecord{}, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil 
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "No user found with that email",
+        },
+        {
+            name: "should err, database error on getting user record",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{}, fmt.Errorf("mock error")
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    t.Fatalf("should not be called when errs")
+                    return database.VerificationRecord{}, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil 
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Database error",
+        },
+        {
+            name: "should err, user email not verified",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: false, Valid: false},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    t.Fatalf("should not be called when errs")
+                    return database.VerificationRecord{}, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil 
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "User's email is not verified",
+        },
+        {
+            name: "should err, on getting verification record (sql.ErrNoRows)",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{}, sql.ErrNoRows
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    t.Fatalf("should not be called when errs")
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil 
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "No verification record found",
+        },
+        {
+            name: "should err, on getting verification record",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{}, fmt.Errorf("mock error")
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    t.Fatalf("should not be called when errs")
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil 
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Database error",
+        },
+        {
+            name: "should err, on deleting verification record",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{
+                        UserID: testUserID,
+                        VerificationCode: code,
+                        ExpiryTime: time.Now().Add(time.Hour), 
+                    }, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return fmt.Errorf("mock error")
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Database error",
+        },
+        {
+            name: "should err, expired verification record",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{
+                        UserID: testUserID,
+                        VerificationCode: code,
+                        ExpiryTime: time.Now().Add(-1*time.Hour), 
+                    }, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "Verification record is expired",
+        },
+        {
+            name: "should err, userID not matching verification record",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{
+                        UserID: uuid.New(),
+                        VerificationCode: code,
+                        ExpiryTime: time.Now().Add(time.Hour), 
+                    }, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusUnauthorized,
+            expectedBody: "User ID does not match verification record",
+        },
+        {
+            name: "should err, on hashing new password",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{
+                        UserID: testUserID,
+                        VerificationCode: code,
+                        ExpiryTime: time.Now().Add(time.Hour), 
+                    }, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil 
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return fmt.Errorf("mock error")
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "", fmt.Errorf("mock error") 
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Error hashing new password",
+        },
+        {
+            name: "should err, on updating password",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{
+                        UserID: testUserID,
+                        VerificationCode: code,
+                        ExpiryTime: time.Now().Add(time.Hour), 
+                    }, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return fmt.Errorf("mock error")
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return nil
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Database error",
+        },
+        {
+            name: "should err, on deleting expired verification record",
+            requestBody: `{"email": "verified@example.com", "code": "VALID_CODE", "new_password": "new_pass"}`,
+            mockDb: &mockDatabaseService{
+                GetUserByEmailFunc: func(ctx context.Context, email string) (database.User, error) {
+                    return database.User{
+                        ID: testUserID,
+                        Email: email,
+                        IsVerified: sql.NullBool{Bool: true, Valid: true},
+                    }, nil
+                },
+                GetVerificationRecordFunc: func(ctx context.Context, code string) (database.VerificationRecord, error) {
+                    return database.VerificationRecord{
+                        UserID: testUserID,
+                        VerificationCode: code,
+                        ExpiryTime: time.Now().Add(-1*time.Hour), 
+                    }, nil
+                },
+                UpdatePasswordFunc: func(ctx context.Context, arg database.UpdatePasswordParams) error {
+                    return nil
+                },
+                DeleteVerificationRecordFunc: func(ctx context.Context, code string) error {
+                    return fmt.Errorf("mock error")
+                },
+            },
+            mockAuth: &mockAuthService{
+                HashPasswordFunc: func(password string) (string, error) {
+                    return "hashed_" + password, nil 
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Database error",
         },
     }
 

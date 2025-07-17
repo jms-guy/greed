@@ -12,6 +12,14 @@ import (
 	"github.com/jms-guy/greed/backend/internal/database"
 )
 
+//Testing global variables
+var (
+    testUserID = uuid.MustParse("a1b2c3d4-e5f6-7890-1234-567890abcdef")
+	testName = "Test"
+	testEmail = "test@email.com"
+	testItemName = "ItemName"
+)
+
 //Test database service
 type mockDatabaseService struct {
     GetUserByNameFunc           func(ctx context.Context, name string) (database.User, error)

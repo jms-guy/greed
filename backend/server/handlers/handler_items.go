@@ -134,6 +134,9 @@ func (app *AppServer) HandlerGetItems(w http.ResponseWriter, r *http.Request) {
 
 	items, err := app.Db.GetItemsByUser(ctx, id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No items found for user", nil)
+		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting item records: %w", err))
 		return
 	}

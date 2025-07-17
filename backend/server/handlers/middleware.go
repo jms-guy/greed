@@ -16,15 +16,6 @@ import (
 	"github.com/jms-guy/greed/backend/internal/encrypt"
 )
 
-type contextKey string
-
-const (
-    userIDKey 		contextKey = "userID"
-	accessTokenKey 	contextKey = "accessTokenKey"
-    accountKey 		contextKey = "account"
-	requestIDKey 	contextKey = "requestID"
-)
-
 //Middleware function to handle user authorization.
 //Serves following handlers with UserID in context
 func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
