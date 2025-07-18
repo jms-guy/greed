@@ -18,6 +18,9 @@ var (
 	testName = "Test"
 	testEmail = "test@email.com"
 	testItemName = "ItemName"
+	testAccountID = "54321"
+	testAccountName = "AccountName"
+	testAccessToken = "testAccessToken"
 )
 
 //Test database service
@@ -98,3 +101,5 @@ type mockMailService struct {
 	NewMailFunc 				func(from string, to string, subject string, body string, data *sgrid.MailData) *sgrid.Mail
 	SendMailFunc 				func(mailreq *sgrid.Mail) error
 }
+
+type mockPlaidService struct

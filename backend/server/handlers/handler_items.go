@@ -18,7 +18,7 @@ func (app *AppServer) HandlerCreateAccounts(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -127,7 +127,7 @@ func (app *AppServer) HandlerGetItems(w http.ResponseWriter, r *http.Request) {
 
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -164,7 +164,7 @@ func (app *AppServer) HandlerUpdateItemName(w http.ResponseWriter, r *http.Reque
 
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -199,7 +199,7 @@ func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) 
 
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -218,6 +218,44 @@ func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) 
 	}
 
 	app.respondWithJSON(w, 200, "Item deleted successfully")
+}
+
+//Gets accounts only for a user's specific item
+func (app *AppServer) HandlerGetAccountsForItem(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	itemID := chi.URLParam(r, "item-id")
+
+	accs, err := app.Db.GetAccountsForItem(ctx, itemID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 400, "No accounts found for item", nil)
+			return 
+		}
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting accounts for item: %w", err))
+		return 
+	}
+
+	//Return slice of account structs
+	var accounts []models.Account
+	for _, account := range accs {
+		result := models.Account{
+			Id: account.ID,
+			CreatedAt: account.CreatedAt,
+			UpdatedAt: account.UpdatedAt,
+			Name: account.Name,
+			Type: account.Type,
+			Subtype: account.Subtype.String,
+			Mask: account.Mask.String,
+			OfficialName: account.OfficialName.String,
+			AvailableBalance: account.AvailableBalance.String,
+			CurrentBalance: account.CurrentBalance.String,
+			IsoCurrencyCode: account.IsoCurrencyCode.String,
+		}
+		accounts = append(accounts, result)
+	}
+	
+	app.respondWithJSON(w, 200, accounts)
 }
 
 //Function to populate database with transaction data for a given item

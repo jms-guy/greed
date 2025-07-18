@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -53,44 +51,6 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 		accounts = append(accounts, result)
 	}
 
-	app.respondWithJSON(w, 200, accounts)
-}
-
-//Gets accounts only for a user's specific item
-func (app *AppServer) HandlerGetAccountsForItem(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	itemID := chi.URLParam(r, "item-id")
-
-	accs, err := app.Db.GetAccountsForItem(ctx, itemID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			app.respondWithError(w, 400, "No accounts found for item", nil)
-			return 
-		}
-		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting accounts for item: %w", err))
-		return 
-	}
-
-	//Return slice of account structs
-	var accounts []models.Account
-	for _, account := range accs {
-		result := models.Account{
-			Id: account.ID,
-			CreatedAt: account.CreatedAt,
-			UpdatedAt: account.UpdatedAt,
-			Name: account.Name,
-			Type: account.Type,
-			Subtype: account.Subtype.String,
-			Mask: account.Mask.String,
-			OfficialName: account.OfficialName.String,
-			AvailableBalance: account.AvailableBalance.String,
-			CurrentBalance: account.CurrentBalance.String,
-			IsoCurrencyCode: account.IsoCurrencyCode.String,
-		}
-		accounts = append(accounts, result)
-	}
-	
 	app.respondWithJSON(w, 200, accounts)
 }
 

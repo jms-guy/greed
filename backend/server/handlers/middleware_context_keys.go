@@ -19,3 +19,7 @@ const (
 func GetUserIDContextKey() any { 
     return userIDKey
 }
+
+func GetAccessTokenKey() any {
+    return accessTokenKey
+}
