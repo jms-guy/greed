@@ -6,11 +6,11 @@ import (
 )
 
 //Retrieves account data listed in a Plaid item
-func GetAccounts(client *plaid.APIClient, ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error){
+func (p *PlaidService) GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error) {
 
 	accountsGetRequest := plaid.NewAccountsGetRequest(accessToken)
 
-	accountsGetResp, httpResp, err := client.PlaidApi.AccountsGet(ctx).AccountsGetRequest(
+	accountsGetResp, httpResp, err := p.Client.PlaidApi.AccountsGet(ctx).AccountsGetRequest(
 		*accountsGetRequest,
 	).Execute()
 	if err != nil {
@@ -23,9 +23,9 @@ func GetAccounts(client *plaid.APIClient, ctx context.Context, accessToken strin
 }
 
 //Gets institution name for an item
-func GetItemInstitution(client *plaid.APIClient, ctx context.Context, accessToken string) (string, error) {
+func (p *PlaidService) GetItemInstitution(ctx context.Context, accessToken string) (string, error) {
 	itemGetReq := plaid.NewItemGetRequest(accessToken)
-	itemResp, _, err := client.PlaidApi.ItemGet(ctx).ItemGetRequest(*itemGetReq).Execute()
+	itemResp, _, err := p.Client.PlaidApi.ItemGet(ctx).ItemGetRequest(*itemGetReq).Execute()
 	if err != nil {
 		return "", err 
 	}
@@ -34,7 +34,7 @@ func GetItemInstitution(client *plaid.APIClient, ctx context.Context, accessToke
 	institutionID := item.GetInstitutionId()
 
 	instReq := plaid.NewInstitutionsGetByIdRequest(institutionID, []plaid.CountryCode{plaid.COUNTRYCODE_CA})
-	instResp, _, err := client.PlaidApi.InstitutionsGetById(ctx).InstitutionsGetByIdRequest(*instReq).Execute()
+	instResp, _, err := p.Client.PlaidApi.InstitutionsGetById(ctx).InstitutionsGetByIdRequest(*instReq).Execute()
 	if err != nil {
 		return "", err 
 	}
@@ -44,9 +44,9 @@ func GetItemInstitution(client *plaid.APIClient, ctx context.Context, accessToke
 	return inst.GetName(), nil
 }
 
-func GetBalances(client *plaid.APIClient, ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
+func (p *PlaidService) GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
 	balancesGetReq := plaid.NewAccountsBalanceGetRequest(accessToken)
-	balancesGetResp, httpResp, err := client.PlaidApi.AccountsBalanceGet(ctx).AccountsBalanceGetRequest(*balancesGetReq).Execute()
+	balancesGetResp, httpResp, err := p.Client.PlaidApi.AccountsBalanceGet(ctx).AccountsBalanceGetRequest(*balancesGetReq).Execute()
 
 	if err != nil {
 		return plaid.AccountsGetResponse{}, httpResp.Header.Get("X-Request-Id"), err
@@ -55,9 +55,9 @@ func GetBalances(client *plaid.APIClient, ctx context.Context, accessToken strin
 	return balancesGetResp, httpResp.Header.Get("X-Request-Id"), nil
 }
 
-//Calls transactions/sync Plaid endpoint, getting all transaction data for a specific account.
+//Called by transactions/sync Plaid endpoint, getting all transaction data for a specific account.
 //Returns last Plaid request ID in loop
-func GetTransactions(client *plaid.APIClient, ctx context.Context, accessToken, cursor string) (
+func (p *PlaidService) GetTransactions(ctx context.Context, accessToken, cursor string) (
 	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) {
 
 	hasMore := true
@@ -74,7 +74,7 @@ func GetTransactions(client *plaid.APIClient, ctx context.Context, accessToken, 
 		if cursor != "" {
 			request.SetCursor(cursor)
 		}
-		resp, httpResp, err := client.PlaidApi.TransactionsSync(ctx).TransactionsSyncRequest(*request).Execute()
+		resp, httpResp, err := p.Client.PlaidApi.TransactionsSync(ctx).TransactionsSyncRequest(*request).Execute()
 		if err != nil {
 			if httpResp != nil {
                 reqID = httpResp.Header.Get("X-Request-Id")

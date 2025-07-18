@@ -12,19 +12,21 @@ import (
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/limiter"
+	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 // Holds state of important server structs
 type AppServer struct {
-	Db       	GreedDatabase      		//SQL database queries
+	Db       	GreedDatabase      		//SQLC generated database queries
 	Auth 		AuthService				//Auth service interface
-	Database 	*sql.DB                 //SQL database
+	Database 	*sql.DB					//Raw database connection
 	Config   	*config.Config          //Environment variables configured from .env file
 	Logger   	kitlog.Logger           //Logging interface
 	SgMail   	MailService    			//SendGrid mail service
 	Limiter  	*limiter.IPRateLimiter  //Rate limiter
-	PClient  	*plaid.APIClient        //Client for Plaid integration
+	PService  	PlaidService        	//Client for Plaid integration
+	TxnUpdater  TxnUpdater				//Used for Db transactions
 }
 
 //Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
@@ -106,4 +108,30 @@ type AuthService interface {
 type MailService interface {
 	NewMail(from string, to string, subject string, body string, data *sgrid.MailData) *sgrid.Mail
 	SendMail(mailreq *sgrid.Mail) error
+}
+
+//Plaid interface
+type PlaidService interface {
+	GetLinkToken(ctx context.Context, userID string) (string, error) 
+	GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) 
+	InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) 
+	GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)
+	GetItemInstitution(ctx context.Context, accessToken string) (string, error) 
+	GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) 
+	GetTransactions(ctx context.Context, accessToken, cursor string) (
+	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error)  
+}
+
+//Database transaction interface
+type TxnUpdater interface {
+	ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error
+	RevokeDelegation(ctx context.Context, token database.RefreshToken) error
+	ApplyTransactionUpdates(
+		ctx context.Context,
+		added []plaid.Transaction,
+		modified []plaid.Transaction,
+		removed []plaid.RemovedTransaction,
+		nextCursor string,
+		itemID string,
+	) error
 }

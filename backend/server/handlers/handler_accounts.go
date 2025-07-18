@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
-	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 //Function will get all accounts for user
@@ -16,7 +14,7 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -88,7 +86,7 @@ func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -111,68 +109,4 @@ func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.respondWithJSON(w, 200, "Account deleted successfully")
-}
-
-//Updates the balances of all accounts associated with an item
-func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	tokenValue := ctx.Value(accessTokenKey)
-	accessToken, ok := tokenValue.(string)
-	if !ok {
-		app.respondWithError(w, 400, "Bad access token in context", nil)
-		return
-	}
-
-	accs, reqID, err := plaidservice.GetBalances(app.PClient, ctx, accessToken)
-	if err != nil {
-		if plaidErr, ok := err.(plaid.GenericOpenAPIError); ok {
-			fmt.Printf("Plaid error: %s\n", string(plaidErr.Body()))
-		} else {
-			fmt.Println("Error:", err.Error())
-		}
-		app.respondWithError(w, 500, "Service error", fmt.Errorf("plaid request id: %s, error getting updated account balances: %w", reqID, err))
-		return 
-	}
-
-	responseAccounts := []models.UpdatedBalance{}
-	for _, acc := range accs.Accounts {
-
-		accBalAvail := sql.NullString{}
-		if acc.Balances.Available.IsSet() {
-			accBalAvail.String = fmt.Sprintf("%.2f", *acc.Balances.Available.Get())
-			accBalAvail.Valid = true
-		}
-
-		accBalCur := sql.NullString{}
-		if acc.Balances.Current.IsSet() {
-			accBalCur.String = fmt.Sprintf("%.2f", *acc.Balances.Current.Get())
-			accBalCur.Valid = true
-		}
-
-		params := database.UpdateBalancesParams{
-			AvailableBalance: accBalAvail,
-			CurrentBalance: accBalCur,
-			ID: acc.AccountId,
-			ItemID: accs.Item.ItemId,
-		}
-
-		updatedAcc, err := app.Db.UpdateBalances(ctx, params)
-		if err != nil {
-			app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating account record: %w", err))
-			return 
-		}
-
-		updatedRecord := models.UpdatedBalance{
-			Id: updatedAcc.ID,
-			AvailableBalance: accBalAvail.String,
-			CurrentBalance: accBalCur.String,
-			ItemId: accs.Item.ItemId,
-			RequestID: reqID,
-		}
-
-		responseAccounts = append(responseAccounts, updatedRecord)
-	}
-
-	app.respondWithJSON(w, 200, responseAccounts)
 }

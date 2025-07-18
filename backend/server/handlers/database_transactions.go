@@ -11,15 +11,25 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
+//Struct to hold the base database connection, so transactions can use Begin, Rollback, Commit, WithTx, etc.
+type DbTransactionUpdater struct {
+	Db      *sql.DB                  
+	Queries GreedDatabase   
+}
+
+func NewDBTransactionUpdater(db *sql.DB, queries GreedDatabase) *DbTransactionUpdater {
+	return &DbTransactionUpdater{Db: db, Queries: queries}
+}
+
 //Transaction for expiring a delegation session, if refresh token given is expired
-func ExpireDelegation(app *AppServer, ctx context.Context, tokenHash string, token database.RefreshToken) error {
-	tx, err := app.Database.Begin()
+func (updater *DbTransactionUpdater) ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error {
+	tx, err := updater.Db.Begin()
 		if err != nil {
 			return fmt.Errorf("error beginning database transaction: %w", err)
 		}
 		defer tx.Rollback()
 
-		qtx := app.Db.WithTx(tx)
+		qtx := updater.Queries.WithTx(tx)
 
 		err  = qtx.ExpireToken(ctx, tokenHash)
 		if err != nil {
@@ -33,14 +43,14 @@ func ExpireDelegation(app *AppServer, ctx context.Context, tokenHash string, tok
 }
 
 //Transaction for revoking a delegation session, if a token was used more than once
-func RevokeDelegation(app *AppServer, ctx context.Context, token database.RefreshToken) error {
-	tx, err := app.Database.Begin()
+func (updater *DbTransactionUpdater) RevokeDelegation(ctx context.Context, token database.RefreshToken) error {
+	tx, err := updater.Db.Begin()
 	if err != nil {
 		return fmt.Errorf("error beginning database transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	qtx := app.Db.WithTx(tx)
+	qtx := updater.Queries.WithTx(tx)
 
 	err = qtx.RevokeDelegationByID(ctx, token.DelegationID)
 	if err != nil {
@@ -56,14 +66,14 @@ func RevokeDelegation(app *AppServer, ctx context.Context, token database.Refres
 
 //Db transaction for updating item transaction history, handling new, modified, and deleted data, 
 //as well as updating the item's transaction cursor.
-func ApplyTransactionUpdates(app *AppServer, ctx context.Context, added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, cursor, itemID string) error {
-	tx, err := app.Database.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context, added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, cursor, itemID string) error {
+	tx, err := updater.Db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return fmt.Errorf("error beginning database transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	qtx := app.Db.WithTx(tx)
+	qtx := updater.Queries.WithTx(tx)
 
 	var (
 		valueStrings 	[]string

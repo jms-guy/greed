@@ -2,15 +2,13 @@ package plaidservice
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
-
+/*
 //Sandbox access token generation
-func GetSandboxToken(client *plaid.APIClient, ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
-	sandboxPublicTokenResp, _, err := client.PlaidApi.SandboxPublicTokenCreate(ctx).SandboxPublicTokenCreateRequest(
+func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
+	sandboxPublicTokenResp, _, err := p.Client.PlaidApi.SandboxPublicTokenCreate(ctx).SandboxPublicTokenCreateRequest(
 		*plaid.NewSandboxPublicTokenCreateRequest(
 			"ins_109508",
 			[]plaid.Products{plaid.PRODUCTS_TRANSACTIONS},
@@ -22,7 +20,7 @@ func GetSandboxToken(client *plaid.APIClient, ctx context.Context) (plaid.ItemPu
 		}
 		return plaid.ItemPublicTokenExchangeResponse{}, err
 	}
-	exchangePublicTokenResp, _, err := client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
+	exchangePublicTokenResp, _, err := p.Client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
 		*plaid.NewItemPublicTokenExchangeRequest(sandboxPublicTokenResp.GetPublicToken()),
 	  ).Execute()
 	if err != nil {
@@ -34,9 +32,9 @@ func GetSandboxToken(client *plaid.APIClient, ctx context.Context) (plaid.ItemPu
 
 	return exchangePublicTokenResp, nil
 }
-
-//Requests Plaid API for a Link token for client use
-func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (string, error) {
+*/
+//Requests Plaid API for a Link token for p.Client use
+func (p *PlaidService) GetLinkToken(ctx context.Context, userID string) (string, error) {
 	user := plaid.LinkTokenCreateRequestUser{
 		ClientUserId: userID,
 	}
@@ -63,7 +61,7 @@ func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (
 		},
 	})
 
-	resp, _, err := client.PlaidApi.LinkTokenCreate(ctx).LinkTokenCreateRequest(*request).Execute()
+	resp, _, err := p.Client.PlaidApi.LinkTokenCreate(ctx).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
 		return "", err
 	}
@@ -74,11 +72,11 @@ func GetLinkToken(client *plaid.APIClient, ctx context.Context, userID string) (
 }
 
 //Exchanges a public token received from client for a permanent access token for item from Plaid API
-func GetAccessToken(client *plaid.APIClient, ctx context.Context, publicToken string) (models.AccessResponse, error) {
+func (p *PlaidService) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
 
 	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 
-	exchangePublicTokenResp, httpResp, err := client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
+	exchangePublicTokenResp, httpResp, err := p.Client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
 		*exchangePublicTokenReq,
 	).Execute()
 	if err != nil {
@@ -87,7 +85,7 @@ func GetAccessToken(client *plaid.APIClient, ctx context.Context, publicToken st
 
 	accessToken := exchangePublicTokenResp.GetAccessToken()
 	itemID := exchangePublicTokenResp.ItemId
-	instName, err := GetItemInstitution(client, ctx, accessToken)
+	instName, err := p.GetItemInstitution(ctx, accessToken)
 	if err != nil {
 		return models.AccessResponse{}, err
 	}
@@ -105,11 +103,11 @@ func GetAccessToken(client *plaid.APIClient, ctx context.Context, publicToken st
 }
 
 //Invalidates an item's access token, requesting a new one from Plaid API
-func InvalidateAccessToken(client *plaid.APIClient,ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
+func (p *PlaidService) InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
 
 	request := plaid.NewItemAccessTokenInvalidateRequest(accessToken.AccessToken)
 
-	response, httpResp, err := client.PlaidApi.ItemAccessTokenInvalidate(ctx).ItemAccessTokenInvalidateRequest(
+	response, httpResp, err := p.Client.PlaidApi.ItemAccessTokenInvalidate(ctx).ItemAccessTokenInvalidateRequest(
 		*request,
 	).Execute()
 	if err != nil {

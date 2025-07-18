@@ -27,7 +27,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 	}
 
 	if token.ExpiresAt.Before(time.Now()) {
-		err = ExpireDelegation(app, ctx, tokenHash, token)
+		err = app.TxnUpdater.ExpireDelegation(ctx, tokenHash, token)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", err)
 			return
@@ -36,7 +36,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 		return
 	}
 	 if token.IsUsed {
-		err = RevokeDelegation(app, ctx, token)
+		err = app.TxnUpdater.RevokeDelegation(ctx, token)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", err)
 			return

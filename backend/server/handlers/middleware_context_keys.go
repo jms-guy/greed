@@ -23,3 +23,10 @@ func GetUserIDContextKey() any {
 func GetAccessTokenKey() any {
     return accessTokenKey
 }
+
+func GetAccountKey() any {
+    return accountKey
+}
+func GetRequestIDKey() any {
+    return requestIDKey
+}

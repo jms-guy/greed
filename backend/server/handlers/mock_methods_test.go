@@ -10,6 +10,8 @@ import (
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
+	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 func (m *mockDatabaseService) WithTx(tx *sql.Tx) *database.Queries {
@@ -477,6 +479,77 @@ func (m *mockMailService) NewMail(from string, to string, subject string, body s
 func (m *mockMailService) SendMail(mailreq *sgrid.Mail) error {
     if m.SendMailFunc != nil {
         return m.SendMailFunc(mailreq)
+    }
+    return nil
+}
+
+func (p *mockPlaidService) GetLinkToken(ctx context.Context, userID string) (string, error) {
+    if p.GetLinkTokenFunc != nil {
+        return p.GetLinkTokenFunc(ctx, userID)
+    }
+    return "", nil 
+}
+
+func (p *mockPlaidService) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
+    if p.GetAccessTokenFunc != nil {
+        return p.GetAccessTokenFunc(ctx, publicToken)
+    }
+    return models.AccessResponse{}, nil 
+}
+
+func (p *mockPlaidService) InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
+    if p.InvalidateAccessTokenFunc != nil {
+        return p.InvalidateAccessTokenFunc(ctx, accessToken)
+    }
+    return models.AccessResponse{}, nil 
+}
+
+func (p *mockPlaidService) GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error) {
+    if p.GetAccountsFunc != nil {
+        return p.GetAccountsFunc(ctx, accessToken)
+    }
+    return []plaid.AccountBase{}, "", nil
+}
+
+func (p *mockPlaidService) GetItemInstitution(ctx context.Context, accessToken string) (string, error) {
+    if p.GetItemInstitutionFunc != nil {
+        return p.GetItemInstitutionFunc(ctx, accessToken)
+    }
+    return "TestInstitution", nil
+}
+
+func (p *mockPlaidService) GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
+    if p.GetBalancesFunc != nil {
+        return p.GetBalancesFunc(ctx, accessToken)
+    }
+    return plaid.AccountsGetResponse{}, "", nil
+}
+
+func (p *mockPlaidService) GetTransactions(ctx context.Context, accessToken, cursor string) (
+	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) {
+    if p.GetTransactionsFunc != nil {
+        return p.GetTransactionsFunc(ctx, accessToken, cursor)
+    }
+    return []plaid.Transaction{}, []plaid.Transaction{}, []plaid.RemovedTransaction{}, "next", "request", nil
+}
+
+func (t *mockTxnUpdaterService) ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error {
+    if t.ExpireDelegationFunc != nil {
+        return t.ExpireDelegationFunc(ctx, tokenHash, token)
+    }
+    return nil 
+}
+
+func (t *mockTxnUpdaterService) RevokeDelegation(ctx context.Context, token database.RefreshToken) error {
+    if t.RevokeDelegationFunc != nil {
+        return t.RevokeDelegationFunc(ctx, token)
+    }
+    return nil 
+}
+
+func (t *mockTxnUpdaterService) ApplyTransactionUpdates(ctx context.Context, added []plaid.Transaction, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, itemID string) error {
+    if t.ApplyTransactionUpdatesFunc != nil {
+        return t.ApplyTransactionUpdatesFunc(ctx, added, modified, removed, nextCursor, itemID)
     }
     return nil
 }

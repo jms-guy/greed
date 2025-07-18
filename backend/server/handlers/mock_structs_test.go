@@ -10,6 +10,8 @@ import (
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
+	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 //Testing global variables
@@ -18,8 +20,10 @@ var (
 	testName = "Test"
 	testEmail = "test@email.com"
 	testItemName = "ItemName"
+	testItemID = "12345"
 	testAccountID = "54321"
 	testAccountName = "AccountName"
+	testAccount = database.Account{ID: testAccountID, Name: testAccountName}
 	testAccessToken = "testAccessToken"
 )
 
@@ -102,4 +106,28 @@ type mockMailService struct {
 	SendMailFunc 				func(mailreq *sgrid.Mail) error
 }
 
-type mockPlaidService struct
+//Test Plaid service
+type mockPlaidService struct {
+	GetLinkTokenFunc 			func(ctx context.Context, userID string) (string, error) 
+	GetAccessTokenFunc 			func(ctx context.Context, publicToken string) (models.AccessResponse, error) 
+	InvalidateAccessTokenFunc 	func(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) 
+	GetAccountsFunc 			func(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)
+	GetItemInstitutionFunc 		func(ctx context.Context, accessToken string) (string, error) 
+	GetBalancesFunc 			func(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) 
+	GetTransactionsFunc 		func(ctx context.Context, accessToken, cursor string) (
+	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) 
+}
+
+//Test TxnUpdater service
+type mockTxnUpdaterService struct {
+	ExpireDelegationFunc 		func(ctx context.Context, tokenHash string, token database.RefreshToken) error
+	RevokeDelegationFunc 		func(ctx context.Context, token database.RefreshToken) error
+	ApplyTransactionUpdatesFunc func(
+		ctx context.Context,
+		added []plaid.Transaction,
+		modified []plaid.Transaction,
+		removed []plaid.RemovedTransaction,
+		nextCursor string,
+		itemID string,
+	) error
+}
