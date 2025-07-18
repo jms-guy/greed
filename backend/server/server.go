@@ -9,11 +9,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
-	auth_pkg "github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
+	auth_pkg "github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/backend/internal/limiter"
 	"github.com/jms-guy/greed/backend/server/handlers"
 	"github.com/joho/godotenv"
@@ -71,6 +72,9 @@ func Run() error {
 	//TxnUpdater interface
 	updater := handlers.NewDBTransactionUpdater(db, dbQueries)
 
+	//Encryptor interface
+	encryptor := encrypt.NewEncryptor()
+
 	//Create mail service instance
 	mailService := sgrid.NewSGMailService(kitLogger)
 
@@ -91,6 +95,7 @@ func Run() error {
 		Limiter:    limiter,
 		PService: 	plaidServiceStruct,
 		TxnUpdater: updater,
+		Encryptor:  encryptor,
 	}
 
 	//Initialize a new router

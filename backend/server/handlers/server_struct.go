@@ -27,6 +27,7 @@ type AppServer struct {
 	Limiter  	*limiter.IPRateLimiter  //Rate limiter
 	PService  	PlaidService        	//Client for Plaid integration
 	TxnUpdater  TxnUpdater				//Used for Db transactions
+	Encryptor 	EncryptorService		//Used for encryption and decryption methods
 }
 
 //Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
@@ -134,4 +135,10 @@ type TxnUpdater interface {
 		nextCursor string,
 		itemID string,
 	) error
+}
+
+//Encryptor service interface
+type EncryptorService interface {
+	EncryptAccessToken(plaintext []byte, keyString string) (string, error)
+	DecryptAccessToken(ciphertext, keyString string) ([]byte, error)
 }

@@ -131,3 +131,9 @@ type mockTxnUpdaterService struct {
 		itemID string,
 	) error
 }
+
+//Test Encryptor service
+type mockEncryptor struct {
+	EncryptAccessTokenFunc 		func(plaintext []byte, keyString string) (string, error)
+	DecryptAccessTokenFunc 		func(ciphertext, keyString string) ([]byte, error)
+}

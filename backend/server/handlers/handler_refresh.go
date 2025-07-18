@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 	"github.com/jms-guy/greed/models"
@@ -22,14 +24,17 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 
 	token, err := app.Db.GetToken(ctx, tokenHash)
 	if err != nil {
-		app.respondWithError(w, 401, "Refresh token not found", err)
-		return 
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 401, "Refresh token not found", err)
+			return 
+		}
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting refresh token: %w", err))
 	}
 
 	if token.ExpiresAt.Before(time.Now()) {
 		err = app.TxnUpdater.ExpireDelegation(ctx, tokenHash, token)
 		if err != nil {
-			app.respondWithError(w, 500, "Database error", err)
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error expiring delegation token: %w", err))
 			return
 		}
 		app.respondWithError(w, 401, "Token is expired", nil)
@@ -38,7 +43,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 	 if token.IsUsed {
 		err = app.TxnUpdater.RevokeDelegation(ctx, token)
 		if err != nil {
-			app.respondWithError(w, 500, "Database error", err)
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error revoking delegation: %w", err))
 			return
 		}
 		app.respondWithError(w, 401, "Refresh token has already been used", nil)
@@ -53,7 +58,11 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 
 	del, err := app.Db.GetDelegation(ctx, token.DelegationID)
 	if err != nil {
-		app.respondWithError(w, 401, "Session delegation not found", err)
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 401, "Session delegation not found", err)
+			return
+		}
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting delegation: %w", err))
 		return
 	}
 
@@ -65,7 +74,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 
 	err = app.Db.ExpireToken(ctx, tokenHash)
 	if err != nil {
-		app.respondWithError(w, 500, "Error expiring refresh token", err)
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error expiring refresh token: %w", err))
 		return
 	}
 

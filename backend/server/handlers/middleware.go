@@ -13,7 +13,6 @@ import (
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
-	"github.com/jms-guy/greed/backend/internal/encrypt"
 )
 
 //Middleware function to handle user authorization.
@@ -66,7 +65,7 @@ func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		accessTokenbytes, err := encrypt.DecryptAccessToken(token.AccessToken, app.Config.AESKey)
+		accessTokenbytes, err := app.Encryptor.DecryptAccessToken(token.AccessToken, app.Config.AESKey)
 		if err != nil {
 			app.respondWithError(w, 500, "Error decrypting access token", err)
 			return 

@@ -553,3 +553,17 @@ func (t *mockTxnUpdaterService) ApplyTransactionUpdates(ctx context.Context, add
     }
     return nil
 }
+
+func (e *mockEncryptor) EncryptAccessToken(plaintext []byte, keyString string) (string, error) {
+    if e.EncryptAccessTokenFunc != nil {
+        return e.EncryptAccessTokenFunc(plaintext, keyString)
+    }
+    return "encrypted", nil
+}
+
+func (e *mockEncryptor) DecryptAccessToken(ciphertext, keyString string) ([]byte, error) {
+    if e.DecryptAccessTokenFunc != nil {
+        return e.DecryptAccessTokenFunc(ciphertext, keyString)
+    }
+    return []byte{123}, nil
+}

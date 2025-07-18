@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
-	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
@@ -65,7 +64,7 @@ func (app *AppServer) HandlerGetLinkToken(w http.ResponseWriter, r *http.Request
 
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -94,7 +93,7 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 
 	userIDValue := ctx.Value(userIDKey)
 	id, ok := userIDValue.(uuid.UUID)
-	if !ok {
+	if !ok || id == uuid.Nil {
 		app.respondWithError(w, 400, "Bad userID in context", nil)
 		return
 	}
@@ -111,7 +110,7 @@ func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Reque
 		return 
 	}
 
-	encryptedAccessToken, err := encrypt.EncryptAccessToken([]byte(accessToken.AccessToken), app.Config.AESKey)
+	encryptedAccessToken, err := app.Encryptor.EncryptAccessToken([]byte(accessToken.AccessToken), app.Config.AESKey)
 	if err != nil {
 		app.respondWithError(w, 500, "Error encrypting access token", err)
 		return

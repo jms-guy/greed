@@ -10,9 +10,15 @@ import (
 	"io"
 )
 
+type Encryptor struct{}
+
+func NewEncryptor() *Encryptor {
+	return &Encryptor{}
+}
+
 // EncryptAccessToken securely encrypts the plaintext token using AES-GCM.
 // The returned string is base64-encoded and safe to store.
-func EncryptAccessToken(plaintext []byte, keyString string) (string, error) {
+func (e *Encryptor) EncryptAccessToken(plaintext []byte, keyString string) (string, error) {
 
     key, err := hex.DecodeString(keyString) // 32 bytes for AES-256
     if err != nil {
@@ -40,7 +46,7 @@ func EncryptAccessToken(plaintext []byte, keyString string) (string, error) {
 
 //DecryptAccessToken decrypts AES-GCM encoded ciphertext, returning a
 //byte slice representing an access token
-func DecryptAccessToken(ciphertext, keyString string) ([]byte, error) {
+func (e *Encryptor) DecryptAccessToken(ciphertext, keyString string) ([]byte, error) {
 	ciphertextBytes, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding ciphertext string: %w", err)
