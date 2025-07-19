@@ -18,13 +18,13 @@ type QueryValidationError struct {
 
 //Responsible for validating query parameters based on their type. 
 //Holds map of type validators, where key is the type, and value is a function that validates the string value
-type QueryValidator struct {
+type QueryService struct {
 	typeValidators 	map[string]func(string) bool 
 }
 
 //Initializes new QueryValidator instance
-func NewQueryValidator() *QueryValidator {
-	qv := &QueryValidator{
+func NewQueryService() *QueryService {
+	qv := &QueryService{
 		typeValidators: make(map[string]func(string) bool),
 	}
 
@@ -50,7 +50,7 @@ func NewQueryValidator() *QueryValidator {
 // - value: Value of parameter to validate
 // - expectedType: Expected data type of query parameter
 // Returns true if value passes validation or no validator exists for expected type
-func (qv *QueryValidator) validateParamValue(value, expectedType string) (bool, error) {
+func (qv *QueryService) ValidateParamValue(value, expectedType string) (bool, error) {
 	validator, exists := qv.typeValidators[expectedType]
 	if !exists {
 		return true, nil
@@ -66,7 +66,7 @@ func (qv *QueryValidator) validateParamValue(value, expectedType string) (bool, 
 //Validates query parameters based on predefined rules. 
 //Rules is a map of expected query parameters and their expected types. 
 //Returns slice of QueryValidationError if validation fails
-func (qv *QueryValidator) ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []QueryValidationError) {
+func (qv *QueryService) ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []QueryValidationError) {
 	var errors []QueryValidationError
 
 	var parsed = make(map[string]string)
@@ -86,7 +86,7 @@ func (qv *QueryValidator) ValidateQuery(queries url.Values, rules map[string]str
 			continue
 		}
 
-		ok, err := qv.validateParamValue(value, expectedType)
+		ok, err := qv.ValidateParamValue(value, expectedType)
 		if err != nil {
 			errors = append(errors, QueryValidationError{
 				Parameter: param,
@@ -107,7 +107,7 @@ func (qv *QueryValidator) ValidateQuery(queries url.Values, rules map[string]str
 }
 
 //Builds an SQL query for transactions based on optional query arguments
-func BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error) {
+func (qv *QueryService) BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error) {
 	query := "SELECT * FROM transactions WHERE account_id = $1"
 	args := []any{accountID}
 	paramCount := 2

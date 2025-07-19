@@ -5,10 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/jms-guy/greed/backend/internal/database"
-	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -43,8 +41,7 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 	params := r.URL.Query()
 
 	//If more than one value present for a single query key, only the first value will be taken
-	qv := utils.NewQueryValidator()
-	queries, errs := qv.ValidateQuery(params, makeQueryRules())
+	queries, errs := app.Querier.ValidateQuery(params, makeQueryRules())
 	if len(errs) != 0 {
 		app.respondWithError(w, 400, fmt.Sprintf("Bad query parameter: %v", errs), nil)
 		return 
@@ -95,7 +92,7 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 	} else if queries["summary"] == "true" {	//Summary flag, but no date flag
 		summary, err := app.Db.GetMerchantSummary(ctx, acc.ID)
 		if err != nil {
-			app.respondWithError(w, 500, "Datebase error", fmt.Errorf("error executing query: %w", err))
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error executing query: %w", err))
 			return 
 		}
 
@@ -116,7 +113,7 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 	}
 
 	//No summary flag, continue with query
-	dbQuery, args, err := utils.BuildSqlQuery(queries, acc.ID)
+	dbQuery, args, err := app.Querier.BuildSqlQuery(queries, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, fmt.Sprintf("Error building database query: %s", err), err)
 		return
@@ -216,7 +213,7 @@ func (app *AppServer) HandlerGetMonetaryDataForMonth(w http.ResponseWriter, r *h
 		return
 	}
 
-	date := fmt.Sprintf("%s-%s", strconv.Itoa(int(y)), strconv.Itoa(int(y)))
+	date := fmt.Sprintf("%s-%s", strconv.Itoa(int(y)), strconv.Itoa(int(m)))
 
 	income := models.MonetaryData{
 		Income: incAmount.Income,

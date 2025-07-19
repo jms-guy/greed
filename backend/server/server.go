@@ -16,6 +16,7 @@ import (
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/backend/internal/limiter"
+	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/jms-guy/greed/backend/server/handlers"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -75,6 +76,9 @@ func Run() error {
 	//Encryptor interface
 	encryptor := encrypt.NewEncryptor()
 
+	//Querier interface
+	querier := utils.NewQueryService()
+
 	//Create mail service instance
 	mailService := sgrid.NewSGMailService(kitLogger)
 
@@ -96,6 +100,7 @@ func Run() error {
 		PService: 	plaidServiceStruct,
 		TxnUpdater: updater,
 		Encryptor:  encryptor,
+		Querier:    querier,
 	}
 
 	//Initialize a new router

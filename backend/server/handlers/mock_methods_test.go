@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
@@ -566,4 +568,25 @@ func (e *mockEncryptor) DecryptAccessToken(ciphertext, keyString string) ([]byte
         return e.DecryptAccessTokenFunc(ciphertext, keyString)
     }
     return []byte{123}, nil
+}
+
+func (q *mockQuerier) ValidateParamValue(value, expectedType string) (bool, error) {
+    if q.ValidateParamValueFunc != nil {
+        return q.ValidateParamValueFunc(value, expectedType)
+    }
+    return true, nil 
+}
+
+func (q *mockQuerier) ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []utils.QueryValidationError) {
+    if q.ValidateQueryFunc != nil {
+        return q.ValidateQueryFunc(queries, rules)
+    }
+    return map[string]string{}, []utils.QueryValidationError{}
+}
+
+func (q *mockQuerier) BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error) {
+    if q.BuildSqlQueryFunc != nil {
+        return q.BuildSqlQueryFunc(queries, accountID)
+    }
+    return "", nil, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"net/url"
 
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/limiter"
+	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
@@ -20,7 +22,7 @@ import (
 type AppServer struct {
 	Db       	GreedDatabase      		//SQLC generated database queries
 	Auth 		AuthService				//Auth service interface
-	Database 	*sql.DB					//Raw database connection
+	Database 	*sql.DB			//Raw database connection
 	Config   	*config.Config          //Environment variables configured from .env file
 	Logger   	kitlog.Logger           //Logging interface
 	SgMail   	MailService    			//SendGrid mail service
@@ -28,6 +30,7 @@ type AppServer struct {
 	PService  	PlaidService        	//Client for Plaid integration
 	TxnUpdater  TxnUpdater				//Used for Db transactions
 	Encryptor 	EncryptorService		//Used for encryption and decryption methods
+	Querier		QueryService			//Used for parsing URL queries
 }
 
 //Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
@@ -141,4 +144,11 @@ type TxnUpdater interface {
 type EncryptorService interface {
 	EncryptAccessToken(plaintext []byte, keyString string) (string, error)
 	DecryptAccessToken(ciphertext, keyString string) ([]byte, error)
+}
+
+//URL Query service interface
+type QueryService interface {
+	ValidateParamValue(value, expectedType string) (bool, error)
+	ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []utils.QueryValidationError)
+	BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error)
 }

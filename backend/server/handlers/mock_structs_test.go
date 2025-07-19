@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/utils"
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
@@ -25,6 +28,9 @@ var (
 	testAccountName = "AccountName"
 	testAccount = database.Account{ID: testAccountID, Name: testAccountName}
 	testAccessToken = "testAccessToken"
+	testTxnID = uuid.MustParse("1a2bc3d4-e5f6-7890-1234-567890abcfed")
+	testDate = sql.NullTime{Time: time.Now(), Valid: true}
+	testMerchant = sql.NullString{String: "testMerchant", Valid: true}
 )
 
 //Test database service
@@ -136,4 +142,11 @@ type mockTxnUpdaterService struct {
 type mockEncryptor struct {
 	EncryptAccessTokenFunc 		func(plaintext []byte, keyString string) (string, error)
 	DecryptAccessTokenFunc 		func(ciphertext, keyString string) ([]byte, error)
+}
+
+//Test Querier service
+type mockQuerier struct {
+	ValidateParamValueFunc 		func(value, expectedType string) (bool, error)
+	ValidateQueryFunc 			func(queries url.Values, rules map[string]string) (map[string]string, []utils.QueryValidationError)
+	BuildSqlQueryFunc 			func(queries map[string]string, accountID string) (string, []any, error)
 }

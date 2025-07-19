@@ -43,7 +43,7 @@ func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		userIDValue := ctx.Value(userIDKey)
 		userID, ok := userIDValue.(uuid.UUID)
-		if !ok {
+		if !ok || userID == uuid.Nil {
 			app.respondWithError(w, 400, "Bad userID in context", nil)
 			return
 		}
@@ -85,7 +85,7 @@ func (app *AppServer) MemberMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		userIDValue := ctx.Value(userIDKey)
 		userID, ok := userIDValue.(uuid.UUID)
-		if !ok {
+		if !ok || userID == uuid.Nil {
 			app.respondWithError(w, 400, "Bad userID in context", nil)
 			return
 		}
@@ -121,7 +121,7 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		userIDValue := ctx.Value(userIDKey)
 		userID, ok := userIDValue.(uuid.UUID)
-		if !ok {
+		if !ok || userID == uuid.Nil {
 			app.respondWithError(w, 400, "Bad userID in context", nil)
 			return
 		}
@@ -137,7 +137,7 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 				app.respondWithError(w, 404, "Account not found", nil)
 				return
 			}
-			app.respondWithError(w, 500, "Error getting account from database", err)
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting account: %w", err))
 			return
 		}
 
