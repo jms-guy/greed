@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"slices"
 	"strconv"
@@ -58,7 +59,7 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 			return fmt.Errorf("decoding error: %w", err)
 		}
 
-		err = tables.PaginateSummariesTable(summaries, accountName, pageSize)
+		err = tables.PaginateSummariesTable(summaries, accountName, merchant, pageSize)
 		if err != nil {
 			return fmt.Errorf("error creating transactions table: %w", err)
 		}
@@ -89,8 +90,12 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 		slices.Reverse(historicalBalances)
 	}
 
+	isFiltered := true
+	if merchant == "" && category == "" && channel == "" && date == "" && start == "" && end == "" && min == math.MinInt64 && max == math.MaxInt64 {
+		isFiltered = false
+	}
 
-	err = tables.PaginateTransactionsTable(txns, accountName, historicalBalances, pageSize)
+	err = tables.PaginateTransactionsTable(txns, accountName, historicalBalances, pageSize, isFiltered)
 	if err != nil {
 		return fmt.Errorf("error creating transactions table: %w", err)
 	}

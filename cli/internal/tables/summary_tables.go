@@ -16,15 +16,15 @@ func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName strin
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New(
-		"|Account",
-		"  |  ",
-		"Date",
-		"  |  ",
-		"Income",
-		"  |  ",
-		"Expenses",
-		"  |  ",
-		"Net Income",
+		"   |Account",
+		"     |     ",
+		"   Date   ",
+		"     |     ",
+		"   Income   ",
+		"     |     ",
+		"   Expenses   ",
+		"     |     ",
+		"   Net Income   ",
 	)
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
@@ -45,15 +45,15 @@ func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName strin
 
 
 		tbl.AddRow(
-			fmt.Sprintf("|%s", accountName),
-			"  |  ",
-			m.Date,
-			"  |  ",
-			income,
-			"  |  ",
-			expenses,
-			"  |  ",
-			formattedNetIncome,
+			fmt.Sprintf("   |%s   ", accountName),
+			"     |     ",
+			fmt.Sprintf("   %s   ", m.Date),
+			"     |     ",
+			fmt.Sprintf("   %v   ", income),
+			"     |     ",
+			fmt.Sprintf("   %v   ", expenses),
+			"     |     ",
+			fmt.Sprintf("   %s   ", formattedNetIncome),
 		)
 	}
 

@@ -59,8 +59,8 @@ The most useful command, it has several subcommands, and many flags.
         - Limit: Filters transactions by limiting the number shown (`--limit <number>`)
         - Pgsize: Specify the number of records to show on the table at any one time (`--pgsize <number>`) 
         - Order: Reorder the transactions shown by date (`--order <ASC>`)
-        - Summary: Provides a summary of transactions. Overrides most other flags. Useful with the [date] flag (`--summary [date]`)
+        - Summary: Provides a summary of transactions. Overrides most other flags. Useful with the [date] & [merchant] flags (`--summary`)
 - `get income <account-name> [flag]`
     - Returns aggregate income/expenses data for account history
     - Flags
-        -Mode: Change visual output of data (`--mode <graph>`)(default table)
+        -Mode: Include visual output of data (`--mode <graph>`)
