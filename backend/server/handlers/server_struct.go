@@ -22,7 +22,7 @@ import (
 type AppServer struct {
 	Db       	GreedDatabase      		//SQLC generated database queries
 	Auth 		AuthService				//Auth service interface
-	Database 	*sql.DB			//Raw database connection
+	Database 	*sql.DB					//Raw database connection
 	Config   	*config.Config          //Environment variables configured from .env file
 	Logger   	kitlog.Logger           //Logging interface
 	SgMail   	MailService    			//SendGrid mail service
