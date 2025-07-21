@@ -129,6 +129,9 @@ func Run() error {
 		io.WriteString(w, "OK")
 	})
 
+	//Webhooks
+	r.Post("/api/plaid-webhook", app.HandlerPlaidWebhook)
+
 	//Authentication and authorization operations
 	r.Group(func(r chi.Router) {
 		r.Route("/api/auth", func(r chi.Router) {

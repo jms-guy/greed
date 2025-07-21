@@ -485,9 +485,9 @@ func (m *mockMailService) SendMail(mailreq *sgrid.Mail) error {
     return nil
 }
 
-func (p *mockPlaidService) GetLinkToken(ctx context.Context, userID string) (string, error) {
+func (p *mockPlaidService) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
     if p.GetLinkTokenFunc != nil {
-        return p.GetLinkTokenFunc(ctx, userID)
+        return p.GetLinkTokenFunc(ctx, userID, webhookURL)
     }
     return "", nil 
 }

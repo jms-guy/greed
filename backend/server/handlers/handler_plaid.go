@@ -69,7 +69,7 @@ func (app *AppServer) HandlerGetLinkToken(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	linkToken, err := app.PService.GetLinkToken(ctx, id.String())
+	linkToken, err := app.PService.GetLinkToken(ctx, id.String(), app.Config.PlaidWebhookURL)
 	if err != nil {
 		if plaidErr, ok := err.(plaid.GenericOpenAPIError); ok {
 			fmt.Printf("Plaid error: %s\n", string(plaidErr.Body()))

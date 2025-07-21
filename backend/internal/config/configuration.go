@@ -23,6 +23,7 @@ type Config struct {
 	GreedEmail				string
 	PlaidClientID			string 
 	PlaidSecret				string
+	PlaidWebhookURL 		string
 	AESKey 					string
 }
 
@@ -111,6 +112,11 @@ func LoadConfig() (*Config, error) {
 	if plaidSecret == "" {
 		return nil, fmt.Errorf("PLAID_SECRET environment variable not set")
 	}
+	 
+	plaidWebhookURL := os.Getenv("PLAID_WEBHOOK_URL")
+	if plaidWebhookURL == "" {
+		return nil, fmt.Errorf("PLAID_WEBHOOK_URL environment variable not set")
+	}
 
 	aesKey := os.Getenv("AES_KEY")
 	if aesKey == "" {
@@ -133,6 +139,7 @@ func LoadConfig() (*Config, error) {
 		GreedEmail: 				greedEmail,
 		PlaidClientID: 				plaidClientID,
 		PlaidSecret: 				plaidSecret,
+		PlaidWebhookURL: 			plaidWebhookURL,
 		AESKey: 					aesKey,
 	}
 

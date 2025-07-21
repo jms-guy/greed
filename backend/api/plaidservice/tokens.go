@@ -34,7 +34,7 @@ func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.Item
 }
 */
 //Requests Plaid API for a Link token for p.Client use
-func (p *PlaidService) GetLinkToken(ctx context.Context, userID string) (string, error) {
+func (p *PlaidService) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
 	user := plaid.LinkTokenCreateRequestUser{
 		ClientUserId: userID,
 	}
@@ -60,6 +60,7 @@ func (p *PlaidService) GetLinkToken(ctx context.Context, userID string) (string,
 			AccountSubtypes: []plaid.CreditAccountSubtype{plaid.CREDITACCOUNTSUBTYPE_CREDIT_CARD},
 		},
 	})
+	request.SetWebhook(webhookURL)
 
 	resp, _, err := p.Client.PlaidApi.LinkTokenCreate(ctx).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {

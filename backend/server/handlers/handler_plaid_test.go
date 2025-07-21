@@ -36,7 +36,7 @@ func TestHandlerGetLinkToken(t *testing.T) {
             userIDInContext: testUserID,
             mockDb: &mockDatabaseService{},
 			mockPS: &mockPlaidService{
-				GetLinkTokenFunc: func(ctx context.Context, userID string) (string, error) {
+				GetLinkTokenFunc: func(ctx context.Context, userID, webhookURL string) (string, error) {
 					return "link_token", nil
 				},
 			},
@@ -48,7 +48,7 @@ func TestHandlerGetLinkToken(t *testing.T) {
             userIDInContext: uuid.Nil,
             mockDb: &mockDatabaseService{},
 			mockPS: &mockPlaidService{
-				GetLinkTokenFunc: func(ctx context.Context, userID string) (string, error) {
+				GetLinkTokenFunc: func(ctx context.Context, userID, webhookURL string) (string, error) {
 					return "link_token", nil
 				},
 			},
@@ -60,7 +60,7 @@ func TestHandlerGetLinkToken(t *testing.T) {
             userIDInContext: testUserID,
             mockDb: &mockDatabaseService{},
 			mockPS: &mockPlaidService{
-				GetLinkTokenFunc: func(ctx context.Context, userID string) (string, error) {
+				GetLinkTokenFunc: func(ctx context.Context, userID, webhookURL string) (string, error) {
 					return "link_token", fmt.Errorf("mock error")
 				},
 			},
@@ -84,6 +84,7 @@ func TestHandlerGetLinkToken(t *testing.T) {
                 Db: tt.mockDb,
 				PService: tt.mockPS,
                 Logger: kitlog.NewNopLogger(),
+				Config: &config.Config{PlaidWebhookURL: ""},
             }
 
             mockApp.HandlerGetLinkToken(rr, req)

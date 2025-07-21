@@ -114,7 +114,7 @@ type mockMailService struct {
 
 //Test Plaid service
 type mockPlaidService struct {
-	GetLinkTokenFunc 			func(ctx context.Context, userID string) (string, error) 
+	GetLinkTokenFunc 			func(ctx context.Context, userID, webhookURL string) (string, error) 
 	GetAccessTokenFunc 			func(ctx context.Context, publicToken string) (models.AccessResponse, error) 
 	InvalidateAccessTokenFunc 	func(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) 
 	GetAccountsFunc 			func(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)
