@@ -8,6 +8,7 @@ import (
 
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
@@ -104,6 +105,7 @@ type AuthService interface {
 	GetBearerToken(headers http.Header) (string, error)
 	MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error)
 	ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error)
+	VerifyPlaidJWT(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error 
 	MakeRefreshToken(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error)
 	HashRefreshToken(token string) string
 }
@@ -124,6 +126,8 @@ type PlaidService interface {
 	GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) 
 	GetTransactions(ctx context.Context, accessToken, cursor string) (
 	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error)  
+	GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error)
+	RemoveItem(ctx context.Context, accessToken string) error
 }
 
 //Database transaction interface

@@ -48,6 +48,15 @@ type PlaidItem struct {
 	UpdatedAt             time.Time
 }
 
+type PlaidWebhookRecord struct {
+	ID          uuid.UUID
+	WebhookType string
+	WebhookCode string
+	ItemID      string
+	UserID      uuid.UUID
+	CreatedAt   time.Time
+}
+
 type RefreshToken struct {
 	ID           uuid.UUID
 	HashedToken  string
@@ -57,12 +66,6 @@ type RefreshToken struct {
 	ExpiresAt    time.Time
 	IsUsed       bool
 	UsedAt       sql.NullTime
-}
-
-type SupportedCurrency struct {
-	Code   string
-	Name   string
-	Active bool
 }
 
 type Transaction struct {

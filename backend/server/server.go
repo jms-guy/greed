@@ -192,7 +192,7 @@ func Run() error {
 		r.Route("/api/items/{item-id}", func(r chi.Router) {
 
 			r.Put("/name", app.HandlerUpdateItemName)										//Updates an item's name in record
-			r.Delete("/", app.HandlerDeleteItem)											//Deletes an item's records from database
+			r.With(app.AccessTokenMiddleware).Delete("/", app.HandlerDeleteItem)			//Deletes an item
 			r.Get("/accounts", app.HandlerGetAccountsForItem) 								//Get list of accounts for a user's specific item
 		
 			r.Route("/access", func(r chi.Router) {

@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
@@ -457,6 +458,13 @@ func (m *mockAuthService) ValidateJWT(cfg *config.Config, tokenString string) (u
     return uuid.UUID{}, nil
 }
 
+func (m *mockAuthService) VerifyPlaidJWT(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error {
+    if m.VerifyPlaidJWTFunc != nil {
+        return m.VerifyPlaidJWTFunc(p, ctx, tokenString)
+    }
+    return nil
+}
+
 func (m *mockAuthService) MakeRefreshToken(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error) {
     if m.MakeRefreshTokenFunc != nil {
         return m.MakeRefreshTokenFunc(tokenStore, userID, delegation)
@@ -533,6 +541,20 @@ func (p *mockPlaidService) GetTransactions(ctx context.Context, accessToken, cur
         return p.GetTransactionsFunc(ctx, accessToken, cursor)
     }
     return []plaid.Transaction{}, []plaid.Transaction{}, []plaid.RemovedTransaction{}, "next", "request", nil
+}
+
+func (p *mockPlaidService) GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error) {
+    if p.GetWebhookVerificationKeyFunc != nil {
+        return p.GetWebhookVerificationKeyFunc(ctx, keyID)
+    }
+    return plaid.JWKPublicKey{}, nil
+}
+
+func (p *mockPlaidService) RemoveItem(ctx context.Context, accessToken string) error {
+    if p.RemoveItemFunc != nil {
+        return p.RemoveItemFunc(ctx, accessToken)
+    }
+    return nil
 }
 
 func (t *mockTxnUpdaterService) ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error {

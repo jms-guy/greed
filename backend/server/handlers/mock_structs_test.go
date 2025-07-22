@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
@@ -102,6 +103,7 @@ type mockAuthService struct {
     GetBearerTokenFunc          func(headers http.Header) (string, error)
 	MakeJWTFunc                 func(cfg *config.Config, userID uuid.UUID) (string, error)
 	ValidateJWTFunc             func(cfg *config.Config, tokenString string) (uuid.UUID, error)
+	VerifyPlaidJWTFunc 			func(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error 
     MakeRefreshTokenFunc        func(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error)
 	HashRefreshTokenFunc        func(token string) string
 }
@@ -122,6 +124,8 @@ type mockPlaidService struct {
 	GetBalancesFunc 			func(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) 
 	GetTransactionsFunc 		func(ctx context.Context, accessToken, cursor string) (
 	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) 
+	GetWebhookVerificationKeyFunc func(ctx context.Context, keyID string) (plaid.JWKPublicKey, error)
+	RemoveItemFunc 				func(ctx context.Context, accessToken string) error
 }
 
 //Test TxnUpdater service

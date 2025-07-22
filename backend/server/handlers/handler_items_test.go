@@ -201,21 +201,29 @@ func TestHandlerDeleteItem(t *testing.T) {
     tests := []struct {
         name            string
 		userIDInContext uuid.UUID
+        accessTokenInCtx string
         pathParams      map[string]string
         requestBody     string
         mockDb          *mockDatabaseService
 		mockAuth 		*mockAuthService
+        mockPlaidService *mockPlaidService
         expectedStatus  int 
         expectedBody    string  
     }{
 		{
             name: "should successfully delete an item record",
 			userIDInContext: testUserID,
+            accessTokenInCtx: testAccessToken,
             pathParams: map[string]string{"item-id": "12345"},
             mockDb: &mockDatabaseService{
                 DeleteItemFunc: func(ctx context.Context, arg database.DeleteItemParams) error {
                     return nil 
                 },  
+            },
+            mockPlaidService: &mockPlaidService{
+                RemoveItemFunc: func(ctx context.Context, accessToken string) error {
+                    return nil
+                },
             },
             expectedStatus: http.StatusOK,
             expectedBody: "Item deleted successfully",
@@ -223,11 +231,17 @@ func TestHandlerDeleteItem(t *testing.T) {
         {
             name: "should err with bad userID in context",
 			userIDInContext: uuid.Nil,
+            accessTokenInCtx: testAccessToken,
             pathParams: map[string]string{"item-id": "12345"},
             mockDb: &mockDatabaseService{
                 DeleteItemFunc: func(ctx context.Context, arg database.DeleteItemParams) error {
                     return nil 
                 },  
+            },
+            mockPlaidService: &mockPlaidService{
+                RemoveItemFunc: func(ctx context.Context, accessToken string) error {
+                    return nil
+                },
             },
             expectedStatus: http.StatusBadRequest,
             expectedBody: "Bad userID in context",
@@ -235,14 +249,38 @@ func TestHandlerDeleteItem(t *testing.T) {
         {
             name: "should err on deleting item",
 			userIDInContext: testUserID,
+            accessTokenInCtx: testAccessToken,
             pathParams: map[string]string{"item-id": "12345"},
             mockDb: &mockDatabaseService{
                 DeleteItemFunc: func(ctx context.Context, arg database.DeleteItemParams) error {
                     return fmt.Errorf("mock error")
                 },  
             },
+            mockPlaidService: &mockPlaidService{
+                RemoveItemFunc: func(ctx context.Context, accessToken string) error {
+                    return nil
+                },
+            },
             expectedStatus: http.StatusInternalServerError,
             expectedBody: "Database error",
+        },
+        {
+            name: "should err on deleting item from plaid",
+			userIDInContext: testUserID,
+            accessTokenInCtx: testAccessToken,
+            pathParams: map[string]string{"item-id": "12345"},
+            mockDb: &mockDatabaseService{
+                DeleteItemFunc: func(ctx context.Context, arg database.DeleteItemParams) error {
+                    return nil
+                },  
+            },
+            mockPlaidService: &mockPlaidService{
+                RemoveItemFunc: func(ctx context.Context, accessToken string) error {
+                    return fmt.Errorf("mock error")
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Service error",
         },
     }
 
@@ -258,6 +296,7 @@ func TestHandlerDeleteItem(t *testing.T) {
 
             ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
             ctx = context.WithValue(ctx,handlers.GetUserIDContextKey(), tt.userIDInContext)
+            ctx = context.WithValue(ctx,handlers.GetAccessTokenKey(), tt.accessTokenInCtx)
 
             req = req.WithContext(ctx)
 
@@ -266,6 +305,7 @@ func TestHandlerDeleteItem(t *testing.T) {
             mockApp := &handlers.AppServer{
                 Db: tt.mockDb,
                 Logger: kitlog.NewNopLogger(),
+                PService: tt.mockPlaidService,
             }
 
             mockApp.HandlerDeleteItem(rr, req)

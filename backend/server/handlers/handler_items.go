@@ -94,6 +94,13 @@ func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	tokenValue := ctx.Value(accessTokenKey)
+	accessToken, ok := tokenValue.(string)
+	if !ok {
+		app.respondWithError(w, 400, "Bad access token in context", nil)
+		return 
+	}
+
 	itemID := chi.URLParam(r, "item-id")
 
 	params := database.DeleteItemParams{
@@ -105,6 +112,11 @@ func (app *AppServer) HandlerDeleteItem(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting item record: %w", err))
 		return 
+	}
+
+	err = app.PService.RemoveItem(ctx, accessToken)
+	if err != nil {
+		app.respondWithError(w, 500, "Service error", fmt.Errorf("error removing item from plaid databases: %w", err))
 	}
 
 	app.respondWithJSON(w, 200, "Item deleted successfully")

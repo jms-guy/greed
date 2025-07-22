@@ -97,3 +97,14 @@ func (p *PlaidService) GetTransactions(ctx context.Context, accessToken, cursor 
 	}
 	return added, modified, removed, nextCursor, reqID, nil
 }
+
+//Deletes an item record on Plaid's database
+func (p *PlaidService) RemoveItem(ctx context.Context, accessToken string) error {
+	request := plaid.NewItemRemoveRequest(accessToken)
+	_, _, err := p.Client.PlaidApi.ItemRemove(ctx).ItemRemoveRequest(*request).Execute()
+	if err != nil {
+		return err 
+	}
+
+	return nil
+}

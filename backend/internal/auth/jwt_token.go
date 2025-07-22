@@ -1,13 +1,20 @@
 package auth
 
 import (
+	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/base64"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/config"
 )
 
@@ -108,4 +115,46 @@ func (s *Service) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID
 	}
 
 	return id, nil
+}
+
+//Validates the JWT provided from Plaid webhooks
+func (s *Service) VerifyPlaidJWT(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error {
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+	if err != nil {
+		return fmt.Errorf("error parsing JWT: %w", err)
+	}
+
+
+	if token.Method.Alg() != "ES256" {
+		return fmt.Errorf("wrong algorithm in JWT")
+	}
+
+	kid := token.Header["kid"].(string)
+
+	JWK, err := p.GetWebhookVerificationKey(ctx, kid)
+	if err != nil {
+		return fmt.Errorf("error getting plaid verification key: %w", err)
+	}
+
+	publicKey := new(ecdsa.PublicKey)
+	publicKey.Curve = elliptic.P256()
+	x, _ := base64.URLEncoding.DecodeString(JWK.X + "=")
+	xc := new(big.Int)
+	publicKey.X = xc.SetBytes(x)
+	y, _ := base64.URLEncoding.DecodeString(JWK.Y + "=")
+	yc := new(big.Int)
+	publicKey.Y = yc.SetBytes(y)
+
+	parsedToken, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
+		return publicKey, nil
+	})
+	if err != nil {
+		return fmt.Errorf("error parsing JWT with key: %w", err)
+	}
+
+	if !parsedToken.Valid {
+		return fmt.Errorf("JWT is not valid")
+	}
+
+	return nil
 }

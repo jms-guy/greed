@@ -127,3 +127,17 @@ func (p *PlaidService) InvalidateAccessToken(ctx context.Context, accessToken mo
 
 	return newToken, nil
 }
+
+//Gets the webhook verification key from Plaid 
+func (p *PlaidService) GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error) {
+
+	webhookReq := plaid.NewWebhookVerificationKeyGetRequest(keyID)
+	webhookResp, _, err := p.Client.PlaidApi.WebhookVerificationKeyGet(ctx).WebhookVerificationKeyGetRequest(*webhookReq).Execute()
+	if err != nil {
+		return plaid.JWKPublicKey{}, err
+	}
+
+	key := webhookResp.GetKey()
+
+	return key, nil
+}
