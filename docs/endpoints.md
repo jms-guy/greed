@@ -35,8 +35,9 @@ API endpoints are grouped by operation types
 | Endpoint | Http Method | Request JSON Struct | Response JSON Struct | Description |
 | :----:  | :----:  | :----:  | :----:  | :----:  |
 | `/` | `GET` | | [ItemName](https://github.com/jms-guy/greed/blob/main/models/response.go#L8) | Returns a list of Plaid items for user |
+| `/webhook-records` | `GET` | | [WebhookRecord](https://github.com/jms-guy/greed/blob/main/models/response.go#L117) | Returns records of Plaid webhook alerts related to user's items |
 | `/{item-id}/name` | `PUT` | [UpdateItemName](https://github.com/jms-guy/greed/blob/main/models/request.go#L9) | | Updates an item's name in record |
-| `/{item-id}/` | `DELETE` | | | Deletes an item's records from database |
+| `/{item-id}/` | `DELETE` | | | Deletes an item |
 | `/{item-id}/accounts` | `GET` | | [Accounts](https://github.com/jms-guy/greed/blob/main/models/response.go#L14) | Returns list of accounts for a user's specified item |
 | `/{item-id}/access/accounts` | `POST` | | [Accounts](https://github.com/jms-guy/greed/blob/main/models/response.go#L14) | Creates/Updates account records for Plaid item. Restricted access for demo users |
 | `/{item-id}/access/balances` | `PUT` | | [UpdatedBalance](https://github.com/jms-guy/greed/blob/main/models/response.go#L47) | Update accounts database records with real-time balances. Restricted access for demo users |
@@ -53,3 +54,11 @@ API endpoints are grouped by operation types
 | `/{account-id}/transactions` | `DELETE` | | | Delete all transaction records for account |
 | `/{account-id}/transactions/monetary` | `GET` | | [MonetaryData](https://github.com/jms-guy/greed/blob/main/models/response.go#L101) | Get monetary data for history of account |
 | `/{account-id}/transactions/monetary/{year}-{month}` | `GET` | | [MonetaryData](https://github.com/jms-guy/greed/blob/main/models/response.go#L101) | Get monetary data for given month |
+
+
+### Plaid Link Redirects
+
+| Endpoint | Http Method | Description |
+| :----:  | :----:  | :----:  |
+| `/link` | `GET` | Provides the redirect page for handling Plaid's Link flow |
+\ `/link-update-mode` | `GET` | Provides redirect page for handling Plaid's Link Update mode flow |

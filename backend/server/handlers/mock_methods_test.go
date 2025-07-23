@@ -422,9 +422,9 @@ func (m *mockDatabaseService) DeleteWebhookRecord(ctx context.Context, arg datab
     return nil 
 }
 
-func (m *mockDatabaseService) GetWebhookRecord(ctx context.Context, arg database.GetWebhookRecordParams) ([]database.PlaidWebhookRecord, error) {
-    if m.GetWebhookRecordFunc != nil {
-        return m.GetWebhookRecordFunc(ctx, arg)
+func (m *mockDatabaseService) GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error) {
+    if m.GetWebhookRecordsFunc != nil {
+        return m.GetWebhookRecordsFunc(ctx, userID)
     }
     return []database.PlaidWebhookRecord{}, nil
 }
@@ -518,6 +518,13 @@ func (p *mockPlaidService) GetLinkToken(ctx context.Context, userID, webhookURL 
         return p.GetLinkTokenFunc(ctx, userID, webhookURL)
     }
     return "", nil 
+}
+
+func (p *mockPlaidService) GetLinkTokenForUpdateMode(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
+    if p.GetLinkTokenForUpdateModeFunc != nil {
+        return p.GetLinkTokenForUpdateModeFunc(ctx, userID, accessToken, webhookURL)
+    }
+    return "", nil
 }
 
 func (p *mockPlaidService) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {

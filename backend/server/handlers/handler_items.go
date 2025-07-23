@@ -159,3 +159,39 @@ func (app *AppServer) HandlerGetAccountsForItem(w http.ResponseWriter, r *http.R
 	
 	app.respondWithJSON(w, 200, accounts)
 }
+
+//Searches database for records sent by Plaid webhook related to user's items
+func (app *AppServer) HandlerGetWebhookRecords(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok || id == uuid.Nil {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
+
+	records, err := app.Db.GetWebhookRecords(ctx, id) 
+	if err != nil {
+		if err == sql.ErrNoRows {
+			app.respondWithError(w, 404, "No webhook records found", nil) 
+			return
+		}
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting webhook records for user: %w", err))
+		return
+	}
+
+	var webhookRecords []models.WebhookRecord
+	for _, record := range records { 
+		foundRecord := models.WebhookRecord{
+			WebhookType: record.WebhookType,
+			WebhookCode: record.WebhookCode,
+			UserID: id,
+			ItemID: record.ItemID,
+			CreatedAt: record.CreatedAt.Format("2006-01-02"),
+		}
+		webhookRecords = append(webhookRecords, foundRecord)
+	}
+
+	app.respondWithJSON(w, 200, webhookRecords)
+}

@@ -92,7 +92,7 @@ type mockDatabaseService struct {
 	GetVerificationRecordByUserFunc     func(ctx context.Context, userID uuid.UUID) (database.VerificationRecord, error)
     CreatePlaidWebhookRecordFunc 		func(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
 	DeleteWebhookRecordFunc 			func(ctx context.Context, arg database.DeleteWebhookRecordParams) error 
-	GetWebhookRecordFunc 				func(ctx context.Context, arg database.GetWebhookRecordParams) ([]database.PlaidWebhookRecord, error)
+	GetWebhookRecordsFunc 				func(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error)
 	WithTxFunc                          func(tx *sql.Tx) *database.Queries
 }
 
@@ -119,6 +119,7 @@ type mockMailService struct {
 //Test Plaid service
 type mockPlaidService struct {
 	GetLinkTokenFunc 			func(ctx context.Context, userID, webhookURL string) (string, error) 
+	GetLinkTokenForUpdateModeFunc func(ctx context.Context, userID, accessToken, webhookURL string) (string, error)
 	GetAccessTokenFunc 			func(ctx context.Context, publicToken string) (models.AccessResponse, error) 
 	InvalidateAccessTokenFunc 	func(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) 
 	GetAccountsFunc 			func(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)

@@ -113,3 +113,11 @@ type MerchantSummary struct {
 	TotalAmount    string		`json:"total_amount"`
 	Month          string		`json:"month"`
 }
+
+type WebhookRecord struct {
+	WebhookType 	string 		`json:"webhook_type"`
+	WebhookCode 	string 		`json:"webhook_code"`
+	ItemID			string 		`json:"item_id"`
+	UserID 			uuid.UUID 	`json:"user_id"`
+	CreatedAt 		string 		`json:"created_at"`
+}

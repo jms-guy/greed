@@ -72,6 +72,46 @@ func (p *Service) GetLinkToken(ctx context.Context, userID, webhookURL string) (
 	return linkToken, nil
 }
 
+//Requests Plaid API for a Link token configured with a user's access token, to initiate Update mode
+func (p *Service) GetLinkTokenForUpdateMode(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
+	user := plaid.LinkTokenCreateRequestUser{
+		ClientUserId: userID,
+	}
+
+	request := plaid.NewLinkTokenCreateRequest(
+		"Greed-CLI",
+		"en",
+		[]plaid.CountryCode{plaid.COUNTRYCODE_CA},
+		user,
+	)
+
+	transactions := plaid.LinkTokenTransactions{
+		DaysRequested: plaid.PtrInt32(730),
+	  }
+
+	request.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
+	request.SetTransactions(transactions)
+	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
+		Depository: &plaid.DepositoryFilter{
+			AccountSubtypes: []plaid.DepositoryAccountSubtype{plaid.DEPOSITORYACCOUNTSUBTYPE_CHECKING, plaid.DEPOSITORYACCOUNTSUBTYPE_SAVINGS},
+		},
+		Credit: &plaid.CreditFilter{
+			AccountSubtypes: []plaid.CreditAccountSubtype{plaid.CREDITACCOUNTSUBTYPE_CREDIT_CARD},
+		},
+	})
+	request.SetWebhook(webhookURL)
+	request.SetAccessToken(accessToken)
+
+	resp, _, err := p.Client.PlaidApi.LinkTokenCreate(ctx).LinkTokenCreateRequest(*request).Execute()
+	if err != nil {
+		return "", err
+	}
+
+	linkToken := resp.GetLinkToken()
+
+	return linkToken, nil
+}
+
 //Exchanges a public token received from client for a permanent access token for item from Plaid API
 func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
 

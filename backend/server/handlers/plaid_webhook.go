@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/database"
 )
 
@@ -33,8 +32,8 @@ func (app *AppServer) HandlerPlaidWebhook(w http.ResponseWriter, r *http.Request
 	tokenString := r.Header.Get("plaid-verification")
 
 
-	plaidService := app.PService.(*plaidservice.Service)	//Type assertion for use in auth method
-	err := app.Auth.VerifyPlaidJWT(plaidService, ctx, tokenString)
+	
+	err := app.Auth.VerifyPlaidJWT(app.PService, ctx, tokenString)
 	if err != nil {
 		app.respondWithError(w, 401, "Unauthorized", fmt.Errorf("error verifying plaid JWT: %w", err))
 		return
@@ -60,7 +59,7 @@ func (app *AppServer) HandlerPlaidWebhook(w http.ResponseWriter, r *http.Request
 
 	_, err = app.Db.CreatePlaidWebhookRecord(ctx, params)
 	if err != nil {
-		app.respondWithError(w, 500, "", fmt.Errorf("error creating webhook record: %w", err))
+		app.respondWithError(w, 500, "Internal Server Error", fmt.Errorf("error creating webhook record: %w", err))
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
@@ -390,6 +391,90 @@ func TestHandlerGetAccountsForItem(t *testing.T) {
             }
 
             mockApp.HandlerGetAccountsForItem(rr, req)
+
+            // --- Assertions ---
+            if status := rr.Code; status != tt.expectedStatus {
+                t.Errorf("handler returned wrong status code: got %v want %v. Body: %s", status, tt.expectedStatus, rr.Body.String())
+            }
+            if !strings.Contains(rr.Body.String(), tt.expectedBody) {
+                t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
+            }
+        })
+    }
+}
+
+func TestHandlerGetWebhookRecords(t *testing.T) {
+    tests := []struct {
+        name            string
+		userIDInContext uuid.UUID
+        requestBody     string
+        mockDb          *mockDatabaseService
+		mockAuth 		*mockAuthService
+        expectedStatus  int 
+        expectedBody    string  
+    }{
+		{
+            name: "should successfully return webhook records for user",
+			userIDInContext: testUserID,
+            mockDb: &mockDatabaseService{
+                GetWebhookRecordsFunc: func(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error) {
+                    return []database.PlaidWebhookRecord{{WebhookType: "test", WebhookCode: "test", UserID: testUserID, ItemID: testItemID, CreatedAt: time.Now()}}, nil
+                },
+            },
+            expectedStatus: http.StatusOK,
+            expectedBody: testItemID,
+        },
+        {
+            name: "should err with bad userID in context",
+			userIDInContext: uuid.Nil,
+            mockDb: &mockDatabaseService{
+                GetWebhookRecordsFunc: func(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error) {
+                    return []database.PlaidWebhookRecord{{WebhookType: "test", WebhookCode: "test", UserID: testUserID, ItemID: testItemID, CreatedAt: time.Now()}}, nil
+                },
+            },
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "Bad userID in context",
+        },
+        {
+            name: "should err with no webhook records found",
+			userIDInContext: testUserID,
+            mockDb: &mockDatabaseService{
+                GetWebhookRecordsFunc: func(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error) {
+                    return []database.PlaidWebhookRecord{}, sql.ErrNoRows
+                },
+            },
+            expectedStatus: http.StatusNotFound,
+            expectedBody: "No webhook records found",
+        },
+        {
+            name: "should err on getting records from database",
+			userIDInContext: testUserID,
+            mockDb: &mockDatabaseService{
+                GetWebhookRecordsFunc: func(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error) {
+                    return []database.PlaidWebhookRecord{}, fmt.Errorf("mock error")
+                },
+            },
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Database error",
+        },
+    }
+
+	for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            req := httptest.NewRequest("GET", "/api/items", bytes.NewBufferString(tt.requestBody))
+            req.Header.Set("Content-Type", "application/json")
+
+			ctx := context.WithValue(req.Context(),handlers.GetUserIDContextKey(), tt.userIDInContext)
+            req = req.WithContext(ctx)
+
+            rr := httptest.NewRecorder()
+
+            mockApp := &handlers.AppServer{
+                Db: tt.mockDb,
+                Logger: kitlog.NewNopLogger(),
+            }
+
+            mockApp.HandlerGetWebhookRecords(rr, req)
 
             // --- Assertions ---
             if status := rr.Code; status != tt.expectedStatus {

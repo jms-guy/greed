@@ -14,6 +14,7 @@ type Service struct {
 //Plaid interface
 type PlaidService interface {
 	GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) 
+	GetLinkTokenForUpdateMode(ctx context.Context, userID, accessToken, webhookURL string) (string, error)
 	GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) 
 	InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) 
 	GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)

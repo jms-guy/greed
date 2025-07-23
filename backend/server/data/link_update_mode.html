@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Plaid Link</title>
+    <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+</head>
+
+<body>
+    <h2>Bank Connection</h2>
+    <button id="link-btn">Connect Your Account</button>
+
+    <script>
+        function getLinkToken() {
+            const url = new URL(window.location.href);
+            return url.searchParams.get('token');
+        }
+
+        document.getElementById('link-btn').onclick = function () {
+            const linkToken = getLinkToken();
+            if (!linkToken) {
+                alert('No link token found in URL!');
+                return;
+            }
+
+            const handler = Plaid.create({
+                token: linkToken,
+                onSuccess: function (public_token, metadata) {
+                    window.location.href = 'http://localhost:8080/plaid-update-callback';
+                },
+                onExit: function (err, metadata) {
+                    let exitUrl = 'http://localhost:8080/plaid-exit';
+
+                    if (err != null) {
+                        exitUrl += '?error_code=' + err.error_code + '&error_type=' + err.error_type;
+                        if (err.display_message) {
+                            exitUrl += '&display_message=' + encodeURIComponent(err.display_message);
+                        }
+                    }
+
+                    window.location.href = exitUrl;
+                }
+            });
+
+            handler.open();
+        };
+    </script>
+</body>
+
+</html>

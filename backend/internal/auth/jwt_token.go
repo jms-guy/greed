@@ -109,8 +109,8 @@ func (s *Service) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID
 	}
 
 	id, err := uuid.Parse(idString)
-	if err != nil {
-		return uuid.UUID{}, fmt.Errorf("error parsing userID string: %w", err)
+	if err != nil || id == uuid.Nil {
+		return uuid.UUID{}, fmt.Errorf("error parsing userID string")
 	}
 
 	return id, nil

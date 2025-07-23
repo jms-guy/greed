@@ -117,8 +117,11 @@ func Run() error {
 
 		workDir, _ := os.Getwd()
 		staticPath := filepath.Join(workDir, app.Config.StaticAssetsPath)
-		r.Get("/link", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/link", func(w http.ResponseWriter, r *http.Request) {						//Provides redirect URL for handling Plaid Link flow
 			http.ServeFile(w, r, filepath.Join(staticPath, "link.html"))
+		})
+		r.Get("/link-update-mode", func(w http.ResponseWriter, r *http.Request) {			//Redirect URL for handling Plaid's Link Update mode
+			http.ServeFile(w, r, filepath.Join(staticPath, "link_update_mode.html"))
 		})
 	})
 
@@ -188,6 +191,7 @@ func Run() error {
 		r.Use(app.AuthMiddleware)
 
 		r.Get("/api/items", app.HandlerGetItems)											//Get list of Plaid items for user
+		r.Get("/api/items/webhook-records", app.HandlerGetWebhookRecords)					//Returns records of Plaid webhook alerts for user's items
 
 		r.Route("/api/items/{item-id}", func(r chi.Router) {
 

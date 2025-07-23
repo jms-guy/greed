@@ -11,11 +11,13 @@ Unless you are running your own server for this application, CLI users are restr
 
 - RESTful API
 - [Endpoints](https://github.com/jms-guy/greed/blob/main/docs/endpoints.md)
+- 80% handler testing coverage
 - Postgres database
 - No storing of sensitive personal or financial information, with the exception of Plaid Access Tokens, which are encrypted at rest
 - Simple IP-based rate limiter
 - JWT authentication
 - Integration with financial data aggregator [Plaid](https://plaid.com/)
+- Plaid webhooks, allowing notification of users of updates avilable for their items
 - Account-email verification utilizing [SendGrid](https://sendgrid.com/en-us)
 
 ### CLI Features
@@ -29,8 +31,17 @@ Unless you are running your own server for this application, CLI users are restr
 - In-depth transaction history reporting 
     - Utilizing paginated tables in terminal
     - Extensive sorting through amount, date, merchant, etc.
-    - Allows summary reporting as well (ex. All transactions for merchant 'A' for month 'X' summed, showing count, total amount, etc.)
+    - Allows summary reporting as well
+        - ex. All transactions summed, showing count and total amount for each merchant, for each month
+        - ex. All transactions for merchant 'A' for month 'X' summed, showing count, total amount, dates
+        - ex. All transactions for merchant 'A' summed over full 24-month history, showing count, total amount
 - Income/Expense viewing
     - View Income vs. Expenses per account
     - Viewable in tables or graphs
 - Export data into a CSV file
+
+### Future Features
+
+- Recurring transaction detection
+- Custom transaction tags and filtering
+    - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, vacation fund, etc.)

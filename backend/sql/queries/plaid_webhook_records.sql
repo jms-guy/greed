@@ -10,9 +10,11 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetWebhookRecord :many
-SELECT * FROM plaid_webhook_records
-WHERE user_id = $1 AND item_id = $2;
+-- name: GetWebhookRecords :many
+SELECT plaid_webhook_records.* FROM plaid_webhook_records
+INNER JOIN users ON users.id = plaid_webhook_records.user_id
+WHERE plaid_webhook_records.user_id = $1;
+
 
 -- name: DeleteWebhookRecord :exec
 DELETE FROM plaid_webhook_records

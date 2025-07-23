@@ -67,18 +67,14 @@ func (q *Queries) DeleteWebhookRecord(ctx context.Context, arg DeleteWebhookReco
 	return err
 }
 
-const getWebhookRecord = `-- name: GetWebhookRecord :many
-SELECT id, webhook_type, webhook_code, item_id, user_id, created_at FROM plaid_webhook_records
-WHERE user_id = $1 AND item_id = $2
+const getWebhookRecords = `-- name: GetWebhookRecords :many
+SELECT plaid_webhook_records.id, plaid_webhook_records.webhook_type, plaid_webhook_records.webhook_code, plaid_webhook_records.item_id, plaid_webhook_records.user_id, plaid_webhook_records.created_at FROM plaid_webhook_records
+INNER JOIN users ON users.id = plaid_webhook_records.user_id
+WHERE plaid_webhook_records.user_id = $1
 `
 
-type GetWebhookRecordParams struct {
-	UserID uuid.UUID
-	ItemID string
-}
-
-func (q *Queries) GetWebhookRecord(ctx context.Context, arg GetWebhookRecordParams) ([]PlaidWebhookRecord, error) {
-	rows, err := q.db.QueryContext(ctx, getWebhookRecord, arg.UserID, arg.ItemID)
+func (q *Queries) GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]PlaidWebhookRecord, error) {
+	rows, err := q.db.QueryContext(ctx, getWebhookRecords, userID)
 	if err != nil {
 		return nil, err
 	}
