@@ -3,9 +3,6 @@ package handlers
 import (
 	"context"
 	"database/sql"
-	"net/http"
-	"net/url"
-
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
@@ -13,25 +10,26 @@ import (
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/backend/internal/limiter"
 	"github.com/jms-guy/greed/backend/internal/utils"
-	"github.com/jms-guy/greed/models"
+
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 // Holds state of important server structs
 type AppServer struct {
-	Db       	GreedDatabase      		//SQLC generated database queries
-	Auth 		AuthService				//Auth service interface
-	Database 	*sql.DB					//Raw database connection
-	Config   	*config.Config          //Environment variables configured from .env file
-	Logger   	kitlog.Logger           //Logging interface
-	SgMail   	MailService    			//SendGrid mail service
-	Limiter  	*limiter.IPRateLimiter  //Rate limiter
-	PService  	PlaidService        	//Client for Plaid integration
-	TxnUpdater  TxnUpdater				//Used for Db transactions
-	Encryptor 	EncryptorService		//Used for encryption and decryption methods
-	Querier		QueryService			//Used for parsing URL queries
+	Db       	GreedDatabase      			//SQLC generated database queries
+	Auth 		auth.AuthService			//Auth service interface
+	Database 	*sql.DB						//Raw database connection
+	Config   	*config.Config          	//Environment variables configured from .env file
+	Logger   	kitlog.Logger          	 	//Logging interface
+	SgMail   	sgrid.MailService    		//SendGrid mail service
+	Limiter  	*limiter.IPRateLimiter  	//Rate limiter
+	PService  	plaidservice.PlaidService   //Client for Plaid integration
+	TxnUpdater  TxnUpdater					//Used for Db transactions
+	Encryptor 	encrypt.EncryptorService	//Used for encryption and decryption methods
+	Querier		utils.QueryService				//Used for parsing URL queries
 }
 
 //Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
@@ -93,41 +91,10 @@ type GreedDatabase interface {
 	DeleteVerificationRecordByUser(ctx context.Context, userID uuid.UUID) error
 	GetVerificationRecord(ctx context.Context, verificationCode string) (database.VerificationRecord, error)
 	GetVerificationRecordByUser(ctx context.Context, userID uuid.UUID) (database.VerificationRecord, error)
+	CreatePlaidWebhookRecord(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
+	DeleteWebhookRecord(ctx context.Context, arg database.DeleteWebhookRecordParams) error 
+	GetWebhookRecord(ctx context.Context, arg database.GetWebhookRecordParams) ([]database.PlaidWebhookRecord, error)
 	WithTx(tx *sql.Tx) *database.Queries
-}
-
-//Auth interface
-type AuthService interface {
-	EmailValidation(email string) bool
-	ValidatePasswordHash(hash, password string) error
-	HashPassword(password string) (string, error)
-	GenerateCode() string
-	GetBearerToken(headers http.Header) (string, error)
-	MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error)
-	ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error)
-	VerifyPlaidJWT(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error 
-	MakeRefreshToken(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error)
-	HashRefreshToken(token string) string
-}
-
-//Sendgrid interface
-type MailService interface {
-	NewMail(from string, to string, subject string, body string, data *sgrid.MailData) *sgrid.Mail
-	SendMail(mailreq *sgrid.Mail) error
-}
-
-//Plaid interface
-type PlaidService interface {
-	GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) 
-	GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) 
-	InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) 
-	GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)
-	GetItemInstitution(ctx context.Context, accessToken string) (string, error) 
-	GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) 
-	GetTransactions(ctx context.Context, accessToken, cursor string) (
-	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error)  
-	GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error)
-	RemoveItem(ctx context.Context, accessToken string) error
 }
 
 //Database transaction interface
@@ -144,15 +111,3 @@ type TxnUpdater interface {
 	) error
 }
 
-//Encryptor service interface
-type EncryptorService interface {
-	EncryptAccessToken(plaintext []byte, keyString string) (string, error)
-	DecryptAccessToken(ciphertext, keyString string) ([]byte, error)
-}
-
-//URL Query service interface
-type QueryService interface {
-	ValidateParamValue(value, expectedType string) (bool, error)
-	ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []utils.QueryValidationError)
-	BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error)
-}

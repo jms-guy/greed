@@ -14,7 +14,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/internal/config"
 )
 
@@ -118,7 +117,7 @@ func (s *Service) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID
 }
 
 //Validates the JWT provided from Plaid webhooks
-func (s *Service) VerifyPlaidJWT(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error {
+func (s *Service) VerifyPlaidJWT(p PlaidKeyFetcher, ctx context.Context, tokenString string) error {
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
 	if err != nil {
 		return fmt.Errorf("error parsing JWT: %w", err)

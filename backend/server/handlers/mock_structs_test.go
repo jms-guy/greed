@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
@@ -91,7 +90,10 @@ type mockDatabaseService struct {
 	DeleteVerificationRecordByUserFunc  func(ctx context.Context, userID uuid.UUID) error
 	GetVerificationRecordFunc           func(ctx context.Context, verificationCode string) (database.VerificationRecord, error)
 	GetVerificationRecordByUserFunc     func(ctx context.Context, userID uuid.UUID) (database.VerificationRecord, error)
-    WithTxFunc                          func(tx *sql.Tx) *database.Queries
+    CreatePlaidWebhookRecordFunc 		func(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
+	DeleteWebhookRecordFunc 			func(ctx context.Context, arg database.DeleteWebhookRecordParams) error 
+	GetWebhookRecordFunc 				func(ctx context.Context, arg database.GetWebhookRecordParams) ([]database.PlaidWebhookRecord, error)
+	WithTxFunc                          func(tx *sql.Tx) *database.Queries
 }
 
 //Test Auth service
@@ -103,7 +105,7 @@ type mockAuthService struct {
     GetBearerTokenFunc          func(headers http.Header) (string, error)
 	MakeJWTFunc                 func(cfg *config.Config, userID uuid.UUID) (string, error)
 	ValidateJWTFunc             func(cfg *config.Config, tokenString string) (uuid.UUID, error)
-	VerifyPlaidJWTFunc 			func(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error 
+	VerifyPlaidJWTFunc 			func(p auth.PlaidKeyFetcher, ctx context.Context, tokenString string) error 
     MakeRefreshTokenFunc        func(tokenStore auth.TokenStore, userID uuid.UUID, delegation database.Delegation) (string, error)
 	HashRefreshTokenFunc        func(token string) string
 }

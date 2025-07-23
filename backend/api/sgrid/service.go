@@ -13,10 +13,17 @@ import (
 */
 
 //Interface for the mail service
-type MailService interface {
+type Service interface {
 	SendMail(mailReq *Mail) error
 	NewMail(from string, to string, subject, body string, data *MailData) *Mail
 }
+
+//Sendgrid interface
+type MailService interface {
+	NewMail(from string, to string, subject string, body string, data *MailData) *Mail
+	SendMail(mailreq *Mail) error
+}
+
 
 //Structure of the data to be used in the template of the mail
 type MailData struct {

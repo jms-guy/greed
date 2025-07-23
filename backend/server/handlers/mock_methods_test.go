@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
@@ -409,6 +408,27 @@ func (m *mockDatabaseService) GetVerificationRecordByUser(ctx context.Context, u
     return database.VerificationRecord{}, nil
 }
 
+func (m *mockDatabaseService) CreatePlaidWebhookRecord(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error) {
+    if m.CreatePlaidWebhookRecordFunc != nil {
+        return m.CreatePlaidWebhookRecordFunc(ctx, arg)
+    }
+    return database.PlaidWebhookRecord{}, nil
+}
+
+func (m *mockDatabaseService) DeleteWebhookRecord(ctx context.Context, arg database.DeleteWebhookRecordParams) error {
+    if m.DeleteWebhookRecordFunc != nil {
+        return m.DeleteWebhookRecordFunc(ctx, arg)
+    }
+    return nil 
+}
+
+func (m *mockDatabaseService) GetWebhookRecord(ctx context.Context, arg database.GetWebhookRecordParams) ([]database.PlaidWebhookRecord, error) {
+    if m.GetWebhookRecordFunc != nil {
+        return m.GetWebhookRecordFunc(ctx, arg)
+    }
+    return []database.PlaidWebhookRecord{}, nil
+}
+
 func (m *mockAuthService) EmailValidation(email string) bool {
     if m.EmailValidationFunc != nil {
         return m.EmailValidationFunc(email)
@@ -458,7 +478,7 @@ func (m *mockAuthService) ValidateJWT(cfg *config.Config, tokenString string) (u
     return uuid.UUID{}, nil
 }
 
-func (m *mockAuthService) VerifyPlaidJWT(p *plaidservice.PlaidService, ctx context.Context, tokenString string) error {
+func (m *mockAuthService) VerifyPlaidJWT(p auth.PlaidKeyFetcher, ctx context.Context, tokenString string) error {
     if m.VerifyPlaidJWTFunc != nil {
         return m.VerifyPlaidJWTFunc(p, ctx, tokenString)
     }

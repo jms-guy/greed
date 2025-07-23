@@ -8,8 +8,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//Struct that holds auth functions as methods
-type Service struct {}
 
 //Function accepts a string password, and hashes it
 func (s *Service) HashPassword(password string) (string, error) {

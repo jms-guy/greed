@@ -34,7 +34,7 @@ func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.Item
 }
 */
 //Requests Plaid API for a Link token for p.Client use
-func (p *PlaidService) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
+func (p *Service) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
 	user := plaid.LinkTokenCreateRequestUser{
 		ClientUserId: userID,
 	}
@@ -73,7 +73,7 @@ func (p *PlaidService) GetLinkToken(ctx context.Context, userID, webhookURL stri
 }
 
 //Exchanges a public token received from client for a permanent access token for item from Plaid API
-func (p *PlaidService) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
+func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
 
 	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 
@@ -104,7 +104,7 @@ func (p *PlaidService) GetAccessToken(ctx context.Context, publicToken string) (
 }
 
 //Invalidates an item's access token, requesting a new one from Plaid API
-func (p *PlaidService) InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
+func (p *Service) InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
 
 	request := plaid.NewItemAccessTokenInvalidateRequest(accessToken.AccessToken)
 
@@ -129,7 +129,7 @@ func (p *PlaidService) InvalidateAccessToken(ctx context.Context, accessToken mo
 }
 
 //Gets the webhook verification key from Plaid 
-func (p *PlaidService) GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error) {
+func (p *Service) GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error) {
 
 	webhookReq := plaid.NewWebhookVerificationKeyGetRequest(keyID)
 	webhookResp, _, err := p.Client.PlaidApi.WebhookVerificationKeyGet(ctx).WebhookVerificationKeyGetRequest(*webhookReq).Execute()

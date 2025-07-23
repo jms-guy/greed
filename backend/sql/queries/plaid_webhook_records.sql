@@ -9,3 +9,11 @@ VALUES (
     NOW()
 )
 RETURNING *;
+
+-- name: GetWebhookRecord :many
+SELECT * FROM plaid_webhook_records
+WHERE user_id = $1 AND item_id = $2;
+
+-- name: DeleteWebhookRecord :exec
+DELETE FROM plaid_webhook_records
+WHERE user_id = $1 AND item_id = $2;

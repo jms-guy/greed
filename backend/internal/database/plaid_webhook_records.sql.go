@@ -51,3 +51,58 @@ func (q *Queries) CreatePlaidWebhookRecord(ctx context.Context, arg CreatePlaidW
 	)
 	return i, err
 }
+
+const deleteWebhookRecord = `-- name: DeleteWebhookRecord :exec
+DELETE FROM plaid_webhook_records
+WHERE user_id = $1 AND item_id = $2
+`
+
+type DeleteWebhookRecordParams struct {
+	UserID uuid.UUID
+	ItemID string
+}
+
+func (q *Queries) DeleteWebhookRecord(ctx context.Context, arg DeleteWebhookRecordParams) error {
+	_, err := q.db.ExecContext(ctx, deleteWebhookRecord, arg.UserID, arg.ItemID)
+	return err
+}
+
+const getWebhookRecord = `-- name: GetWebhookRecord :many
+SELECT id, webhook_type, webhook_code, item_id, user_id, created_at FROM plaid_webhook_records
+WHERE user_id = $1 AND item_id = $2
+`
+
+type GetWebhookRecordParams struct {
+	UserID uuid.UUID
+	ItemID string
+}
+
+func (q *Queries) GetWebhookRecord(ctx context.Context, arg GetWebhookRecordParams) ([]PlaidWebhookRecord, error) {
+	rows, err := q.db.QueryContext(ctx, getWebhookRecord, arg.UserID, arg.ItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlaidWebhookRecord
+	for rows.Next() {
+		var i PlaidWebhookRecord
+		if err := rows.Scan(
+			&i.ID,
+			&i.WebhookType,
+			&i.WebhookCode,
+			&i.ItemID,
+			&i.UserID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

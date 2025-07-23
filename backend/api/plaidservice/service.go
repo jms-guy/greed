@@ -6,7 +6,7 @@ import (
 )
 
 //Retrieves account data listed in a Plaid item
-func (p *PlaidService) GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error) {
+func (p *Service) GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error) {
 
 	accountsGetRequest := plaid.NewAccountsGetRequest(accessToken)
 
@@ -23,7 +23,7 @@ func (p *PlaidService) GetAccounts(ctx context.Context, accessToken string) ([]p
 }
 
 //Gets institution name for an item
-func (p *PlaidService) GetItemInstitution(ctx context.Context, accessToken string) (string, error) {
+func (p *Service) GetItemInstitution(ctx context.Context, accessToken string) (string, error) {
 	itemGetReq := plaid.NewItemGetRequest(accessToken)
 	itemResp, _, err := p.Client.PlaidApi.ItemGet(ctx).ItemGetRequest(*itemGetReq).Execute()
 	if err != nil {
@@ -44,7 +44,7 @@ func (p *PlaidService) GetItemInstitution(ctx context.Context, accessToken strin
 	return inst.GetName(), nil
 }
 
-func (p *PlaidService) GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
+func (p *Service) GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
 	balancesGetReq := plaid.NewAccountsBalanceGetRequest(accessToken)
 	balancesGetResp, httpResp, err := p.Client.PlaidApi.AccountsBalanceGet(ctx).AccountsBalanceGetRequest(*balancesGetReq).Execute()
 
@@ -57,7 +57,7 @@ func (p *PlaidService) GetBalances(ctx context.Context, accessToken string) (pla
 
 //Called by transactions/sync Plaid endpoint, getting all transaction data for a specific account.
 //Returns last Plaid request ID in loop
-func (p *PlaidService) GetTransactions(ctx context.Context, accessToken, cursor string) (
+func (p *Service) GetTransactions(ctx context.Context, accessToken, cursor string) (
 	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) {
 
 	hasMore := true
@@ -99,7 +99,7 @@ func (p *PlaidService) GetTransactions(ctx context.Context, accessToken, cursor 
 }
 
 //Deletes an item record on Plaid's database
-func (p *PlaidService) RemoveItem(ctx context.Context, accessToken string) error {
+func (p *Service) RemoveItem(ctx context.Context, accessToken string) error {
 	request := plaid.NewItemRemoveRequest(accessToken)
 	_, _, err := p.Client.PlaidApi.ItemRemove(ctx).ItemRemoveRequest(*request).Execute()
 	if err != nil {
