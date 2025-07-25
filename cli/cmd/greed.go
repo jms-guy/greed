@@ -110,14 +110,14 @@ func (app *CLIApp) itemsCmd() *cobra.Command {
 	}
 }
 
-func (app *CLIApp) updatepwCmd() *cobra.Command {
+func (app *CLIApp) changepwCmd() *cobra.Command {
 	return &cobra.Command{
-		Use: 		"updatepw",
-		Aliases: 	[]string{"Updatepw", "UPDATEPW"},
+		Use: 		"changepw",
+		Aliases: 	[]string{"Changepw", "CHANGEPW"},
 		Short: 		"Updates a user's password",
 		Args: 		cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUpdatePassword()
+			return app.commandChangePassword()
 		},
 	}
 }
@@ -159,6 +159,18 @@ func (app *CLIApp) syncCmd() *cobra.Command {
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.commandSync(args)
+		},
+	}
+}
+
+func (app *CLIApp) updateCmd() *cobra.Command {
+	return &cobra.Command{
+		Use: "update <item-name>",
+		Aliases: []string{"Update", "UPDATE"},
+		Short: "Re-authenticates user's financial institution through Plaid",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandUpdate(args)
 		},
 	}
 }

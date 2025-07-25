@@ -10,7 +10,7 @@ import (
 //Automatically opens Link URL from client
 func OpenLink(system, link string) error {
 	if system == "linux" && IsWSL() {
-		// Use Windows default browser for WSL
+		// Windows default browser for WSL
 		return exec.Command("cmd.exe", "/c", "start", link).Run()
 	}
 

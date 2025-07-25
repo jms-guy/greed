@@ -21,7 +21,7 @@
 - `items` 
     - Lists a user's item records. An item is a link to a financial institution, containing all account records for that institution
 
-- `updatepw`
+- `changepw`
     - Updates a user's password. Must have a verified email address
 
 - `resetpw <email>`
@@ -32,6 +32,9 @@
 
 - `sync <item-name>`
     - Updates account and transaction data for an item, providing the latest data from the financial institution
+
+- `update <item-name>`
+    - Re-authenticates user's financial institute through Plaid Link Update mode
 
 - `rename <current-item-name> <new-item-name>`
     - Rename an item 

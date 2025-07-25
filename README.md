@@ -37,11 +37,11 @@ Unless you are running your own server for this application, CLI users are restr
         - ex. All transactions for merchant 'A' summed over full 24-month history, showing count, total amount
 - Income/Expense viewing
     - View Income vs. Expenses per account
-    - Viewable in tables or graphs
+    - Viewable in tables and graphs
 - Export data into a CSV file
 
 ### Future Features
 
 - Recurring transaction detection
 - Custom transaction tags and filtering
-    - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, vacation fund, etc.)
+    - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)

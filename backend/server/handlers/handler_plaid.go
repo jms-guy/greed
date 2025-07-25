@@ -87,6 +87,42 @@ func (app *AppServer) HandlerGetLinkToken(w http.ResponseWriter, r *http.Request
 	app.respondWithJSON(w, 200, response)
 }
 
+//Gets a Link token from Plaid with user's Access token, providing Update mode re-authentication
+func (app *AppServer) HandlerGetLinkTokenForUpdateMode(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID) 
+	if !ok || id == uuid.Nil {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
+
+	tokenValue := ctx.Value(accessTokenKey)
+	accessToken, ok := tokenValue.(string)
+	if !ok {
+		app.respondWithError(w, 400, "Bad access token in context", nil)
+		return
+	}
+
+	linkToken, err := app.PService.GetLinkTokenForUpdateMode(ctx, id.String(), accessToken, app.Config.PlaidWebhookURL)
+	if err != nil {
+		if plaidErr, ok := err.(plaid.GenericOpenAPIError); ok {
+			fmt.Printf("Plaid error: %s\n", string(plaidErr.Body()))
+		} else {
+			fmt.Println("Error:", err.Error())
+		}
+		app.respondWithError(w, 500, "Service error", fmt.Errorf("error getting link token: %w", err))
+    	return 
+	}
+
+	response := models.LinkResponse{
+		LinkToken: linkToken,
+	}
+
+	app.respondWithJSON(w, 200, response)
+}
+
 //Exchanges a received public token with an access token, and stores the Plaid item in database
 func (app *AppServer) HandlerGetAccessToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

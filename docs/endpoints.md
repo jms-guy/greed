@@ -28,6 +28,7 @@ API endpoints are grouped by operation types
 | Endpoint | Http Method | Request JSON Struct | Response JSON Struct | Description |
 | :----:  | :----:  | :----:  | :----:  | :----:  |
 | `/get-link-token` | `POST` | | [LinkResponse](https://github.com/jms-guy/greed/blob/main/models/response.go#L64) | Gets a Link token from Plaid to return to client |
+| `/get-link-token-update` | `POST` | | [LinkResponse](https://github.com/jms-guy/greed/blob/main/models/response.go#L64) | Gets a Link token from Plaid to return to client, containing user's Plaid Access token for update mode |
 | `/get-access-token` | `POST` | [AccessTokenRequest](https://github.com/jms-guy/greed/blob/main/models/request.go#L13) | [AccessResponse](https://github.com/jms-guy/greed/blob/main/models/response.go#L56) | Exchanges a client's public token for an access token from Plaid |
 
 ### Item Operations - /api/items
@@ -36,6 +37,7 @@ API endpoints are grouped by operation types
 | :----:  | :----:  | :----:  | :----:  | :----:  |
 | `/` | `GET` | | [ItemName](https://github.com/jms-guy/greed/blob/main/models/response.go#L8) | Returns a list of Plaid items for user |
 | `/webhook-records` | `GET` | | [WebhookRecord](https://github.com/jms-guy/greed/blob/main/models/response.go#L117) | Returns records of Plaid webhook alerts related to user's items |
+| `/webhook-records` | `PUT` | [ProcessWebhook](https://github.com/jms-guy/greed/blob/main/models/request.go#L49) | | Processes a user's webhooks of a given type, after user has resolved them |
 | `/{item-id}/name` | `PUT` | [UpdateItemName](https://github.com/jms-guy/greed/blob/main/models/request.go#L9) | | Updates an item's name in record |
 | `/{item-id}/` | `DELETE` | | | Deletes an item |
 | `/{item-id}/accounts` | `GET` | | [Accounts](https://github.com/jms-guy/greed/blob/main/models/response.go#L14) | Returns list of accounts for a user's specified item |

@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
-	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
 )
 
@@ -25,64 +24,19 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
 
-	var password string
-
-	for {
-		pw, err := auth.ReadPassword("Please enter a password > ")
-		if err != nil {
-			return fmt.Errorf("error getting password: %w", err)
-		}
-
-		if len(pw) < 8 {
-			fmt.Println(" ")
-			fmt.Println("Password must be greater than 8 characters")
-			fmt.Println("")
-			continue
-		} else {
-			for {
-				confirmPw, err := auth.ReadPassword("Confirm password > ")
-				if err != nil {
-					return fmt.Errorf("error reading confirmed password: %w", err)
-				}
-
-				if confirmPw == pw {
-					password = pw
-					break
-				} else {
-					fmt.Println("Password does not match")
-					continue
-				}
-			}
-			break
-		}
+	//Get user password
+	password, err := registerPasswordHelper()
+	if err != nil {
+		return err
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	var email string
-
-	fmt.Println(" < Please enter a valid email address for your account. > ")
-	fmt.Println(" < Email verification will be used for resetting your password, and recovering your account in case of a forgotten password. > ")
-	fmt.Println(" < Type 'exit' to cancel > ")
-	for {
-		fmt.Print(" > ")
-		scanner.Scan()
-		email = scanner.Text()
-
-		if len(email) == 0 {
-			fmt.Println("Please enter an email address")
-			continue
-		}
-
-		if email == "exit" {
-			return nil
-		}
-		
-		if auth.EmailValidation(email) {
-			break
-		}
-
-		fmt.Println("Provided input is not a valid email address")
-		continue
+	//Get user email
+	email, err := registerEmailHelper()
+	if err != nil {
+		return err 
+	}
+	if email == "exit" {
+		return nil
 	}
 
 	reqData := models.UserDetails{
@@ -97,7 +51,10 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	}
 	defer res.Body.Close()
 
-	checkResponseStatus(res)
+	err = checkResponseStatus(res)
+	if err != nil {
+		return err
+	}
 
 	var user models.User
 
@@ -116,77 +73,19 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	}
 	defer emailRes.Body.Close()
 
-	checkResponseStatus(emailRes)
-
-	var code string
-
-	fmt.Println(" < A verification email has been sent to the provided email address. > ")
-	fmt.Println(" < Please enter the verification code provided within the email below. > ")
-	fmt.Println(" < It can take up to a couple of minutes for the email to be received. If no email has been received, you can type 'resend' to try again. > ")
-	fmt.Println(" < Or you can type 'continue' to continue without a verified email address. > ")
-	fmt.Println(" < Please note, if your address has not been verified, you will be unable to change your password, or recover your account in case the password has been forgotten. > ")
-	fmt.Println(" < Type 'exit' to cancel > ")
-	for {
-		fmt.Print(" > ")
-		scanner.Scan()
-		code = scanner.Text()
-
-		if len(code) == 0 {
-			fmt.Println(" < Please enter the verification code provided within the email below. > ")
-			continue
-		}
-
-		if code == "exit" {
-			return nil
-		}
-
-		if code == "resend" {
-			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
-			if err != nil {
-				return fmt.Errorf("error making http request: %w", err)
-			}
-			defer emailRes.Body.Close()
-
-			checkResponseStatus(emailRes)
-
-			fmt.Printf(" < Another verification code has been sent to email: %s > \n", email)
-			continue
-		}
-
-		if code == "continue" {
-			params := database.CreateUserParams{
-				ID: user.ID.String(),
-				Name: username,
-				CreatedAt: user.CreatedAt.Format("2006-01-02"),
-				UpdatedAt: user.UpdatedAt.Format("2006-01-02"),
-				HashedPassword: user.HashedPassword,
-				Email: user.Email,
-				IsVerified: sql.NullBool{Bool: false, Valid: true},
-			}
-		
-			_, err = app.Config.Db.CreateUser(context.Background(), params)
-			if err != nil {
-				return fmt.Errorf("error creating local record of user: %w", err)	
-			}
-		
-			fmt.Printf("User: %s has been successfully registered!\n", username)
-			fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
-			return nil
-		}
-		break
-	}
-	verifyData := models.EmailVerificationWithCode{
-		UserID: user.ID,
-		Code: code,
-	}
-
-	verifyRes, err := app.Config.MakeBasicRequest("POST", verifyURL, "", verifyData)
+	err = checkResponseStatus(emailRes)
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		return err
 	}
-	defer verifyRes.Body.Close()
-	
-	checkResponseStatus(verifyRes)
+
+	//Email verification flow
+	verified, err := verifyEmailHelper(app, sendURL, verifyURL, user, emailData)
+	if err != nil {
+		return err 
+	}
+	if !verified {
+		return nil 
+	}
 
 	params := database.CreateUserParams{
 		ID: user.ID.String(),
@@ -219,139 +118,33 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token"
 	redirectURL := app.Config.Client.BaseURL + "/link"
 	accessURL := app.Config.Client.BaseURL + "/plaid/get-access-token"
+	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
 
-	pw, err := auth.ReadPassword("Please enter your password > ")
+	//Get user credentials
+	login, err := userLoginHelper(app, username, loginURL)
 	if err != nil {
-		return fmt.Errorf("error getting password: %w", err)
+		return err
 	}
 
-	req := models.UserDetails{
-		Name: username,
-		Password: pw,
-	}
-
-	res, err := app.Config.MakeBasicRequest("POST", loginURL, "", req)
+	//Check user for existing items
+	items, err := userCheckItemsHelper(app, login, itemsURL)
 	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
+		return err
 	}
-	defer res.Body.Close()
-
-	checkResponseStatus(res)
-
-	var login models.Credentials
-
-	if err = json.NewDecoder(res.Body).Decode(&login); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
-	}
-
-	itemsRes, err := app.Config.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
-	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
-	}
-	defer itemsRes.Body.Close()
-
-	checkResponseStatus(itemsRes)
-
-	if itemsRes.StatusCode == 200 {
-		var itemsResp struct {
-			Items []models.ItemName `json:"items"`
-		}
-		if err = json.NewDecoder(itemsRes.Body).Decode(&itemsResp); err != nil {
-			return fmt.Errorf("error decoding response data: %w", err)
-		}
-		
-		if len(itemsResp.Items) != 0 {
-			fmt.Printf(" > Available items for user: %s\n", username)
-			fmt.Println(" ~~~~~")
-			for _, i := range itemsResp.Items {
-				fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
-			}
-
-			err = auth.StoreTokens(login, app.Config.ConfigFP)
-			if err != nil {
-				return fmt.Errorf("error storing auth tokens: %w", err)
-			}
-			
-			return nil
-		}
+	if len(items) != 0 {
+		return checkForWebhookRecords(app, webhookURL, items)
 	}
 	
-	linkRes, err := app.Config.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
+	//If no items for user found, this is determined to be first time login
+	//Go through first time Plaid Link flow
+	linked, err := userFirstTimePlaidLinkHelper(app, login, linkURL, accessURL, redirectURL, itemsURL)
 	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
+		return err 
 	}
-	defer linkRes.Body.Close()
-
-	checkResponseStatus(linkRes)
-	
-	var link models.LinkResponse
-	if err = json.NewDecoder(linkRes.Body).Decode(&link); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
+	if linked {
+		return nil
 	}
 
-	redirectURL = redirectURL + "?token=" + link.LinkToken
-	err = utils.OpenLink(app.Config.OperatingSystem, redirectURL)
-	if err != nil {
-		return fmt.Errorf("error opening redirect link: %w", err)
-	}
-
-	fmt.Println("Waiting for Plaid callback...")
-	token, err := auth.ListenForPlaidCallback()
-	if err != nil {
-		return fmt.Errorf("error getting public token: %w", err)
-	}
-	if token == "" {
-		return fmt.Errorf("error getting public token")
-	}
-
-	name := promptForItemName()
-
-	request := models.AccessTokenRequest{
-		PublicToken: token,
-		Nickname: name,
-	}
-	accessResponse, err := app.Config.MakeBasicRequest("POST", accessURL, login.AccessToken, request)
-	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
-	}
-	defer accessResponse.Body.Close()
-
-	checkResponseStatus(accessResponse)
-
-	itemsResp, err := app.Config.MakeBasicRequest("GET", itemsURL, login.AccessToken, nil)
-	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
-	}
-	defer itemsResp.Body.Close()
-
-	checkResponseStatus(itemsResp)
-
-	if itemsResp.StatusCode == 200 {
-		var itemsResponse struct {
-			Items []models.ItemName `json:"items"`
-		}
-		if err = json.NewDecoder(itemsResp.Body).Decode(&itemsResponse); err != nil {
-			return fmt.Errorf("error decoding response data: %w", err)
-		}
-		
-		if len(itemsResponse.Items) != 0 {
-			fmt.Printf(" > Available items for user: %s\n", username)
-			fmt.Println(" ~~~~~")
-			for _, i := range itemsResponse.Items {
-				fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
-			}
-			
-			err = auth.StoreTokens(login, app.Config.ConfigFP)
-			if err != nil {
-				return fmt.Errorf("error storing auth tokens: %w", err)
-			}
-
-			return nil
-		}
-	
-	}
-
-	
 	err = auth.StoreTokens(login, app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error storing auth tokens: %w", err)
@@ -381,7 +174,10 @@ func (app *CLIApp) commandUserLogout() error {
 	}
 	defer resp.Body.Close()
 
-	checkResponseStatus(resp)
+	err = checkResponseStatus(resp)
+	if err != nil {
+		return err
+	}
 
 	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
@@ -445,7 +241,10 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	checkResponseStatus(resp)
+	err = checkResponseStatus(resp)
+	if err != nil {
+		return err
+	}
 
 	err = app.Config.Db.DeleteUser(context.Background(), username)
 	if err != nil {
@@ -495,44 +294,19 @@ func (app *CLIApp) commandVerifyEmail() error {
 	}
 	defer sendResp.Body.Close()
 
-	checkResponseStatus(sendResp)
-
-	scanner := bufio.NewScanner(os.Stdin)
-	var code string
-
-	fmt.Println(" < A verification email has been sent to the provided email address. > ")
-	fmt.Println(" < Please enter the verification code provided within the email below. > ")
-	fmt.Println(" < It can take up to a couple of minutes for the email to be received. If no email has been received, you can type 'resend' to try again. > ")
-	fmt.Println(" < Type 'exit' to cancel > ")
-	for {
-		fmt.Print(" > ")
-		scanner.Scan()
-		code = scanner.Text()
-
-		if len(code) == 0 {
-			fmt.Println(" < Please enter the verification code provided within the email below. > ")
-			continue
-		}
-
-		if code == "exit" {
-			return nil
-		}
-
-		if code == "resend" {
-			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", sendReq)
-			if err != nil {
-				return fmt.Errorf("error making http request: %w", err)
-			}
-
-			if emailRes.StatusCode >= 400 {
-				return fmt.Errorf("server returned error: %s", emailRes.Status)
-			}
-
-			fmt.Printf(" < Another verification code has been sent to email: %s > \n", user.Email)
-			continue
-		}
-		break
+	err = checkResponseStatus(sendResp)
+	if err != nil {
+		return err
 	}
+
+	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, sendReq)
+	if err != nil {
+		return err 
+	}
+	if code == "" {
+		return nil
+	}
+
 	verifyData := models.EmailVerificationWithCode{
 		UserID: creds.User.ID,
 		Code: code,
@@ -544,7 +318,10 @@ func (app *CLIApp) commandVerifyEmail() error {
 	}
 	defer verifyRes.Body.Close()
 	
-	checkResponseStatus(verifyRes)
+	err = checkResponseStatus(verifyRes)
+	if err != nil {
+		return err
+	}
 
 	verifyParams := database.VerifyEmailParams{
 		IsVerified: sql.NullBool{Bool: true, Valid: true},
@@ -580,7 +357,11 @@ func (app *CLIApp) commandUserItems() error {
 	}
 	defer resp.Body.Close()
 
-	checkResponseStatus(resp)
+	err = checkResponseStatus(resp)
+	if err != nil {
+		return err
+	}
+
 	if resp.StatusCode == 200 {
 		var itemsResponse struct {
 			Items []models.ItemName `json:"items"`
@@ -602,7 +383,7 @@ func (app *CLIApp) commandUserItems() error {
 }
 
 //Updates a user's password in record. Requires verified email address to send code to
-func (app *CLIApp) commandUpdatePassword() error {
+func (app *CLIApp) commandChangePassword() error {
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	updateURL := app.Config.Client.BaseURL + "/api/users/update-password"
@@ -612,50 +393,20 @@ func (app *CLIApp) commandUpdatePassword() error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
-	if err != nil {
-		return fmt.Errorf("error getting local user record: %w", err)
-	}
-
 	pw, err := auth.ReadPassword("Please enter your current password > ")
 	if err != nil {
 		return fmt.Errorf("error getting password: %w", err)
 	}
 
-	err = auth.ValidatePasswordHash(user.HashedPassword, pw)
+	err = auth.ValidatePasswordHash(creds.User.HashedPassword, pw)
 	if err != nil {
 		fmt.Println("Bad password input")
 		return nil
 	}
 
-	var password string
-
-	for {
-		pw, err := auth.ReadPassword("Please enter a new password for your user > ")
-		if err != nil {
-			return fmt.Errorf("error getting password: %w", err)
-		}
-
-		if len(pw) < 8 {
-			fmt.Println("Password must be greater than 8 characters")
-			continue
-		} else {
-			for {
-				confirmPw, err := auth.ReadPassword("Confirm password > ")
-				if err != nil {
-					return fmt.Errorf("error reading confirmed password: %w", err)
-				}
-
-				if confirmPw == pw {
-					password = pw
-					break
-				} else {
-					fmt.Println("Password does not match")
-					continue
-				}
-			}
-			break
-		}
+	password, err := registerPasswordHelper()
+	if err != nil {
+		return err
 	}
 
 	request := models.EmailVerification{
@@ -669,40 +420,17 @@ func (app *CLIApp) commandUpdatePassword() error {
 	}
 	defer emailResp.Body.Close()
 
-	checkResponseStatus(emailResp)
+	err = checkResponseStatus(emailResp)
+	if err != nil {
+		return err
+	}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	var code string
-
-	fmt.Println(" < An email with a verification code has been sent to user's email. Please type in the code to continue > ")
-	fmt.Println(" < Type 'exit' to cancel > ")
-	for {
-		fmt.Print(" > ")
-		scanner.Scan()
-		code = scanner.Text()
-		if len(code) == 0 {
-			fmt.Println(" < Please enter the verification code provided within the email below. > ")
-			continue
-		}
-
-		if code == "exit" {
-			return nil
-		}
-
-		if code == "resend" {
-			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
-			if err != nil {
-				return fmt.Errorf("error making http request: %w", err)
-			}
-
-			if emailRes.StatusCode >= 400 {
-				return fmt.Errorf("server returned error: %s", emailRes.Status)
-			}
-
-			fmt.Printf(" < Another verification code has been sent to email: %s > \n", creds.User.Email)
-			continue
-		}
-		break
+	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, request)
+	if err != nil {
+		return err
+	}
+	if code == "" {
+		return nil
 	}
 
 	updateReq := models.UpdatePassword{
@@ -718,7 +446,10 @@ func (app *CLIApp) commandUpdatePassword() error {
 	}
 	defer resp.Body.Close()
 
-	checkResponseStatus(resp)
+	err = checkResponseStatus(resp)
+	if err != nil {
+		return err
+	}
 
 	var updated models.UpdatedPassword
 
@@ -754,34 +485,9 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 		return fmt.Errorf("error getting user record: %w", err)
 	}
 
-	var password string
-
-	for {
-		pw, err := auth.ReadPassword("Please enter a new password for your user > ")
-		if err != nil {
-			return fmt.Errorf("error getting password: %w", err)
-		}
-
-		if len(pw) < 8 {
-			fmt.Println("Password must be greater than 8 characters")
-			continue
-		} else {
-			for {
-				confirmPw, err := auth.ReadPassword("Confirm password > ")
-				if err != nil {
-					return fmt.Errorf("error reading confirmed password: %w", err)
-				}
-
-				if confirmPw == pw {
-					password = pw
-					break
-				} else {
-					fmt.Println("Password does not match")
-					continue
-				}
-			}
-			break
-		}
+	password, err := registerPasswordHelper()
+	if err != nil {
+		return err
 	}
 
 	request := models.EmailVerification{
@@ -795,40 +501,17 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 	}
 	defer emailResp.Body.Close()
 
-	checkResponseStatus(emailResp)
+	err = checkResponseStatus(emailResp)
+	if err != nil {
+		return err
+	}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	var code string
-
-	fmt.Println(" < An email with a verification code has been sent to user's email. Please type in the code to continue > ")
-	fmt.Println(" < Type 'exit' to cancel > ")
-	for {
-		fmt.Print(" > ")
-		scanner.Scan()
-		code = scanner.Text()
-
-		if len(code) == 0 {
-			fmt.Println(" < Please enter the verification code provided within the email below. > ")
-			continue
-		}
-
-		if code == "exit" {
-			return nil
-		}
-
-		if code == "resend" {
-			emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
-			if err != nil {
-				return fmt.Errorf("error making http request: %w", err)
-			}
-			defer emailRes.Body.Close()
-
-			checkResponseStatus(emailRes)
-
-			fmt.Printf(" < Another verification code has been sent to email: %s > \n",user.Email)
-			continue
-		}
-		break
+	code, err := getEmailCodeHelper(app, email, sendURL, request)
+	if err != nil {
+		return err 
+	}
+	if code == "" {
+		return nil
 	}
 
 	resetReq := models.ResetPassword{
@@ -843,7 +526,10 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 	}
 	defer resetResp.Body.Close()
 
-	checkResponseStatus(resetResp)
+	err = checkResponseStatus(resetResp)
+	if err != nil {
+		return err
+	}
 
 	var updated models.UpdatedPassword
 
@@ -864,40 +550,4 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 
 	fmt.Println("Password successfully reset")
 	return nil
-}
-
-//Simple bufio scanner for getting an item nickname
-func promptForItemName() string {
-	scanner := bufio.NewScanner(os.Stdin)
-	var name string
-
-	Loop:
-		for {
-			fmt.Println("Please enter a name for this item: ")
-			fmt.Print(" > ")
-			scanner.Scan()
-
-			name = scanner.Text()
-
-			if name == "" {
-				fmt.Println("No input found")
-				continue 
-			}
-
-			fmt.Printf("Set item name to %s? (y/n)\n", name)
-			for {
-				scanner.Scan()
-				confirm := scanner.Text()
-
-				if confirm == "y" {
-					break Loop
-				} else if confirm == "n" {
-					break 
-				} else {
-					continue
-				}
-			}
-		}
-	
-		return name
 }

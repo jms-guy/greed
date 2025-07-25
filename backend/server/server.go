@@ -184,6 +184,8 @@ func Run() error {
 
 		r.Post("/plaid/get-link-token", app.HandlerGetLinkToken)							//Gets a Link token from Plaid to return to client
 		r.Post("/plaid/get-access-token", app.HandlerGetAccessToken)						//Exchanges a client's public token with an access token from Plaid
+		r.With(app.AccessTokenMiddleware).Post("/plaid/get-link-token-update", app.HandlerGetLinkTokenForUpdateMode)		//Gets a Link token from Plaid using user's Access Token, to initiate Update mode
+		
 	})
 
 	//Item operations
@@ -192,6 +194,7 @@ func Run() error {
 
 		r.Get("/api/items", app.HandlerGetItems)											//Get list of Plaid items for user
 		r.Get("/api/items/webhook-records", app.HandlerGetWebhookRecords)					//Returns records of Plaid webhook alerts for user's items
+		r.Put("/api/items/webhook-records", app.HandlerProcessWebhookRecords)				//Processes webhooks record of a certain type after user has taken action
 
 		r.Route("/api/items/{item-id}", func(r chi.Router) {
 

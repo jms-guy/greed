@@ -100,6 +100,104 @@ func TestHandlerGetLinkToken(t *testing.T) {
     }
 }
 
+func TestHandlerGetLinkTokenForUpdateMode(t *testing.T) {
+    tests := []struct {
+        name            string
+        userIDInContext uuid.UUID
+		accessTokenInContext any
+		requestBody 	string
+        mockDb          *mockDatabaseService
+		mockPS 			*mockPlaidService
+		mockAuth 		*mockAuthService
+        expectedStatus  int 
+        expectedBody    string  
+    }{
+		{
+            name: "should successfully get a link token from plaid for update mode",
+            userIDInContext: testUserID,
+			accessTokenInContext: testAccessToken,
+            mockDb: &mockDatabaseService{},
+			mockPS: &mockPlaidService{
+				GetLinkTokenForUpdateModeFunc: func(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
+					return "link_token", nil
+				},
+			},
+            expectedStatus: http.StatusOK,
+            expectedBody: "link_token",
+        },
+		{
+            name: "should err with bad userID",
+            userIDInContext: uuid.Nil,
+			accessTokenInContext: testAccessToken,
+            mockDb: &mockDatabaseService{},
+			mockPS: &mockPlaidService{
+				GetLinkTokenForUpdateModeFunc: func(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
+					return "link_token", nil
+				},
+			},
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "Bad userID in context",
+        },
+		{
+            name: "should err with bad access token",
+            userIDInContext: testUserID,
+			accessTokenInContext: 1,
+            mockDb: &mockDatabaseService{},
+			mockPS: &mockPlaidService{
+				GetLinkTokenForUpdateModeFunc: func(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
+					return "link_token", nil
+				},
+			},
+            expectedStatus: http.StatusBadRequest,
+            expectedBody: "Bad access token in context",
+        },
+		{
+            name: "should err on getting link token",
+            userIDInContext: testUserID,
+			accessTokenInContext: testAccessToken,
+            mockDb: &mockDatabaseService{},
+			mockPS: &mockPlaidService{
+				GetLinkTokenForUpdateModeFunc: func(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
+					return "link_token", fmt.Errorf("mock error")
+				},
+			},
+            expectedStatus: http.StatusInternalServerError,
+            expectedBody: "Service error",
+        },
+	}
+
+	for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            req := httptest.NewRequest("POST", "/plaid/get-link-token-update", bytes.NewBufferString(tt.requestBody))
+            req.Header.Set("Content-Type", "application/json")
+
+            ctx := context.WithValue(req.Context(), handlers.GetUserIDContextKey(), tt.userIDInContext)
+			ctx = context.WithValue(ctx, handlers.GetAccessTokenKey(), tt.accessTokenInContext)
+
+            req = req.WithContext(ctx)
+
+            rr := httptest.NewRecorder()
+
+            mockApp := &handlers.AppServer{
+                Db: tt.mockDb,
+				PService: tt.mockPS,
+                Logger: kitlog.NewNopLogger(),
+				Config: &config.Config{PlaidWebhookURL: ""},
+            }
+
+            mockApp.HandlerGetLinkTokenForUpdateMode(rr, req)
+
+            // --- Assertions ---
+            if status := rr.Code; status != tt.expectedStatus {
+                t.Errorf("handler returned wrong status code: got %v want %v. Body: %s", status, tt.expectedStatus, rr.Body.String())
+            }
+            if !strings.Contains(rr.Body.String(), tt.expectedBody) {
+                t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
+            }
+        })
+    }
+}
+
 func TestHandlerGetAccessToken(t *testing.T) {
     tests := []struct {
         name            string

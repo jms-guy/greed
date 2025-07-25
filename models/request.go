@@ -46,3 +46,8 @@ type EmailVerification struct {
 	Email 					string 		`json:"email"`
 }
 
+type ProcessWebhook struct {
+	ItemID 					string 		`json:"item_id"`
+	WebhookCode 			string 		`json:"webhook_code"`
+	WebhookType 			string 		`json:"webhook_type"`
+}

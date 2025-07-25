@@ -7,21 +7,24 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const createPlaidWebhookRecord = `-- name: CreatePlaidWebhookRecord :one
-INSERT INTO plaid_webhook_records(id, webhook_type, webhook_code, item_id, user_id, created_at)
+INSERT INTO plaid_webhook_records(id, webhook_type, webhook_code, item_id, user_id, created_at, processed, processed_at)
 VALUES (
     $1,
     $2,
     $3,
     $4,
     $5,
-    NOW()
+    NOW(),
+    FALSE,
+    NULL
 )
-RETURNING id, webhook_type, webhook_code, item_id, user_id, created_at
+RETURNING id, webhook_type, webhook_code, item_id, user_id, created_at, processed, processed_at
 `
 
 type CreatePlaidWebhookRecordParams struct {
@@ -48,29 +51,15 @@ func (q *Queries) CreatePlaidWebhookRecord(ctx context.Context, arg CreatePlaidW
 		&i.ItemID,
 		&i.UserID,
 		&i.CreatedAt,
+		&i.Processed,
+		&i.ProcessedAt,
 	)
 	return i, err
 }
 
-const deleteWebhookRecord = `-- name: DeleteWebhookRecord :exec
-DELETE FROM plaid_webhook_records
-WHERE user_id = $1 AND item_id = $2
-`
-
-type DeleteWebhookRecordParams struct {
-	UserID uuid.UUID
-	ItemID string
-}
-
-func (q *Queries) DeleteWebhookRecord(ctx context.Context, arg DeleteWebhookRecordParams) error {
-	_, err := q.db.ExecContext(ctx, deleteWebhookRecord, arg.UserID, arg.ItemID)
-	return err
-}
-
 const getWebhookRecords = `-- name: GetWebhookRecords :many
-SELECT plaid_webhook_records.id, plaid_webhook_records.webhook_type, plaid_webhook_records.webhook_code, plaid_webhook_records.item_id, plaid_webhook_records.user_id, plaid_webhook_records.created_at FROM plaid_webhook_records
-INNER JOIN users ON users.id = plaid_webhook_records.user_id
-WHERE plaid_webhook_records.user_id = $1
+SELECT plaid_webhook_records.id, plaid_webhook_records.webhook_type, plaid_webhook_records.webhook_code, plaid_webhook_records.item_id, plaid_webhook_records.user_id, plaid_webhook_records.created_at, plaid_webhook_records.processed, plaid_webhook_records.processed_at FROM plaid_webhook_records
+WHERE plaid_webhook_records.user_id = $1 AND plaid_webhook_records.processed = FALSE
 `
 
 func (q *Queries) GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]PlaidWebhookRecord, error) {
@@ -89,6 +78,8 @@ func (q *Queries) GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]Pl
 			&i.ItemID,
 			&i.UserID,
 			&i.CreatedAt,
+			&i.Processed,
+			&i.ProcessedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -101,4 +92,34 @@ func (q *Queries) GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]Pl
 		return nil, err
 	}
 	return items, nil
+}
+
+const processWebhookRecordsByType = `-- name: ProcessWebhookRecordsByType :exec
+UPDATE plaid_webhook_records
+SET processed = TRUE, processed_at = NOW()
+WHERE item_id = $1
+    AND user_id = $2
+    AND webhook_type = $3
+    AND webhook_code = $4
+    AND created_at <= $5 
+    AND processed = FALSE
+`
+
+type ProcessWebhookRecordsByTypeParams struct {
+	ItemID      string
+	UserID      uuid.UUID
+	WebhookType string
+	WebhookCode string
+	CreatedAt   time.Time
+}
+
+func (q *Queries) ProcessWebhookRecordsByType(ctx context.Context, arg ProcessWebhookRecordsByTypeParams) error {
+	_, err := q.db.ExecContext(ctx, processWebhookRecordsByType,
+		arg.ItemID,
+		arg.UserID,
+		arg.WebhookType,
+		arg.WebhookCode,
+		arg.CreatedAt,
+	)
+	return err
 }

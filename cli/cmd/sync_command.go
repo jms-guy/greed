@@ -25,35 +25,10 @@ func (app *CLIApp) commandSync(args []string) error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-
-	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
-		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
-	})
+	//Get item ID
+	itemID, err := findItemHelper(app, itemName, itemsURL)
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
-	}
-	defer res.Body.Close()
-
-	checkResponseStatus(res)
-
-	var itemsResp struct {
-		Items []models.ItemName `json:"items"`
-	}
-	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
-	}
-
-	var itemID string
- 	for _, i := range itemsResp.Items {
-		if i.Nickname == itemName {
-			itemID = i.ItemId
-			break
-		}
-	}
-
-	if itemID == "" {
-		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil 
+		return err
 	}
 
 	updateBalanceURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/balances"
@@ -67,17 +42,14 @@ func (app *CLIApp) commandSync(args []string) error {
 	defer resp.Body.Close()
 
 	var accUpdates []models.UpdatedBalance
-	if resp.StatusCode != http.StatusOK {
-		var serverErr map[string]string
-		if decodeErr := json.NewDecoder(resp.Body).Decode(&serverErr); decodeErr == nil && serverErr["error"] != "" {
-			return fmt.Errorf("server error updating balances (status %d): %s", resp.StatusCode, serverErr["error"])
-		}
-		return fmt.Errorf("server returned non-OK status for balances: %s", resp.Status)
-	}
 
+	serverErr := parseAndReturnServerError(resp)
+	if serverErr != nil {
+		return serverErr
+	}
 	if err = json.NewDecoder(resp.Body).Decode(&accUpdates); err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("decoding error: received an empty or incomplete response for account balances. This often indicates a temporary issue with Plaid or the financial institution. Please try syncing again later")
+			return fmt.Errorf("decoding error: received an empty or incomplete response for accounts. This often indicates a temporary issue with Plaid or the financial institution. Please try syncing again later")
 		}
 		return fmt.Errorf("decoding error for account balances: %w. The response might be malformed or unexpected. Please try syncing again later", err)
 	}
@@ -119,6 +91,11 @@ func (app *CLIApp) commandSync(args []string) error {
 
 	fmt.Println(" > Account balances synced successfully.")
 
+	err = processWebhookRecords(app, itemID, "ITEM", "DEFAULT_UPDATE")
+	if err != nil {
+		return err
+	}
+
 	syncTxnsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/transactions"
 
 	response, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
@@ -129,12 +106,9 @@ func (app *CLIApp) commandSync(args []string) error {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
-		var serverErr map[string]string
-		if decodeErr := json.NewDecoder(response.Body).Decode(&serverErr); decodeErr == nil && serverErr["error"] != "" {
-			return fmt.Errorf("server error syncing transactions (status %d): %s", response.StatusCode, serverErr["error"])
-		}
-		return fmt.Errorf("server returned non-OK status for transactions: %s", response.Status)
+	serverErr = parseAndReturnServerError(response)
+	if serverErr != nil {
+		return serverErr
 	}
 
 	var txns []models.Transaction
@@ -179,6 +153,19 @@ func (app *CLIApp) commandSync(args []string) error {
 	}
 
 	fmt.Println("\r > Transaction records synced successfully.")
+
+	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "TRANSACTIONS_UPDATES_AVAILABLE")
+	if err != nil {
+		return err 
+	}
+	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "TRANSACTIONS_REMOVED")
+	if err != nil {
+		return err 
+	}
+	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "DEFAULT_UPDATE")
+	if err != nil {
+		return err 
+	}
 
 	return nil
 }

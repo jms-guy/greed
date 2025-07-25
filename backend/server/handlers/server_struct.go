@@ -92,7 +92,7 @@ type GreedDatabase interface {
 	GetVerificationRecord(ctx context.Context, verificationCode string) (database.VerificationRecord, error)
 	GetVerificationRecordByUser(ctx context.Context, userID uuid.UUID) (database.VerificationRecord, error)
 	CreatePlaidWebhookRecord(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
-	DeleteWebhookRecord(ctx context.Context, arg database.DeleteWebhookRecordParams) error 
+	ProcessWebhookRecordsByType(ctx context.Context, arg database.ProcessWebhookRecordsByTypeParams) error 
 	GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error)
 	WithTx(tx *sql.Tx) *database.Queries
 }

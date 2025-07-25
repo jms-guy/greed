@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -194,4 +196,38 @@ func (app *AppServer) HandlerGetWebhookRecords(w http.ResponseWriter, r *http.Re
 	}
 
 	app.respondWithJSON(w, 200, webhookRecords)
+}
+
+//Processes all webhooks record of a certain type after action has been taken client-side by user to resolve
+func (app *AppServer) HandlerProcessWebhookRecords(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userIDValue := ctx.Value(userIDKey)
+	id, ok := userIDValue.(uuid.UUID)
+	if !ok || id == uuid.Nil {
+		app.respondWithError(w, 400, "Bad userID in context", nil)
+		return
+	}
+
+	request := models.ProcessWebhook{}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		app.respondWithError(w, 400, "Bad request data", err)
+		return 
+	}
+
+	params := database.ProcessWebhookRecordsByTypeParams{
+		ItemID: request.ItemID,
+		UserID: id,
+		WebhookType: request.WebhookType,
+		WebhookCode: request.WebhookCode,
+		CreatedAt: time.Now(),
+	}
+
+	err := app.Db.ProcessWebhookRecordsByType(ctx, params)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error processing webhook records: %w", err))
+		return 
+	}
+
+	app.respondWithJSON(w, 200, "Webhook records processed")
 }

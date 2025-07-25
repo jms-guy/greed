@@ -44,6 +44,7 @@ func (p *Service) GetItemInstitution(ctx context.Context, accessToken string) (s
 	return inst.GetName(), nil
 }
 
+//Updates account balances for item
 func (p *Service) GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
 	balancesGetReq := plaid.NewAccountsBalanceGetRequest(accessToken)
 	balancesGetResp, httpResp, err := p.Client.PlaidApi.AccountsBalanceGet(ctx).AccountsBalanceGetRequest(*balancesGetReq).Execute()

@@ -41,7 +41,10 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 	}
 	defer res.Body.Close()
 
-	checkResponseStatus(res)
+	err = checkResponseStatus(res)
+	if err != nil {
+		return err
+	}
 
 	var response []models.MonetaryData
 	if err = json.NewDecoder(res.Body).Decode(&response); err != nil {

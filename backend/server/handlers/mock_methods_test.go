@@ -415,9 +415,9 @@ func (m *mockDatabaseService) CreatePlaidWebhookRecord(ctx context.Context, arg 
     return database.PlaidWebhookRecord{}, nil
 }
 
-func (m *mockDatabaseService) DeleteWebhookRecord(ctx context.Context, arg database.DeleteWebhookRecordParams) error {
-    if m.DeleteWebhookRecordFunc != nil {
-        return m.DeleteWebhookRecordFunc(ctx, arg)
+func (m *mockDatabaseService) ProcessWebhookRecordsByType(ctx context.Context, arg database.ProcessWebhookRecordsByTypeParams) error {
+    if m.ProcessWebhookRecordsByTypeFunc != nil {
+        return m.ProcessWebhookRecordsByTypeFunc(ctx, arg)
     }
     return nil 
 }

@@ -26,7 +26,10 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 	}
 	defer res.Body.Close()
 
-	checkResponseStatus(res)
+	err = checkResponseStatus(res)
+	if err != nil {
+		return err
+	}
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
@@ -60,7 +63,10 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	checkResponseStatus(resp)
+	err = checkResponseStatus(resp)
+	if err != nil {
+		return err
+	}
 
 	var response []models.Account
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {

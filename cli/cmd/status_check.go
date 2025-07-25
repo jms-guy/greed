@@ -4,22 +4,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 )
 
 //Checks an *http.Response StatusCode, and acts appropriately if 400+ code found
-func checkResponseStatus(r *http.Response) {
-
+func checkResponseStatus(r *http.Response) error { 
 	if r.StatusCode >= 500 {
-		fmt.Printf("Server error - %s\n", r.Status)
-		body, _ := io.ReadAll(r.Body)
-		fmt.Printf("%s\n", string(body))
-		os.Exit(1)
+		body, _ := io.ReadAll(r.Body) 
+		return fmt.Errorf("server error (%s): %s", r.Status, string(body))
 	} else if r.StatusCode >= 400 {
-		fmt.Printf("Bad request - %s\n", r.Status)
-		body, _ := io.ReadAll(r.Body)
-		fmt.Printf("%s\n", string(body))
-		os.Exit(1)
+		body, _ := io.ReadAll(r.Body) 
+		return fmt.Errorf("bad request (%s): %s", r.Status, string(body))
 	}
-
+	return nil
 }

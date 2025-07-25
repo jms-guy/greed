@@ -91,7 +91,7 @@ type mockDatabaseService struct {
 	GetVerificationRecordFunc           func(ctx context.Context, verificationCode string) (database.VerificationRecord, error)
 	GetVerificationRecordByUserFunc     func(ctx context.Context, userID uuid.UUID) (database.VerificationRecord, error)
     CreatePlaidWebhookRecordFunc 		func(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
-	DeleteWebhookRecordFunc 			func(ctx context.Context, arg database.DeleteWebhookRecordParams) error 
+	ProcessWebhookRecordsByTypeFunc 	func(ctx context.Context, arg database.ProcessWebhookRecordsByTypeParams) error 
 	GetWebhookRecordsFunc 				func(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error)
 	WithTxFunc                          func(tx *sql.Tx) *database.Queries
 }

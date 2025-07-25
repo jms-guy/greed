@@ -55,6 +55,8 @@ type PlaidWebhookRecord struct {
 	ItemID      string
 	UserID      uuid.UUID
 	CreatedAt   time.Time
+	Processed   bool
+	ProcessedAt sql.NullTime
 }
 
 type RefreshToken struct {

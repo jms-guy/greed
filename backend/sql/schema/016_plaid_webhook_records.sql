@@ -7,7 +7,9 @@ CREATE TABLE plaid_webhook_records (
     ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id)
     ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    processed BOOLEAN NOT NULL DEFAULT FALSE,
+    processed_at TIMESTAMPTZ
 );
 
 -- +goose Down

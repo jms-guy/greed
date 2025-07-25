@@ -51,7 +51,10 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 	}
 	defer res.Body.Close()
 
-	checkResponseStatus(res)
+	err = checkResponseStatus(res)
+	if err != nil {
+		return err
+	}
 	
 	if summary {
 		var summaries []models.MerchantSummary

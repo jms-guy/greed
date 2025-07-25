@@ -35,6 +35,16 @@ func ListenForPlaidCallback() (string, error) {
 		publicTokenChan <- publicToken
 	})
 
+	mux.HandleFunc("/plaid-update-callback", func(w http.ResponseWriter, r *http.Request) {
+
+		itemID := r.URL.Query().Get("item_id")
+    	fmt.Printf("Plaid Link Update successful for itemID: %s\n", itemID)
+		
+		fmt.Fprintf(w, "Bank connection updated! You can close this window.")
+		w.(http.Flusher).Flush()
+		publicTokenChan <- ""
+	})
+
 	mux.HandleFunc("/plaid-exit", func(w http.ResponseWriter, r *http.Request) {
 		errorCode := r.URL.Query().Get("error_code")
 		displayMessage := r.URL.Query().Get("display_message")
@@ -47,10 +57,6 @@ func ListenForPlaidCallback() (string, error) {
 		}
 		publicTokenChan <- "" 
 
-		select {
-		case exitSignalChan <- true:
-		default:
-		}
 	})
 
 
@@ -66,11 +72,6 @@ func ListenForPlaidCallback() (string, error) {
 
 	select {
 	case token := <-publicTokenChan:
-		select {
-			case <-exitSignalChan:
-			case <-time.After(5 * time.Second): 
-				fmt.Println("Timed out waiting for exit signal after public token received.")
-		}
 		
 		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 		defer cancel()
