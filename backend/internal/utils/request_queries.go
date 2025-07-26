@@ -121,22 +121,22 @@ func (qv *Service) BuildSqlQuery(queries map[string]string, accountID string) (s
 
 	if val, ok := queries["merchant"]; ok {
 		if val != "" {
-			query += fmt.Sprintf(" AND merchant_name = $%d", paramCount)
-			args = append(args, val)
+			query += fmt.Sprintf(" AND merchant_name ILIKE $%d", paramCount)
+			args = append(args, "%"+val+"%")
 			paramCount++
 		}
 	}
 	if val, ok := queries["category"]; ok {
 		if val != "" {
-			query += fmt.Sprintf(" AND personal_finance_category = $%d", paramCount)
-			args = append(args, val)
+			query += fmt.Sprintf(" AND personal_finance_category ILIKE $%d", paramCount)
+			args = append(args, "%"+val+"%")
 			paramCount++
 		}
 	}
 	if val, ok := queries["channel"]; ok {
 		if val != "" {
-			query += fmt.Sprintf(" AND payment_channel = $%d", paramCount)
-			args = append(args, val)
+			query += fmt.Sprintf(" AND payment_channel ILIKE $%d", paramCount)
+			args = append(args, "%"+val+"%")
 			paramCount++
 		}
 	}
