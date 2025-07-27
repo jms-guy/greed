@@ -63,4 +63,4 @@ API endpoints are grouped by operation types
 | Endpoint | Http Method | Description |
 | :----:  | :----:  | :----:  |
 | `/link` | `GET` | Provides the redirect page for handling Plaid's Link flow |
-\ `/link-update-mode` | `GET` | Provides redirect page for handling Plaid's Link Update mode flow |
+| `/link-update-mode` | `GET` | Provides redirect page for handling Plaid's Link Update mode flow |
