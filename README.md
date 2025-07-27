@@ -40,8 +40,11 @@ Unless you are running your own server for this application, CLI users are restr
     - Viewable in tables and graphs
 - Export data into a CSV file
 
-### Future Features
+### To-Do List
 
+- CLI tests + backend integration tests
+- Deploy + C/I 
 - Recurring transaction detection
 - Custom transaction tags and filtering
     - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)
+- Web frontend?
