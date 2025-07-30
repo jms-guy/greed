@@ -37,8 +37,7 @@ func ListenForPlaidCallback() (string, error) {
 
 	mux.HandleFunc("/plaid-update-callback", func(w http.ResponseWriter, r *http.Request) {
 
-		itemID := r.URL.Query().Get("item_id")
-    	fmt.Printf("Plaid Link Update successful for itemID: %s\n", itemID)
+    	fmt.Println(" > Plaid Link Update successful")
 		
 		fmt.Fprintf(w, "Bank connection updated! You can close this window.")
 		w.(http.Flusher).Flush()

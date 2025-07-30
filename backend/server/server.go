@@ -184,7 +184,7 @@ func Run() error {
 
 		r.Post("/plaid/get-link-token", app.HandlerGetLinkToken)							//Gets a Link token from Plaid to return to client
 		r.Post("/plaid/get-access-token", app.HandlerGetAccessToken)						//Exchanges a client's public token with an access token from Plaid
-		r.With(app.AccessTokenMiddleware).Post("/plaid/get-link-token-update", app.HandlerGetLinkTokenForUpdateMode)		//Gets a Link token from Plaid using user's Access Token, to initiate Update mode
+		r.With(app.AccessTokenMiddleware).Post("/plaid/{item-id}/get-link-token-update", app.HandlerGetLinkTokenForUpdateMode)		//Gets a Link token from Plaid using user's Access Token, to initiate Update mode
 		
 	})
 

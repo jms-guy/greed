@@ -409,7 +409,6 @@ func (app *CLIApp) commandUpdate(args []string) error {
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
-	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token-update"
 	redirectURL := app.Config.Client.BaseURL + "/link-update-mode"
 
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
@@ -444,6 +443,8 @@ func (app *CLIApp) commandUpdate(args []string) error {
 		fmt.Printf("No item found with name: %s\n", itemName)
 		return nil 
 	}
+
+	linkURL := app.Config.Client.BaseURL + "/plaid/" + itemID + "/get-link-token-update"
 
 	linkRes, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("POST", linkURL, token, nil)
