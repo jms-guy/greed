@@ -444,7 +444,7 @@ func (app *CLIApp) commandUpdate(args []string) error {
 		return nil 
 	}
 
-	linkURL := app.Config.Client.BaseURL + "/plaid/" + itemID + "/get-link-token-update"
+	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token-update/" + itemID
 
 	linkRes, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("POST", linkURL, token, nil)
