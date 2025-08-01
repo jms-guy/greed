@@ -83,6 +83,18 @@ type Transaction struct {
 	UpdatedAt               time.Time
 }
 
+type TransactionTag struct {
+	ID        uuid.UUID
+	Name      string
+	UserID    uuid.UUID
+	CreatedAt time.Time
+}
+
+type TransactionsToTag struct {
+	TransactionID string
+	TagID         uuid.UUID
+}
+
 type User struct {
 	ID             uuid.UUID
 	Name           string
