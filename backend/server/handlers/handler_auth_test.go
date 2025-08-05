@@ -43,7 +43,7 @@ func TestHandlerCreateUser(t *testing.T) {
         mockUpdatedAt := time.Now().Truncate(time.Second) 
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{}, sql.ErrNoRows 
             },
             CreateUserFunc: func(ctx context.Context, params database.CreateUserParams) (database.User, error) {
@@ -116,7 +116,7 @@ func TestHandlerCreateUser(t *testing.T) {
         expectedEmail := "test@example.com"
         plainTextPassword := "password123" 
         mockHashedPassword := "password123_hashed"
-        expectedErrorMessage := "User already exists with that email address"
+        expectedErrorMessage := "User already exists by that name"
 
         reqBody := `{"name": "` + expectedName + `", "email": "` + expectedEmail + `", "password": "` + plainTextPassword + `"}`
         req := httptest.NewRequest("POST", "/api/auth/register", bytes.NewBufferString(reqBody))
@@ -129,7 +129,7 @@ func TestHandlerCreateUser(t *testing.T) {
         mockUpdatedAt := time.Now().Truncate(time.Second) 
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{
                     ID: mockUserID,
                     Name: expectedName,
@@ -192,7 +192,7 @@ func TestHandlerCreateUser(t *testing.T) {
         rr := httptest.NewRecorder()
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{}, sql.ErrNoRows 
             },
             CreateUserFunc: func(ctx context.Context, params database.CreateUserParams) (database.User, error) {
@@ -248,7 +248,7 @@ func TestHandlerCreateUser(t *testing.T) {
         rr := httptest.NewRecorder()
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{}, fmt.Errorf("mock error: getting user error")
             },
             CreateUserFunc: func(ctx context.Context, params database.CreateUserParams) (database.User, error) {
@@ -306,7 +306,7 @@ func TestHandlerCreateUser(t *testing.T) {
         rr := httptest.NewRecorder()
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{}, sql.ErrNoRows
             },
             CreateUserFunc: func(ctx context.Context, params database.CreateUserParams) (database.User, error) {
@@ -374,7 +374,7 @@ func TestHandlerUserLogin(t *testing.T) {
         expectedRefresh := "refreshToken"
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{
                     ID: mockUserID,
                     Name: expectedName,
@@ -466,7 +466,7 @@ func TestHandlerUserLogin(t *testing.T) {
          expectedErrorMessage := "Password is incorrect"
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{
                     ID: mockUserID,
                     Name: expectedName,
@@ -537,7 +537,7 @@ func TestHandlerUserLogin(t *testing.T) {
         expectedErrorMessage := "Database error"
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{}, fmt.Errorf("mock error")
             },
             CreateDelegationFunc: func(ctx context.Context, arg database.CreateDelegationParams) (database.Delegation, error) {
@@ -607,7 +607,7 @@ func TestHandlerUserLogin(t *testing.T) {
         expectedErrorMessage := "Database error"
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{
                     ID: mockUserID,
                     Name: expectedName,
@@ -685,7 +685,7 @@ func TestHandlerUserLogin(t *testing.T) {
         mockRevokedAt := sql.NullTime{}
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{
                     ID: mockUserID,
                     Name: expectedName,
@@ -769,7 +769,7 @@ func TestHandlerUserLogin(t *testing.T) {
         mockRevokedAt := sql.NullTime{}
 
         mockDb := &mockDatabaseService{
-            GetUserByEmailFunc: func(ctx context.Context, name string) (database.User, error) {
+            GetUserByNameFunc: func(ctx context.Context, name string) (database.User, error) {
                 return database.User{
                     ID: mockUserID,
                     Name: expectedName,

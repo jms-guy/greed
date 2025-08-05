@@ -22,6 +22,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	registerURL := app.Config.Client.BaseURL + "/api/auth/register"
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
+	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
 
 	//Get user password
 	password, err := registerPasswordHelper()
@@ -61,6 +62,31 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 		return fmt.Errorf("error decoding response data: %w", err)
 	}
 
+	emailData := models.EmailVerification{
+		UserID: user.ID,
+		Email: user.Email,
+	}
+
+	emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
+	if err != nil {
+		return fmt.Errorf("error making http request: %w", err)
+	}
+	defer emailRes.Body.Close()
+
+	err = checkResponseStatus(emailRes)
+	if err != nil {
+		return err
+	}
+
+	//Email verification flow
+	verified, err := verifyEmailHelper(app, sendURL, verifyURL, user, emailData)
+	if err != nil {
+		return err 
+	}
+	if !verified {
+		return nil 
+	}
+
 	params := database.CreateUserParams{
 		ID: user.ID.String(),
 		Name: username,
@@ -79,39 +105,13 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	fmt.Printf("User: %s has been successfully registered!\n", username)
 	fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
 	
-
-	emailData := models.EmailVerification{
-		UserID: user.ID,
-		Email: user.Email,
-	}
-
-	emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
-	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
-	}
-	defer emailRes.Body.Close()
-
-	err = checkResponseStatus(emailRes)
-	if err != nil {
-		return err
-	}
-
-	//Email verification flow
-	verified, err := verifyEmailHelper(app, emailData)
-	if err != nil {
-		return err 
-	}
-	if !verified {
-		return nil 
-	}
-
 	return nil
 }
 
 //Function creates a login session for user, getting auth tokens
 func (app *CLIApp) commandUserLogin(args []string) error {
 
-	email := args[0]
+	username := args[0]
 
 	loginURL := app.Config.Client.BaseURL + "/api/auth/login"
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -121,7 +121,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
 
 	//Get user credentials
-	login, err := userLoginHelper(app, email, loginURL)
+	login, err := userLoginHelper(app, username, loginURL)
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 		return err
 	}
 
-	code, err := getEmailCodeHelper(app, sendURL, sendReq)
+	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, sendReq)
 	if err != nil {
 		return err 
 	}
@@ -425,7 +425,7 @@ func (app *CLIApp) commandChangePassword() error {
 		return err
 	}
 
-	code, err := getEmailCodeHelper(app, sendURL, request)
+	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, request)
 	if err != nil {
 		return err
 	}
@@ -506,7 +506,7 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 		return err
 	}
 
-	code, err := getEmailCodeHelper(app, sendURL, request)
+	code, err := getEmailCodeHelper(app, email, sendURL, request)
 	if err != nil {
 		return err 
 	}

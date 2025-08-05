@@ -70,14 +70,9 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Get user record from database
-	user, err := app.Db.GetUserByEmail(ctx, params.Email)
+	user, err := app.Db.GetUserByName(ctx, params.Name)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user: %w", err))
-		return
-	}
-
-	if !user.IsVerified.Valid {
-		app.respondWithError(w, 403, "User is not verified", nil)
 		return
 	}
 
@@ -141,10 +136,10 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	//Check if user with email exists in database already
-	_, err = app.Db.GetUserByEmail(ctx, params.Email)
+	//Check if user with request name exists in database already
+	_, err = app.Db.GetUserByName(ctx, params.Name)
 	if err == nil {
-		app.respondWithError(w, 400, "User already exists with that email address", nil)
+		app.respondWithError(w, 400, "User already exists by that name", nil)
 		return
 	}
 	
@@ -160,8 +155,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	} else {
-		app.respondWithError(w, 400, "Valid email must be provided", nil)
-		return
+		givenEmail = "unset"
 	}
 
 	//Hash request password

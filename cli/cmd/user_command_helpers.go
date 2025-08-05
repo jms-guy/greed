@@ -3,13 +3,13 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
+	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
 )
@@ -56,7 +56,7 @@ func registerEmailHelper() (string, error) {
 	var email string
 
 	fmt.Println(" < Please enter a valid email address for your account. > ")
-	fmt.Println(" < This email will be used to log in and access your account > ")
+	fmt.Println(" < Email verification will be used for resetting your password, and recovering your account in case of a forgotten password. > ")
 	fmt.Println(" < Type 'exit' to cancel > ")
 	for {
 		fmt.Print(" > ")
@@ -84,7 +84,7 @@ func registerEmailHelper() (string, error) {
 }
 
 //Gets email code from user
-func getEmailCodeHelper(app *CLIApp, sendURL string, emailData models.EmailVerification) (string, error) {
+func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models.EmailVerification) (string, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var code string
 
@@ -116,7 +116,7 @@ func getEmailCodeHelper(app *CLIApp, sendURL string, emailData models.EmailVerif
 				return "", err
 			}
 
-			fmt.Printf(" < Another verification code has been sent to email: %s > \n", emailData.Email)
+			fmt.Printf(" < Another verification code has been sent to email: %s > \n", userEmail)
 			continue
 		}
 		break
@@ -126,14 +126,13 @@ func getEmailCodeHelper(app *CLIApp, sendURL string, emailData models.EmailVerif
 }
 
 //Helper for performing email verification flow in registering a new user
-func verifyEmailHelper(app *CLIApp, emailData models.EmailVerification) (bool, error) {
-	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
-	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
+func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User, emailData models.EmailVerification) (bool, error) {
 
-	fmt.Println(" < It can take up to a couple of minutes for the email to be received. If you don't receive the verification email, please check your spam folder. Some email providers (like Outlook/Hotmail, Yahoo, or iCloud) may block or filter emails from new domains. If you don't see it, try using a Gmail address.")
-	fmt.Println(" < Email address must be verified to continue > ")
+	fmt.Println(" < It can take up to a couple of minutes for the email to be received > ")
+	fmt.Println(" < Or you can type 'continue' to continue without a verified email address. > ")
+	fmt.Println(" < Please note, if your address has not been verified, you will be unable to change your password, or recover your account in case the password has been forgotten. > ")
 
-	code, err := getEmailCodeHelper(app, sendURL, emailData)
+	code, err := getEmailCodeHelper(app, user.Email, sendURL, emailData)
 	if err != nil {
 		return false, err
 	}
@@ -141,8 +140,29 @@ func verifyEmailHelper(app *CLIApp, emailData models.EmailVerification) (bool, e
 		return false, nil
 	}
 
+	if code == "continue" {
+		params := database.CreateUserParams{
+			ID: user.ID.String(),
+			Name: user.Name,
+			CreatedAt: user.CreatedAt.Format("2006-01-02"),
+			UpdatedAt: user.UpdatedAt.Format("2006-01-02"),
+			HashedPassword: user.HashedPassword,
+			Email: user.Email,
+			IsVerified: sql.NullBool{Bool: false, Valid: true},
+		}
+	
+		_, err := app.Config.Db.CreateUser(context.Background(), params)
+		if err != nil {
+			return false, fmt.Errorf("error creating local record of user: %w", err)	
+		}
+	
+		fmt.Printf("User: %s has been successfully registered!\n", user.Name)
+		fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
+		return false, nil
+	}
+
 	verifyData := models.EmailVerificationWithCode{
-		UserID: emailData.UserID,
+		UserID: user.ID,
 		Code: code,
 	}
 
@@ -161,14 +181,14 @@ func verifyEmailHelper(app *CLIApp, emailData models.EmailVerification) (bool, e
 }
 
 //Helper for fetching user credentials on login
-func userLoginHelper(app *CLIApp, email, loginURL string) (models.Credentials, error) {
+func userLoginHelper(app *CLIApp, username, loginURL string) (models.Credentials, error) {
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
 		return models.Credentials{}, fmt.Errorf("error getting password: %w", err)
 	}
 
 	req := models.UserDetails{
-		Email: email,
+		Name: username,
 		Password: pw,
 	}
 
@@ -177,30 +197,6 @@ func userLoginHelper(app *CLIApp, email, loginURL string) (models.Credentials, e
 		return models.Credentials{}, fmt.Errorf("error making request: %w", err)
 	}
 	defer res.Body.Close()
-
-	if res.StatusCode == 403 {
-		fmt.Println("User's email is not verified")
-		user, err := app.Config.Db.GetUserByEmail(context.Background(), email)
-		if err != nil {
-			return models.Credentials{}, fmt.Errorf("error getting local user record: %w", err)
-		}
-		id, err := uuid.Parse(user.ID)
-		if err != nil {
-			return models.Credentials{}, fmt.Errorf("error parsing user ID: %w", err)
-		}
-		emailVerification := models.EmailVerification{
-			UserID: id,
-			Email: user.Email,
-		}
-		verified, err := verifyEmailHelper(app, emailVerification)
-		if err != nil {
-			return models.Credentials{}, fmt.Errorf("error verifying email: %w", err)
-		}
-
-		if !verified {
-			return models.Credentials{}, nil
-		}
-	}
 
 	err = checkResponseStatus(res)
 	if err != nil {
