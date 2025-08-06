@@ -148,7 +148,7 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 		txns = append(txns, t)
 	}
 	if err := rows.Err(); err != nil {
-		app.respondWithError(w, 500, "Error encounted during query", err)
+		app.respondWithError(w, 500, "Error encountered during query", err)
 		return
 	}
 	if err := rows.Close(); err != nil {

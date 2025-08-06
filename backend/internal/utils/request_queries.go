@@ -204,7 +204,6 @@ func (qv *Service) BuildSqlQuery(queries map[string]string, accountID string) (s
 			}
 			query += fmt.Sprintf(" LIMIT $%d", paramCount)
 			args = append(args, limit)
-			paramCount++
 		}
 	}
 

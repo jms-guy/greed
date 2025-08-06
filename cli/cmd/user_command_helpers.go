@@ -157,7 +157,7 @@ func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User,
 		}
 
 		fmt.Printf("User: %s has been successfully registered!\n", user.Name)
-		fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
+		fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The initial fetch will use 2, and each sync afterwards will also use 2.")
 		return false, nil
 	}
 
