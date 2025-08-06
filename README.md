@@ -3,7 +3,7 @@
 
 ## Project Status
 ![Test Status](https://github.com/jms-guy/greed/actions/workflows/CI.yml/badge.svg)
-![Go Report Card](https://goreportcard.com/badge/github.com/jms-guy/greed)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jms-guy/greed)](https://goreportcard.com/report/github.com/jms-guy/greed)
 
 ## Overview
 
