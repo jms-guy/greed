@@ -19,7 +19,7 @@ import (
 func (app *CLIApp) commandExportData(args []string) error {
 	accountName := args[0]
 
-	//Trim quotes included in argument by shell
+	// Trim quotes included in argument by shell
 	accountName = strings.TrimPrefix(accountName, "'")
 	accountName = strings.TrimSuffix(accountName, "'")
 	accountName = strings.TrimPrefix(accountName, "\"")
@@ -57,7 +57,7 @@ func (app *CLIApp) commandExportData(args []string) error {
 	filename := fmt.Sprintf("%s.csv", accountName)
 	exportFile := filepath.Join(exportDirectory, filename)
 
-	err = os.MkdirAll(exportDirectory, 0755)
+	err = os.MkdirAll(exportDirectory, 0o755)
 	if err != nil {
 		return fmt.Errorf("error creating export directory %s: %w", exportDirectory, err)
 	}

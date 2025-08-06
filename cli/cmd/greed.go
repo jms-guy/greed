@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"math"
+
+	"github.com/spf13/cobra"
 )
 
 func (app *CLIApp) pingCmd() *cobra.Command {

@@ -6,12 +6,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
-	"net/http"
-	"os"
 )
 
 // Helper for getting password while registering a new user
@@ -127,7 +128,6 @@ func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models
 
 // Helper for performing email verification flow in registering a new user
 func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User, emailData models.EmailVerification) (bool, error) {
-
 	fmt.Println(" < It can take up to a couple of minutes for the email to be received > ")
 	fmt.Println(" < Or you can type 'continue' to continue without a verified email address. > ")
 	fmt.Println(" < Please note, if your address has not been verified, you will be unable to change your password, or recover your account in case the password has been forgotten. > ")
@@ -299,7 +299,7 @@ func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL
 		Nickname:    name,
 	}
 
-	//The following login.AccessTokens are app JWT's, not to be mistaken for Plaid's Access Tokens
+	// The following login.AccessTokens are app JWT's, not to be mistaken for Plaid's Access Tokens
 	accessResponse, err := app.Config.MakeBasicRequest("POST", accessURL, login.AccessToken, request)
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)

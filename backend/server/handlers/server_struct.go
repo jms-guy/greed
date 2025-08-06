@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
@@ -19,20 +20,20 @@ import (
 
 // Holds state of important server structs
 type AppServer struct {
-	Db         GreedDatabase             //SQLC generated database queries
-	Auth       auth.AuthService          //Auth service interface
-	Database   *sql.DB                   //Raw database connection
-	Config     *config.Config            //Environment variables configured from .env file
-	Logger     kitlog.Logger             //Logging interface
-	SgMail     sgrid.MailService         //SendGrid mail service
-	Limiter    *limiter.IPRateLimiter    //Rate limiter
-	PService   plaidservice.PlaidService //Client for Plaid integration
-	TxnUpdater TxnUpdater                //Used for Db transactions
-	Encryptor  encrypt.EncryptorService  //Used for encryption and decryption methods
-	Querier    utils.QueryService        //Used for parsing URL queries
+	Db         GreedDatabase             // SQLC generated database queries
+	Auth       auth.AuthService          // Auth service interface
+	Database   *sql.DB                   // Raw database connection
+	Config     *config.Config            // Environment variables configured from .env file
+	Logger     kitlog.Logger             // Logging interface
+	SgMail     sgrid.MailService         // SendGrid mail service
+	Limiter    *limiter.IPRateLimiter    // Rate limiter
+	PService   plaidservice.PlaidService // Client for Plaid integration
+	TxnUpdater TxnUpdater                // Used for Db transactions
+	Encryptor  encrypt.EncryptorService  // Used for encryption and decryption methods
+	Querier    utils.QueryService        // Used for parsing URL queries
 }
 
-//Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
+// Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
 
 // Database interface
 type GreedDatabase interface {

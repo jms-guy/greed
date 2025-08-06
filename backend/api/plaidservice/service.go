@@ -2,12 +2,12 @@ package plaidservice
 
 import (
 	"context"
+
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
 // Retrieves account data listed in a Plaid item
 func (p *Service) GetAccounts(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error) {
-
 	accountsGetRequest := plaid.NewAccountsGetRequest(accessToken)
 
 	accountsGetResp, httpResp, err := p.Client.PlaidApi.AccountsGet(ctx).AccountsGetRequest(
@@ -48,7 +48,6 @@ func (p *Service) GetItemInstitution(ctx context.Context, accessToken string) (s
 func (p *Service) GetBalances(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error) {
 	balancesGetReq := plaid.NewAccountsBalanceGetRequest(accessToken)
 	balancesGetResp, httpResp, err := p.Client.PlaidApi.AccountsBalanceGet(ctx).AccountsBalanceGetRequest(*balancesGetReq).Execute()
-
 	if err != nil {
 		return plaid.AccountsGetResponse{}, httpResp.Header.Get("X-Request-Id"), err
 	}
@@ -59,8 +58,8 @@ func (p *Service) GetBalances(ctx context.Context, accessToken string) (plaid.Ac
 // Called by transactions/sync Plaid endpoint, getting all transaction data for a specific account.
 // Returns last Plaid request ID in loop
 func (p *Service) GetTransactions(ctx context.Context, accessToken, cursor string) (
-	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) {
-
+	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error,
+) {
 	hasMore := true
 	yes := true
 	options := plaid.TransactionsSyncRequestOptions{

@@ -13,7 +13,7 @@ func CreateMoneyNullString(s string) (sql.NullString, error) {
 
 	if s == "" {
 		nullString.Valid = false
-		//Validates string, making sure it is in proper format
+		// Validates string, making sure it is in proper format
 	} else if moneyStringValidation(s) {
 		nullString.Valid = true
 		nullString.String = s

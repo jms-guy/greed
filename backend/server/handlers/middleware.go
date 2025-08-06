@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-kit/log"
-	"github.com/google/uuid"
-	"github.com/jms-guy/greed/backend/internal/database"
 	"net"
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-kit/log"
+	"github.com/google/uuid"
+	"github.com/jms-guy/greed/backend/internal/database"
 )
 
 // Middleware function to handle user authorization.

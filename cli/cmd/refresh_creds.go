@@ -3,10 +3,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jms-guy/greed/cli/internal/auth"
-	"github.com/jms-guy/greed/models"
 	"io"
 	"net/http"
+
+	"github.com/jms-guy/greed/cli/internal/auth"
+	"github.com/jms-guy/greed/models"
 )
 
 // Wrapper function for refreshing JWT token logic

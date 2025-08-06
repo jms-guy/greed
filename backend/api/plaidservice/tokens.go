@@ -2,6 +2,7 @@ package plaidservice
 
 import (
 	"context"
+
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
@@ -115,7 +116,6 @@ func (p *Service) GetLinkTokenForUpdateMode(ctx context.Context, userID, accessT
 
 // Exchanges a public token received from client for a permanent access token for item from Plaid API
 func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
-
 	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 
 	exchangePublicTokenResp, httpResp, err := p.Client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
@@ -146,7 +146,6 @@ func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (model
 
 // Invalidates an item's access token, requesting a new one from Plaid API
 func (p *Service) InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
-
 	request := plaid.NewItemAccessTokenInvalidateRequest(accessToken.AccessToken)
 
 	response, httpResp, err := p.Client.PlaidApi.ItemAccessTokenInvalidate(ctx).ItemAccessTokenInvalidateRequest(
@@ -171,7 +170,6 @@ func (p *Service) InvalidateAccessToken(ctx context.Context, accessToken models.
 
 // Gets the webhook verification key from Plaid
 func (p *Service) GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error) {
-
 	webhookReq := plaid.NewWebhookVerificationKeyGetRequest(keyID)
 	webhookResp, _, err := p.Client.PlaidApi.WebhookVerificationKeyGet(ctx).WebhookVerificationKeyGetRequest(*webhookReq).Execute()
 	if err != nil {

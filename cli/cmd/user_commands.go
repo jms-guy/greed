@@ -6,31 +6,31 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
-	"net/http"
-	"os"
-	"time"
 )
 
 // Function creates a new user record on server, and in loca database
 func (app *CLIApp) commandRegisterUser(args []string) error {
-
 	username := args[0]
 
 	registerURL := app.Config.Client.BaseURL + "/api/auth/register"
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
 
-	//Get user password
+	// Get user password
 	password, err := registerPasswordHelper()
 	if err != nil {
 		return err
 	}
 
-	//Get user email
+	// Get user email
 	email, err := registerEmailHelper()
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 		return err
 	}
 
-	//Email verification flow
+	// Email verification flow
 	verified, err := verifyEmailHelper(app, sendURL, verifyURL, user, emailData)
 	if err != nil {
 		return err
@@ -110,7 +110,6 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 
 // Function creates a login session for user, getting auth tokens
 func (app *CLIApp) commandUserLogin(args []string) error {
-
 	username := args[0]
 
 	loginURL := app.Config.Client.BaseURL + "/api/auth/login"
@@ -120,13 +119,13 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	accessURL := app.Config.Client.BaseURL + "/plaid/get-access-token"
 	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
 
-	//Get user credentials
+	// Get user credentials
 	login, err := userLoginHelper(app, username, loginURL)
 	if err != nil {
 		return err
 	}
 
-	//Check user for existing items
+	// Check user for existing items
 	items, err := userCheckItemsHelper(app, login, itemsURL)
 	if err != nil {
 		return err
@@ -135,8 +134,8 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 		return checkForWebhookRecords(app, webhookURL, items)
 	}
 
-	//If no items for user found, this is determined to be first time login
-	//Go through first time Plaid Link flow
+	// If no items for user found, this is determined to be first time login
+	// Go through first time Plaid Link flow
 	linked, err := userFirstTimePlaidLinkHelper(app, login, linkURL, accessURL, redirectURL, itemsURL)
 	if err != nil {
 		return err
@@ -155,7 +154,6 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 
 // Logs a user out, by deleting their local credentials file, and expiring their session delegation server side
 func (app *CLIApp) commandUserLogout() error {
-
 	logoutURL := app.Config.Client.BaseURL + "/api/auth/logout"
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
@@ -191,7 +189,6 @@ func (app *CLIApp) commandUserLogout() error {
 
 // Delete a user's records locally, and server side
 func (app *CLIApp) commandDeleteUser(args []string) error {
-
 	username := args[0]
 
 	deleteURL := app.Config.Client.BaseURL + "/api/users/me"
@@ -263,7 +260,6 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 
 // Verifies a user's email address
 func (app *CLIApp) commandVerifyEmail() error {
-
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	verifyURL := app.Config.Client.BaseURL + "/api/auth/email/verify"
 
@@ -341,7 +337,6 @@ func (app *CLIApp) commandVerifyEmail() error {
 
 // Lists all items attached to a specific user
 func (app *CLIApp) commandUserItems() error {
-
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
@@ -384,7 +379,6 @@ func (app *CLIApp) commandUserItems() error {
 
 // Updates a user's password in record. Requires verified email address to send code to
 func (app *CLIApp) commandChangePassword() error {
-
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
 	updateURL := app.Config.Client.BaseURL + "/api/users/update-password"
 
@@ -474,7 +468,6 @@ func (app *CLIApp) commandChangePassword() error {
 
 // Resets a user's forgotten password, allowing for account recovery. Requires a verified email address.
 func (app *CLIApp) commandResetPassword(args []string) error {
-
 	email := args[0]
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"

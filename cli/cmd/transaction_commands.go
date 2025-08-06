@@ -20,7 +20,6 @@ import (
 // Takes into account optional flags, creating a dynamic query to retrieve and sort the data on.
 // If summary flag is present, overrides most other flags, and returns a transaction summary instead
 func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit, pageSize int, summary bool) error {
-
 	var err error
 	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, min, max, limit, summary)
 

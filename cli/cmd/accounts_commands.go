@@ -4,16 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/tables"
 	"github.com/jms-guy/greed/models"
-	"net/http"
 )
 
 // List accounts for a given item name
 func (app *CLIApp) commandListAccounts(args []string) error {
-
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -81,7 +81,6 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 
 // List all accounts for user
 func (app *CLIApp) commandListAllAccounts() error {
-
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error getting credentials: %w", err)
@@ -100,7 +99,6 @@ func (app *CLIApp) commandListAllAccounts() error {
 
 // Lists account information for a given account name
 func (app *CLIApp) commandAccountInfo(args []string) error {
-
 	accountName := args[0]
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)

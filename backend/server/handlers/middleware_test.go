@@ -5,15 +5,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/server/handlers"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestAuthMiddleware(t *testing.T) {
@@ -109,7 +110,6 @@ func TestAuthMiddleware(t *testing.T) {
 			if userIDFromContext != tt.expectedContext {
 				t.Errorf("handler did not set expected userID in context: got %v want %v", userIDFromContext, tt.expectedContext)
 			}
-
 		})
 	}
 }

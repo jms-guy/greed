@@ -14,9 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	testUserID = uuid.MustParse("a1b2c3d4-e5f6-7890-1234-567890abcdef")
-)
+var testUserID = uuid.MustParse("a1b2c3d4-e5f6-7890-1234-567890abcdef")
 
 func TestEmailValidation(t *testing.T) {
 	tests := []struct {

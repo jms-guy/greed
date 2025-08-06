@@ -9,7 +9,6 @@ import (
 
 // Function opens a temporary local webserver, to wait for the Plaid public token received after Link flow completion
 func ListenForPlaidCallback() (string, error) {
-
 	mux := http.NewServeMux()
 	server := http.Server{
 		Handler: mux,
@@ -36,7 +35,6 @@ func ListenForPlaidCallback() (string, error) {
 	})
 
 	mux.HandleFunc("/plaid-update-callback", func(w http.ResponseWriter, r *http.Request) {
-
 		fmt.Println(" > Plaid Link Update successful")
 
 		fmt.Fprintf(w, "Bank connection updated! You can close this window.")
@@ -55,7 +53,6 @@ func ListenForPlaidCallback() (string, error) {
 			fmt.Fprintf(w, "Plaid Link flow cancelled. You can close this window.")
 		}
 		publicTokenChan <- ""
-
 	})
 
 	go func() {

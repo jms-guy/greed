@@ -2,19 +2,20 @@ package config
 
 import (
 	"fmt"
-	"github.com/jms-guy/greed/cli/internal/database"
-	mySQL "github.com/jms-guy/greed/cli/sql"
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/jms-guy/greed/cli/internal/database"
+	mySQL "github.com/jms-guy/greed/cli/sql"
 )
 
 // CLI config struct
 type Config struct {
-	Client          *Client           //Http client for handling server requests
-	Db              *database.Queries //Local database queries
-	ConfigFP        string            //Config file path
-	OperatingSystem string            //Local operating system
+	Client          *Client           // Http client for handling server requests
+	Db              *database.Queries // Local database queries
+	ConfigFP        string            // Config file path
+	OperatingSystem string            // Local operating system
 }
 
 // Initializes configuration struct
@@ -26,8 +27,8 @@ func LoadConfig() (*Config, error) {
 
 	client := NewClient(serverAddress)
 
-	//Database path can either be absolute or just filename, if just a filename is provided, make sure
-	//it's stored in home directory
+	// Database path can either be absolute or just filename, if just a filename is provided, make sure
+	// it's stored in home directory
 	localDatabase := os.Getenv("LOCAL_DATABASE")
 	if localDatabase == "" {
 		return nil, fmt.Errorf("LOCAL_DATABASE environment variable not set")
@@ -50,7 +51,7 @@ func LoadConfig() (*Config, error) {
 
 	cFP := os.Getenv("CONFIG_FILEPATH")
 	if cFP == "" {
-		cFP = ".config/greed" //Default
+		cFP = ".config/greed" // Default
 	}
 
 	os := runtime.GOOS

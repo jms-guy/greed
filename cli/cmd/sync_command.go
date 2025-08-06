@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/jms-guy/greed/cli/internal/auth"
-	"github.com/jms-guy/greed/cli/internal/database"
-	"github.com/jms-guy/greed/models"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/jms-guy/greed/cli/internal/auth"
+	"github.com/jms-guy/greed/cli/internal/database"
+	"github.com/jms-guy/greed/models"
 )
 
 // Syncs database with updated account balances, and transaction records
@@ -25,7 +26,7 @@ func (app *CLIApp) commandSync(args []string) error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	//Get item ID
+	// Get item ID
 	itemID, err := findItemHelper(app, itemName, itemsURL)
 	if err != nil {
 		return err

@@ -563,7 +563,8 @@ func (p *mockPlaidService) GetBalances(ctx context.Context, accessToken string) 
 }
 
 func (p *mockPlaidService) GetTransactions(ctx context.Context, accessToken, cursor string) (
-	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error) {
+	added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error,
+) {
 	if p.GetTransactionsFunc != nil {
 		return p.GetTransactionsFunc(ctx, accessToken, cursor)
 	}

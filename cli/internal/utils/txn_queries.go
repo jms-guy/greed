@@ -8,7 +8,6 @@ import (
 
 // Builds query string for URL
 func BuildQueries(merchant, category, channel, date, start, end string, min, max, limit int, summary bool) string {
-
 	queries := map[string]string{
 		"merchant": merchant,
 		"category": category,

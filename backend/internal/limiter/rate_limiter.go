@@ -6,10 +6,10 @@ import (
 )
 
 type RateLimiter struct {
-	Tokens         float64   //Current number of tokens
-	MaxTokens      float64   //Max number of tokens
-	RefillRate     float64   //Tokens added per second
-	LastRefillTime time.Time //Last time tokens were refilled
+	Tokens         float64   // Current number of tokens
+	MaxTokens      float64   // Max number of tokens
+	RefillRate     float64   // Tokens added per second
+	LastRefillTime time.Time // Last time tokens were refilled
 	Mutex          sync.Mutex
 }
 
@@ -51,7 +51,6 @@ func (i *IPRateLimiter) GetLimiter(ip string, limit, refresh float64) *RateLimit
 
 // Refill available tokens in limiter struct
 func (r *RateLimiter) RefillTokens() {
-
 	now := time.Now()
 	duration := now.Sub(r.LastRefillTime).Seconds()
 	tokensToAdd := duration * r.RefillRate

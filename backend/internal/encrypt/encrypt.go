@@ -19,7 +19,6 @@ func NewEncryptor() *Encryptor {
 // EncryptAccessToken securely encrypts the plaintext token using AES-GCM.
 // The returned string is base64-encoded and safe to store.
 func (e *Encryptor) EncryptAccessToken(plaintext []byte, keyString string) (string, error) {
-
 	key, err := hex.DecodeString(keyString) // 32 bytes for AES-256
 	if err != nil {
 		return "", fmt.Errorf("error decoding key string to bytes: %w", err)

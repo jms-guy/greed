@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 // Function logs out a user, invalidating all session tokens
@@ -53,14 +54,13 @@ func (app *AppServer) HandlerUserLogout(w http.ResponseWriter, r *http.Request) 
 
 // Function returns a single user record
 func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
-
 	delegationExp, err := strconv.Atoi(app.Config.RefreshExpiration)
 	if err != nil {
 		app.respondWithError(w, 500, "Error getting .env session expiration time", err)
 	}
 
 	ctx := r.Context()
-	//Decode request parameters
+	// Decode request parameters
 	decoder := json.NewDecoder(r.Body)
 	params := models.UserDetails{}
 	err = decoder.Decode(&params)
@@ -69,14 +69,14 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//Get user record from database
+	// Get user record from database
 	user, err := app.Db.GetUserByName(ctx, params.Name)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user: %w", err))
 		return
 	}
 
-	//Validate input password, against user record's hashed password
+	// Validate input password, against user record's hashed password
 	err = app.Auth.ValidatePasswordHash(user.HashedPassword, params.Password)
 	if err != nil {
 		app.respondWithError(w, 400, "Password is incorrect", err)
@@ -127,7 +127,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 // Function will create a new user in database
 func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	//Decode request parameters
+	// Decode request parameters
 	decoder := json.NewDecoder(r.Body)
 	params := models.UserDetails{}
 	err := decoder.Decode(&params)
@@ -136,7 +136,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	//Check if user with request name exists in database already
+	// Check if user with request name exists in database already
 	_, err = app.Db.GetUserByName(ctx, params.Name)
 	if err == nil {
 		app.respondWithError(w, 400, "User already exists by that name", nil)
@@ -158,14 +158,14 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		givenEmail = "unset"
 	}
 
-	//Hash request password
+	// Hash request password
 	hash, err := app.Auth.HashPassword(params.Password)
 	if err != nil {
 		app.respondWithError(w, 500, hash, err)
 		return
 	}
 
-	//Creates new user in database
+	// Creates new user in database
 	newUser, err := app.Db.CreateUser(ctx, database.CreateUserParams{
 		Name:           params.Name,
 		ID:             uuid.New(),
@@ -177,7 +177,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	//Creates return structure
+	// Creates return structure
 	user := models.User{
 		ID:             newUser.ID,
 		Name:           newUser.Name,
@@ -193,8 +193,8 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	//Email verification code expires after 1 hour
-	var verificationExpiryTime = 1
+	// Email verification code expires after 1 hour
+	verificationExpiryTime := 1
 
 	request := models.EmailVerification{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -202,7 +202,7 @@ func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	//Expires any existing verification record for user
+	// Expires any existing verification record for user
 	existingRec, err := app.Db.GetVerificationRecordByUser(ctx, request.UserID)
 	if err != nil {
 		if err != sql.ErrNoRows {

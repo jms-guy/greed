@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/jms-guy/greed/backend/internal/database"
-	"github.com/jms-guy/greed/models"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jms-guy/greed/backend/internal/database"
+	"github.com/jms-guy/greed/models"
 )
 
 // Initializes a map, the key being expected query parameters, the value being the expected data type it should be.
@@ -40,15 +41,15 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 
 	params := r.URL.Query()
 
-	//If more than one value present for a single query key, only the first value will be taken
+	// If more than one value present for a single query key, only the first value will be taken
 	queries, errs := app.Querier.ValidateQuery(params, makeQueryRules())
 	if len(errs) != 0 {
 		app.respondWithError(w, 400, fmt.Sprintf("Bad query parameter: %v", errs), nil)
 		return
 	}
 
-	//If summary flag was used
-	date, ok := queries["date"] //Date being a string in format ("2006-01-02")
+	// If summary flag was used
+	date, ok := queries["date"] // Date being a string in format ("2006-01-02")
 	if queries["summary"] == "true" && ok {
 		vals := strings.Split(date, "-")
 		year, month := vals[0], vals[1]
@@ -89,7 +90,7 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 		}
 		app.respondWithJSON(w, 200, responseSummary)
 		return
-	} else if queries["summary"] == "true" { //Summary flag, but no date flag
+	} else if queries["summary"] == "true" { // Summary flag, but no date flag
 		summary, err := app.Db.GetMerchantSummary(ctx, acc.ID)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error executing query: %w", err))
@@ -112,7 +113,7 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 		return
 	}
 
-	//No summary flag, continue with query
+	// No summary flag, continue with query
 	dbQuery, args, err := app.Querier.BuildSqlQuery(queries, acc.ID)
 	if err != nil {
 		app.respondWithError(w, 500, fmt.Sprintf("Error building database query: %s", err), err)

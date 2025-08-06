@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
 )
 
 // App struct holding CLI config, as well as all command methods
@@ -39,7 +40,6 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 		Short: "Greed is a CLI tool for tracking user's financial data",
 		Long:  "Greed is a CLI tool for tracking user's financial data, through accessing financial institutions",
 		Run: func(cmd *cobra.Command, args []string) {
-
 		},
 	}
 	dCmd := app.deleteCmd()

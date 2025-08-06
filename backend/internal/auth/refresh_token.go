@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 )

@@ -19,7 +19,6 @@ import (
 
 // Fetches all transaction records for accounts attached to given item
 func (app *CLIApp) commandGetTransactions(args []string) error {
-
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -111,7 +110,6 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 
 // Gets all accounts for item
 func (app *CLIApp) commandGetAccounts(args []string) error {
-
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -233,7 +231,6 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 
 // Rename an item
 func (app *CLIApp) commandRenameItem(args []string) error {
-
 	itemCurrent := args[0]
 	itemRename := args[1]
 
@@ -297,7 +294,6 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 
 // Deletes an item record for user
 func (app *CLIApp) commandDeleteItem(args []string) error {
-
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"

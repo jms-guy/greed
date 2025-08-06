@@ -139,7 +139,7 @@ func (app *AppServer) HandlerGetAccountsForItem(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	//Return slice of account structs
+	// Return slice of account structs
 	var accounts []models.Account
 	for _, account := range accs {
 		result := models.Account{

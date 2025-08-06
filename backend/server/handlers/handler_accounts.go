@@ -3,10 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
-	"net/http"
 )
 
 // Function will get all accounts for user
@@ -19,7 +20,7 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	//Get accounts for user from database
+	// Get accounts for user from database
 	accs, err := app.Db.GetAllAccountsForUser(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -30,7 +31,7 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	//Return slice of account structs
+	// Return slice of account structs
 	var accounts []models.Account
 	for _, account := range accs {
 		result := models.Account{
@@ -98,7 +99,7 @@ func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	//Delete account from database based on user ID given
+	// Delete account from database based on user ID given
 	err := app.Db.DeleteAccount(ctx, database.DeleteAccountParams{
 		ID:     acc.ID,
 		UserID: id,

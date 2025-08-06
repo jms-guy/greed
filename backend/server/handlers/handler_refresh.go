@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/jms-guy/greed/models"
 	"net/http"
 	"time"
+
+	"github.com/jms-guy/greed/models"
 )
 
 // Handler function for generating a new JWT + refresh token for the user. Validates current

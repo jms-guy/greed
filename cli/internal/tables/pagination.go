@@ -12,7 +12,6 @@ import (
 // Takes slice of transaction records, and paginates the results into a table, displaying a base number of 20 transaction records at a time.
 // Listens for pgUp/pgDown key presses to view through record pages
 func PaginateTransactionsTable(txns []models.Transaction, accountName string, balances []float64, pageSize int, isFiltered bool) error {
-
 	if len(txns) == 0 {
 		return fmt.Errorf("no results to display")
 	}
@@ -34,14 +33,12 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 	for {
 		screen.Clear()
 
-		//Determine indexes of transaction items to display
+		// Determine indexes of transaction items to display
 		startIndex := (currentPage - 1) * pageSize
 		var displayItems []models.Transaction
 
 		if startIndex >= len(txns) {
-
 			displayItems = []models.Transaction{}
-
 		} else {
 
 			endIndex = min(startIndex+pageSize, len(txns))
@@ -82,7 +79,7 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 
 // Draws a table of transaction data onto the tcell screen
 func CreateTable(screen tcell.Screen, displayItems []models.Transaction, accountName string, balances []float64, isFiltered bool) {
-	//Define tcell screen styles and variables to create table
+	// Define tcell screen styles and variables to create table
 	headerStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen).Underline(true)
 	columnStyle := tcell.StyleDefault.Foreground(tcell.ColorYellow)
 
@@ -100,7 +97,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 
 	currentX, currentY := 10, 0
 
-	//Draw table headers
+	// Draw table headers
 	for i, header := range columnHeaders {
 		for _, r := range header {
 			screen.SetContent(currentX, currentY, r, nil, headerStyle)
@@ -111,7 +108,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 	}
 	currentY += 2
 
-	//Draw transaction rows
+	// Draw transaction rows
 	for i, txn := range displayItems {
 		currentX = 10
 
@@ -216,7 +213,6 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 }
 
 func PaginateSummariesTable(summaries []models.MerchantSummary, accountName, merchant string, pageSize int) error {
-
 	if len(summaries) == 0 {
 		return fmt.Errorf("no results to display")
 	}
@@ -255,14 +251,12 @@ func PaginateSummariesTable(summaries []models.MerchantSummary, accountName, mer
 	for {
 		screen.Clear()
 
-		//Determine indexes of transaction items to display
+		// Determine indexes of transaction items to display
 		startIndex := (currentPage - 1) * pageSize
 		var displayItems []models.MerchantSummary
 
 		if startIndex >= len(summaries) {
-
 			displayItems = []models.MerchantSummary{}
-
 		} else {
 
 			endIndex = min(startIndex+pageSize, len(summaries))
@@ -296,7 +290,7 @@ func PaginateSummariesTable(summaries []models.MerchantSummary, accountName, mer
 
 // Draws a table of transaction data onto the tcell screen
 func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSummary, accountName, merchant string) {
-	//Define tcell screen styles and variables to create table
+	// Define tcell screen styles and variables to create table
 	headerStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen).Underline(true)
 	columnStyle := tcell.StyleDefault.Foreground(tcell.ColorYellow)
 
@@ -306,7 +300,7 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 
 	currentX, currentY := 10, 0
 
-	//Draw table headers
+	// Draw table headers
 	for i, header := range columnHeaders {
 		for _, r := range header {
 			screen.SetContent(currentX, currentY, r, nil, headerStyle)
@@ -317,7 +311,7 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 	}
 	currentY += 2
 
-	//Draw transaction rows
+	// Draw transaction rows
 	for _, sum := range displayItems {
 		currentX = 10
 

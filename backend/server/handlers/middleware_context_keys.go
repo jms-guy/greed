@@ -1,7 +1,5 @@
 package handlers
 
-import ()
-
 // Middleware context keys
 type contextKey string
 
@@ -12,8 +10,7 @@ const (
 	requestIDKey   contextKey = "requestID"
 )
 
-//Export functions for use in handler testing
-
+// Export functions for use in handler testing
 func GetUserIDContextKey() any {
 	return userIDKey
 }
@@ -25,6 +22,7 @@ func GetAccessTokenKey() any {
 func GetAccountKey() any {
 	return accountKey
 }
+
 func GetRequestIDKey() any {
 	return requestIDKey
 }

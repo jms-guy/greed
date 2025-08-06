@@ -4,8 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-//Structs used in http requests
-
+// Structs used in http requests
 type UpdateItemName struct {
 	Nickname string `json:"nickname"`
 }
@@ -32,13 +31,13 @@ type EmailVerificationWithCode struct {
 
 type ResetPassword struct {
 	Email       string `json:"email"`
-	Code        string `json:"code"` //email verification code
+	Code        string `json:"code"` // email verification code
 	NewPassword string `json:"new_password"`
 }
 
 type UpdatePassword struct {
 	NewPassword string `json:"new_password"`
-	Code        string `json:"code"` //email verification code
+	Code        string `json:"code"` // email verification code
 }
 
 type EmailVerification struct {

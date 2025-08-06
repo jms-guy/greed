@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/jms-guy/greed/backend/server"
 	"os"
+
+	"github.com/jms-guy/greed/backend/server"
 )
 
 func main() {

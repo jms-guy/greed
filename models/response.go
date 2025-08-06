@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ItemName struct {
@@ -13,7 +14,7 @@ type ItemName struct {
 
 type Accounts struct {
 	Accounts  []Account `json:"accounts"`
-	RequestID string    `json:"request_id"` //This field is the request ID returned from the Plaid API call
+	RequestID string    `json:"request_id"` // This field is the request ID returned from the Plaid API call
 }
 
 type Account struct {
@@ -54,7 +55,7 @@ type AccessResponse struct {
 	AccessToken     string `json:"access_token"`
 	ItemID          string `json:"item_id"`
 	InstitutionName string `json:"institution_name"`
-	RequestID       string `json:"request_id"` //Request ID returned from Plaid API call
+	RequestID       string `json:"request_id"` // Request ID returned from Plaid API call
 }
 
 type LinkResponse struct {

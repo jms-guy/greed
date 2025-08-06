@@ -66,13 +66,13 @@ func StoreTokens(data models.Credentials, configPath string) error {
 		return err
 	}
 
-	if err := os.MkdirAll(base, 0755); err != nil {
+	if err := os.MkdirAll(base, 0o755); err != nil {
 		return fmt.Errorf("error creating config dir: %w", err)
 	}
 
 	creds := filepath.Join(base, "credentials.json")
 
-	f, err := os.OpenFile(creds, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	f, err := os.OpenFile(creds, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}

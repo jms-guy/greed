@@ -22,9 +22,8 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Please ignore the disgusting tests in this file, this was before I really got the hang of Go testing
-//Left them in because I didn't want to rewrite them all
-
+// Please ignore the disgusting tests in this file, this was before I really got the hang of Go testing
+// Left them in because I didn't want to rewrite them all
 func TestHandlerCreateUser(t *testing.T) {
 	t.Run("should create user successfully with 201 status and correct body", func(t *testing.T) {
 		expectedName := "testuser"

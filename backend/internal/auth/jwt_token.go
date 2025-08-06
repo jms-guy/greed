@@ -45,14 +45,13 @@ func (s *Service) GetBearerToken(headers http.Header) (string, error) {
 
 // Function generates a JWT authorization token for a given userID
 func (s *Service) MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) {
-
-	//Get expiration time variable from .env
+	// Get expiration time variable from .env
 	expirationTime, err := strconv.Atoi(cfg.JWTExpiration)
 	if err != nil {
 		return "", fmt.Errorf("error getting JWT expiration time from .env: %w", err)
 	}
 
-	//Claims payload
+	// Claims payload
 	claims := jwt.RegisteredClaims{
 		Issuer:    cfg.JWTIssuer,
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
@@ -76,7 +75,7 @@ func (s *Service) MakeJWT(cfg *config.Config, userID uuid.UUID) (string, error) 
 // Validates a token input based off the secret string
 func (s *Service) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID, error) {
 	claims := &jwt.RegisteredClaims{}
-	//Parse token string into claims token
+	// Parse token string into claims token
 	parsedToken, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
 		return []byte(cfg.JWTSecret), nil
 	})
@@ -102,7 +101,7 @@ func (s *Service) ValidateJWT(cfg *config.Config, tokenString string) (uuid.UUID
 		return uuid.UUID{}, fmt.Errorf("invalid audience claim")
 	}
 
-	//Get userID subject string from claims
+	// Get userID subject string from claims
 	idString, err := parsedToken.Claims.GetSubject()
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("error getting user id from token: %w", err)

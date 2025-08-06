@@ -36,13 +36,13 @@ func NewQueryService() *Service {
 	}
 
 	qv.typeValidators["number"] = func(v string) bool {
-		matched, _ := regexp.MatchString(`^-?\d+(\.\d+)?$`, v) //Validator for numerics (int and float)
+		matched, _ := regexp.MatchString(`^-?\d+(\.\d+)?$`, v) // Validator for numerics (int and float)
 		return matched
 	}
 
 	qv.typeValidators["boolean"] = func(v string) bool {
 		v = strings.ToLower(v)
-		return v == "true" || v == "false" || v == "1" || v == "0" //Validator for boolean
+		return v == "true" || v == "false" || v == "1" || v == "0" // Validator for boolean
 	}
 
 	qv.typeValidators["date"] = func(v string) bool {
@@ -76,7 +76,7 @@ func (qv *Service) ValidateParamValue(value, expectedType string) (bool, error) 
 func (qv *Service) ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []QueryValidationError) {
 	var errors []QueryValidationError
 
-	var parsed = make(map[string]string)
+	parsed := make(map[string]string)
 
 	for key, value := range queries {
 		parsed[key] = value[0]

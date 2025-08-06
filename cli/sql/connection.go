@@ -14,7 +14,6 @@ import (
 var embedMigrations embed.FS
 
 func OpenLocalDatabase(dbPath string) (*database.Queries, error) {
-
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err

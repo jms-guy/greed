@@ -81,7 +81,7 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 
 	added = append(added, modified...)
 
-	//This loop handles creating the query arguments for upserting data
+	// This loop handles creating the query arguments for upserting data
 	for i, txn := range added {
 		curCode := ""
 		if txn.IsoCurrencyCode.IsSet() {

@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
-	"net/http"
-	"time"
 )
 
 // Gets current user database record
@@ -53,7 +54,7 @@ func (app *AppServer) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	//Find user in database
+	// Find user in database
 	_, err := app.Db.GetUser(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -65,7 +66,7 @@ func (app *AppServer) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	//Delete user record from database
+	// Delete user record from database
 	err = app.Db.DeleteUser(ctx, id)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting user record: %w", err))

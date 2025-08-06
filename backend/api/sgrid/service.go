@@ -1,10 +1,11 @@
 package sgrid
 
 import (
+	"os"
+
 	"github.com/go-kit/log"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
-	"os"
 )
 
 /*
@@ -56,7 +57,6 @@ func NewSGMailService(logger log.Logger) *SGMailService {
 
 // CreateMail takes in mail request, and constructs a sendgrid mail type
 func (ms *SGMailService) SendMail(mailReq *Mail) error {
-
 	from := mail.NewEmail("Greed Finance", mailReq.From)
 	subject := mailReq.Subject
 	to := mail.NewEmail(mailReq.Data.Username, mailReq.To)
