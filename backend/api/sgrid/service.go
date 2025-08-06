@@ -1,10 +1,10 @@
 package sgrid
 
 import (
-	"os"
 	"github.com/go-kit/log"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
+	"os"
 )
 
 /*
@@ -12,42 +12,40 @@ import (
 	as well as password resetting
 */
 
-//Interface for the mail service
+// Interface for the mail service
 type Service interface {
 	SendMail(mailReq *Mail) error
 	NewMail(from string, to string, subject, body string, data *MailData) *Mail
 }
 
-//Sendgrid interface
+// Sendgrid interface
 type MailService interface {
 	NewMail(from string, to string, subject string, body string, data *MailData) *Mail
 	SendMail(mailreq *Mail) error
 }
 
-
-//Structure of the data to be used in the template of the mail
+// Structure of the data to be used in the template of the mail
 type MailData struct {
-	Username	string
-	Code		string
+	Username string
+	Code     string
 }
 
-//Email request struct
+// Email request struct
 type Mail struct {
-	From 		string
-	To 			string
-	Subject 	string
-	Body 		string
-	Data 		*MailData
+	From    string
+	To      string
+	Subject string
+	Body    string
+	Data    *MailData
 }
 
-//Sendgrid implementation of mailservice
+// Sendgrid implementation of mailservice
 type SGMailService struct {
-	Logger 		log.Logger
-	Client		*sendgrid.Client
+	Logger log.Logger
+	Client *sendgrid.Client
 }
 
-
-//Returns a new instance of SGMailService
+// Returns a new instance of SGMailService
 func NewSGMailService(logger log.Logger) *SGMailService {
 	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	return &SGMailService{
@@ -56,12 +54,12 @@ func NewSGMailService(logger log.Logger) *SGMailService {
 	}
 }
 
-//CreateMail takes in mail request, and constructs a sendgrid mail type
+// CreateMail takes in mail request, and constructs a sendgrid mail type
 func (ms *SGMailService) SendMail(mailReq *Mail) error {
 
 	from := mail.NewEmail("Greed Finance", mailReq.From)
 	subject := mailReq.Subject
-	to  := mail.NewEmail(mailReq.Data.Username, mailReq.To)
+	to := mail.NewEmail(mailReq.Data.Username, mailReq.To)
 	plainTextContent := mailReq.Body
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, "")
 
@@ -75,20 +73,20 @@ func (ms *SGMailService) SendMail(mailReq *Mail) error {
 		return err
 	} else {
 		ms.Logger.Log(
-        "statusCode", response.StatusCode,
-        "to", mailReq.To)
+			"statusCode", response.StatusCode,
+			"to", mailReq.To)
 	}
 
 	return nil
 }
 
-//NewMail returns a new mail request
+// NewMail returns a new mail request
 func (ms *SGMailService) NewMail(from string, to string, subject, body string, data *MailData) *Mail {
 	return &Mail{
-		From:		from,
-		To: 		to,
-		Subject:	subject,
-		Body:  		body,
-		Data:		data,
+		From:    from,
+		To:      to,
+		Subject: subject,
+		Body:    body,
+		Data:    data,
 	}
 }

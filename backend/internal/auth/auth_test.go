@@ -53,107 +53,107 @@ func TestEmailValidation(t *testing.T) {
 }
 
 func TestGetBearerToken(t *testing.T) {
-    tests := []struct {
-        name        string
-        input       string
-        setHeader   bool  
-        expected    string
-        expectedErr string
-    }{
-        {
-            name:  "successfully get bearer token",
-            input:     "Bearer testToken",
-            setHeader:   true,
-            expected:  "testToken",
-            expectedErr: "",
-        },
-        {
-            name:   "missing authorization header",
-            input:    "",
-            setHeader:   false,  
-            expected:   "",
-            expectedErr: "no Authorization header found",
-        },
-        {
-            name:   "empty authorization header",
-            input:       "",
-            setHeader:   true,   
-            expected:   "",
-            expectedErr: "no Authorization header found",
-        },
+	tests := []struct {
+		name        string
+		input       string
+		setHeader   bool
+		expected    string
+		expectedErr string
+	}{
 		{
-			name: "missing Bearer format",
-			input: "testToken",
-			setHeader: true,
-			expected: "",
+			name:        "successfully get bearer token",
+			input:       "Bearer testToken",
+			setHeader:   true,
+			expected:    "testToken",
+			expectedErr: "",
+		},
+		{
+			name:        "missing authorization header",
+			input:       "",
+			setHeader:   false,
+			expected:    "",
+			expectedErr: "no Authorization header found",
+		},
+		{
+			name:        "empty authorization header",
+			input:       "",
+			setHeader:   true,
+			expected:    "",
+			expectedErr: "no Authorization header found",
+		},
+		{
+			name:        "missing Bearer format",
+			input:       "testToken",
+			setHeader:   true,
+			expected:    "",
 			expectedErr: "authorization header format must be 'Bearer {token}'",
 		},
 		{
-			name: "empty token",
-			input: "Bearer ",
-			setHeader: true,
-			expected: "",
+			name:        "empty token",
+			input:       "Bearer ",
+			setHeader:   true,
+			expected:    "",
 			expectedErr: "token is empty",
 		},
-    }
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            headers := http.Header{}
-            if tt.setHeader {
-                headers.Set("Authorization", tt.input)
-            }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			headers := http.Header{}
+			if tt.setHeader {
+				headers.Set("Authorization", tt.input)
+			}
 
-            s := &auth.Service{}
-            result, err := s.GetBearerToken(headers)
+			s := &auth.Service{}
+			result, err := s.GetBearerToken(headers)
 
-            if tt.expectedErr != "" {
-                assert.Error(t, err)
-                assert.Equal(t, tt.expectedErr, err.Error())
-            } else {
-                assert.NoError(t, err)
-            }
-            assert.Equal(t, tt.expected, result)
-        })
-    }
+			if tt.expectedErr != "" {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedErr, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }
 
 func TestMakeJWT(t *testing.T) {
-	jwtSecret := "supersecretkeythatisatleast32byteslongforHS256" 
+	jwtSecret := "supersecretkeythatisatleast32byteslongforHS256"
 	jwtIssuer := "test.issuer.com"
 	jwtAudience := "test.audience.com,another.audience.com"
 
 	tests := []struct {
-		name          string
+		name            string
 		expirationInput string
-		userIDInput   uuid.UUID
-		cfg           *config.Config
-		expectedErr   string
+		userIDInput     uuid.UUID
+		cfg             *config.Config
+		expectedErr     string
 	}{
 		{
-			name:          "successfully create JWT",
-			expirationInput: "500", 
-			userIDInput:   testUserID,
+			name:            "successfully create JWT",
+			expirationInput: "500",
+			userIDInput:     testUserID,
 			cfg: &config.Config{
 				JWTExpiration: "500",
 				JWTIssuer:     jwtIssuer,
 				JWTAudience:   jwtAudience,
 				JWTSecret:     jwtSecret,
 			},
-			expectedErr: "", 
+			expectedErr: "",
 		},
 		{
-            name: "should return error for invalid expiration",
-            expirationInput: "notanumber",
-            userIDInput: testUserID,
-            cfg: &config.Config{
-                JWTExpiration: "notanumber",
-                JWTIssuer:     jwtIssuer,
-                JWTAudience:   jwtAudience,
-                JWTSecret:     jwtSecret,
-            },
-            expectedErr: "error getting JWT expiration time from .env: strconv.Atoi: parsing \"notanumber\": invalid syntax",
-        },
+			name:            "should return error for invalid expiration",
+			expirationInput: "notanumber",
+			userIDInput:     testUserID,
+			cfg: &config.Config{
+				JWTExpiration: "notanumber",
+				JWTIssuer:     jwtIssuer,
+				JWTAudience:   jwtAudience,
+				JWTSecret:     jwtSecret,
+			},
+			expectedErr: "error getting JWT expiration time from .env: strconv.Atoi: parsing \"notanumber\": invalid syntax",
+		},
 	}
 
 	for _, tt := range tests {
@@ -169,12 +169,11 @@ func TestMakeJWT(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-
 			token, parseErr := jwt.ParseWithClaims(resultJWTString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 				}
-				return []byte(tt.cfg.JWTSecret), nil 
+				return []byte(tt.cfg.JWTSecret), nil
 			})
 
 			assert.NoError(t, parseErr, "Failed to parse and verify generated JWT")
@@ -193,8 +192,7 @@ func TestMakeJWT(t *testing.T) {
 			assert.WithinDuration(t, now, claims.IssuedAt.Time, 5*time.Second, "IssuedAt is not within expected range")
 			assert.WithinDuration(t, now, claims.NotBefore.Time, 5*time.Second, "NotBefore is not within expected range")
 
-            assert.WithinDuration(t, claims.IssuedAt.Add(time.Duration(500) * time.Second), claims.ExpiresAt.Time, 5*time.Second, "ExpiresAt is not within expected range")
-
+			assert.WithinDuration(t, claims.IssuedAt.Add(time.Duration(500)*time.Second), claims.ExpiresAt.Time, 5*time.Second, "ExpiresAt is not within expected range")
 
 			_, err = uuid.Parse(claims.ID)
 			assert.NoError(t, err, "JWT ID is not a valid UUID")
@@ -203,9 +201,9 @@ func TestMakeJWT(t *testing.T) {
 }
 
 func TestValidateJWT(t *testing.T) {
-	const jwtSecret = "supersecretkeythatisatleast32byteslongforHS256" 
+	const jwtSecret = "supersecretkeythatisatleast32byteslongforHS256"
 	const jwtIssuer = "test.issuer.com"
-	const jwtAudienceValid = "greed-cli-app" 
+	const jwtAudienceValid = "greed-cli-app"
 	const jwtAudienceAnotherValid = "another-valid-app"
 	const jwtAudienceInvalid = "wrong-app"
 
@@ -239,7 +237,7 @@ func TestValidateJWT(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name:     "should successfully validate a valid JWT",
+			name:        "should successfully validate a valid JWT",
 			tokenString: createTestJWT(t, testUserID, 3600, jwtIssuer, jwtAudienceValid, jwtSecret, ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
@@ -250,8 +248,8 @@ func TestValidateJWT(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:     "should return error for expired JWT",
-			tokenString: createTestJWT(t, testUserID, -1, jwtIssuer, jwtAudienceValid, jwtSecret, ""), 
+			name:        "should return error for expired JWT",
+			tokenString: createTestJWT(t, testUserID, -1, jwtIssuer, jwtAudienceValid, jwtSecret, ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
 				JWTAudience: jwtAudienceValid,
@@ -261,18 +259,18 @@ func TestValidateJWT(t *testing.T) {
 			expectedErr: "token is invalid or expired",
 		},
 		{
-			name: "should return error for invalid signature (wrong secret)",
+			name:        "should return error for invalid signature (wrong secret)",
 			tokenString: createTestJWT(t, testUserID, 3600, jwtIssuer, jwtAudienceValid, "wrongsecret", ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
 				JWTAudience: jwtAudienceValid,
-				JWTSecret:   jwtSecret, 
+				JWTSecret:   jwtSecret,
 			},
 			expectedID:  uuid.Nil,
 			expectedErr: "token is invalid or expired",
 		},
 		{
-			name:    "should return error for invalid issuer claim",
+			name:        "should return error for invalid issuer claim",
 			tokenString: createTestJWT(t, testUserID, 3600, "wrong.issuer.com", jwtAudienceValid, jwtSecret, ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
@@ -283,7 +281,7 @@ func TestValidateJWT(t *testing.T) {
 			expectedErr: "invalid issuer claim",
 		},
 		{
-			name:   "should return error for invalid audience claim",
+			name:        "should return error for invalid audience claim",
 			tokenString: createTestJWT(t, testUserID, 3600, jwtIssuer, jwtAudienceInvalid, jwtSecret, ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
@@ -295,32 +293,32 @@ func TestValidateJWT(t *testing.T) {
 		},
 		{
 			name:        "should return error for a malformed token string",
-			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c", 
+			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
 				JWTAudience: jwtAudienceValid,
 				JWTSecret:   jwtSecret,
 			},
 			expectedID:  uuid.Nil,
-			expectedErr: "token is invalid or expired", 
+			expectedErr: "token is invalid or expired",
 		},
 		{
-			name:    "should return error if subject is missing",
-			tokenString: createTestJWT(t, uuid.Nil, 3600, jwtIssuer, jwtAudienceValid, jwtSecret, ""), 
+			name:        "should return error if subject is missing",
+			tokenString: createTestJWT(t, uuid.Nil, 3600, jwtIssuer, jwtAudienceValid, jwtSecret, ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
 				JWTAudience: jwtAudienceValid,
 				JWTSecret:   jwtSecret,
 			},
 			expectedID:  uuid.Nil,
-			expectedErr: "error parsing userID string", 
+			expectedErr: "error parsing userID string",
 		},
 		{
-			name:    "should return error if expected audience is comma-separated but none match",
+			name:        "should return error if expected audience is comma-separated but none match",
 			tokenString: createTestJWT(t, testUserID, 3600, jwtIssuer, "another-random-app", jwtSecret, ""),
 			cfg: &config.Config{
 				JWTIssuer:   jwtIssuer,
-				JWTAudience: fmt.Sprintf("%s,%s", jwtAudienceValid, jwtAudienceAnotherValid), 
+				JWTAudience: fmt.Sprintf("%s,%s", jwtAudienceValid, jwtAudienceAnotherValid),
 				JWTSecret:   jwtSecret,
 			},
 			expectedID:  uuid.Nil,
@@ -335,7 +333,7 @@ func TestValidateJWT(t *testing.T) {
 
 			if tt.expectedErr != "" {
 				assert.Error(t, err)
-				assert.EqualError(t, err, tt.expectedErr, "Unexpected error message") 
+				assert.EqualError(t, err, tt.expectedErr, "Unexpected error message")
 				assert.Equal(t, uuid.Nil, actualID, "Expected nil UUID on error")
 			} else {
 				assert.NoError(t, err)

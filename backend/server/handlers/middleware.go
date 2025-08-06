@@ -5,18 +5,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net"
-	"net/http"
-	"runtime/debug"
-	"time"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
+	"net"
+	"net/http"
+	"runtime/debug"
+	"time"
 )
 
-//Middleware function to handle user authorization.
-//Serves following handlers with UserID in context
+// Middleware function to handle user authorization.
+// Serves following handlers with UserID in context
 func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := app.Auth.GetBearerToken(r.Header)
@@ -36,8 +36,8 @@ func (app *AppServer) AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-//Middleware function to handle the Plaid access token.
-//Serves following handlers with Plaid Access token in context
+// Middleware function to handle the Plaid access token.
+// Serves following handlers with Plaid Access token in context
 func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -49,15 +49,15 @@ func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 		}
 
 		itemID := chi.URLParam(r, "item-id")
-	
+
 		token, err := app.Db.GetAccessToken(ctx, itemID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				app.respondWithError(w, 400, "No item found for user", nil)
 				return
-			} 
+			}
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting access token: %w", err))
-			return 
+			return
 		}
 
 		if token.UserID != userID {
@@ -68,7 +68,7 @@ func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 		accessTokenbytes, err := app.Encryptor.DecryptAccessToken(token.AccessToken, app.Config.AESKey)
 		if err != nil {
 			app.respondWithError(w, 500, "Error decrypting access token", err)
-			return 
+			return
 		}
 
 		accessToken := string(accessTokenbytes)
@@ -78,8 +78,8 @@ func (app *AppServer) AccessTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-//Middleware function that checks user's status as a member or non-member.
-//If user is a non-member, access to certain endpoints are restricted beyond a certain number of calls.
+// Middleware function that checks user's status as a member or non-member.
+// If user is a non-member, access to certain endpoints are restricted beyond a certain number of calls.
 func (app *AppServer) MemberMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -93,7 +93,7 @@ func (app *AppServer) MemberMiddleware(next http.Handler) http.Handler {
 		user, err := app.Db.GetUser(ctx, userID)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
-			return 
+			return
 		}
 
 		if !user.IsMember {
@@ -101,7 +101,7 @@ func (app *AppServer) MemberMiddleware(next http.Handler) http.Handler {
 				err = app.Db.UpdateFreeCalls(ctx, userID)
 				if err != nil {
 					app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user record: %w", err))
-					return 
+					return
 				}
 				next.ServeHTTP(w, r.WithContext(ctx))
 			} else {
@@ -109,13 +109,13 @@ func (app *AppServer) MemberMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
-		
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-//Middleware function to handle account authorization.
-//Serves following handlers with an account struct in context
+// Middleware function to handle account authorization.
+// Serves following handlers with an account struct in context
 func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -129,7 +129,7 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 		accID := chi.URLParam(r, "accountid")
 
 		account, err := app.Db.GetAccountById(ctx, database.GetAccountByIdParams{
-			ID: accID,
+			ID:     accID,
 			UserID: userID,
 		})
 		if err != nil {
@@ -146,11 +146,11 @@ func (app *AppServer) AccountMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-//Below is logging middleware - includes panic recovery 
-type responseWriter struct{
+// Below is logging middleware - includes panic recovery
+type responseWriter struct {
 	http.ResponseWriter
-	status			int
-	wroteHeader		bool
+	status      int
+	wroteHeader bool
 }
 
 func wrapResponseWriter(w http.ResponseWriter) *responseWriter {
@@ -172,14 +172,14 @@ func (rw *responseWriter) WriteHeader(code int) {
 }
 
 func (rw *responseWriter) Write(b []byte) (int, error) {
-    if !rw.wroteHeader {
-        rw.WriteHeader(http.StatusOK)
-    }
-    return rw.ResponseWriter.Write(b)
+	if !rw.wroteHeader {
+		rw.WriteHeader(http.StatusOK)
+	}
+	return rw.ResponseWriter.Write(b)
 }
 
-//Logging middleware function.
-//Logs details of http request, and any errors
+// Logging middleware function.
+// Logs details of http request, and any errors
 func LoggingMiddleware(Logger log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -215,11 +215,11 @@ func LoggingMiddleware(Logger log.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-//Middleware for rate limiting based off IP address
+// Middleware for rate limiting based off IP address
 func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		
+
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			app.Logger.Log(
@@ -228,7 +228,7 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 				"err", err,
 			)
 			http.Error(w, "Invalid IP", 400)
-			return 
+			return
 		}
 
 		limiter := app.Limiter.GetLimiter(ip, app.Config.RateLimit, app.Config.RateRefresh)
@@ -245,7 +245,7 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-//Dev middleware for accessing admin endpoints
+// Dev middleware for accessing admin endpoints
 func (app *AppServer) DevAuthMiddleware(next http.Handler) http.Handler {
 	isDev := app.Config.Environment == "dev"
 

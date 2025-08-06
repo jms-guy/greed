@@ -9,7 +9,7 @@ import (
 	"github.com/rodaine/table"
 )
 
-//Format a table for a single account record
+// Format a table for a single account record
 func MakeSingleAccountTable(acc database.Account) table.Table {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
@@ -17,19 +17,19 @@ func MakeSingleAccountTable(acc database.Account) table.Table {
 	tbl := table.New(
 		"|Institution",
 		"  |  ",
-	 	"ID", 
+		"ID",
 		"  |  ",
-	 	"Name",
+		"Name",
 		"  |  ",
-	  	"Type",
+		"Type",
 		"  |  ",
-	  	"Subtype",
+		"Subtype",
 		"  |  ",
 		"Mask",
 		"  |  ",
 		"Official Name",
 		"  |  ",
-	    "Available Bal.",
+		"Available Bal.",
 		"  |  ",
 		"Current Bal.",
 		"  |  ",
@@ -42,35 +42,35 @@ func MakeSingleAccountTable(acc database.Account) table.Table {
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	tbl.AddRow(
-	fmt.Sprintf("|%s", acc.InstitutionName.String),
-	"  |  ",
-	acc.ID,
-	"  |  ",
-	acc.Name,
-	"  |  ",
-	acc.Type,
-	"  |  ",
-	acc.Subtype.String,
-	"  |  ",
-	acc.Mask.String,
-	"  |  ",
-	acc.OfficialName.String,
-	"  |  ",
-	acc.AvailableBalance.Float64,
-	"  |  ",
-	acc.CurrentBalance.Float64,
-	"  |  ",
-	acc.IsoCurrencyCode.String,
-	"  |  ",
-	acc.CreatedAt,
-	"  |  ",
-	acc.UpdatedAt,
+		fmt.Sprintf("|%s", acc.InstitutionName.String),
+		"  |  ",
+		acc.ID,
+		"  |  ",
+		acc.Name,
+		"  |  ",
+		acc.Type,
+		"  |  ",
+		acc.Subtype.String,
+		"  |  ",
+		acc.Mask.String,
+		"  |  ",
+		acc.OfficialName.String,
+		"  |  ",
+		acc.AvailableBalance.Float64,
+		"  |  ",
+		acc.CurrentBalance.Float64,
+		"  |  ",
+		acc.IsoCurrencyCode.String,
+		"  |  ",
+		acc.CreatedAt,
+		"  |  ",
+		acc.UpdatedAt,
 	)
 
 	return tbl
 }
 
-//Format a table of accounts data to display of single item record
+// Format a table of accounts data to display of single item record
 func MakeAccountsTable(accounts []models.Account, institutionName string) table.Table {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
@@ -80,73 +80,73 @@ func MakeAccountsTable(accounts []models.Account, institutionName string) table.
 		"  |  ",
 		"Name",
 		"  |  ",
-		"Type", 
+		"Type",
 		"  |  ",
 		"Subtype",
-		"  |  ", 
+		"  |  ",
 		"Available Bal.",
-		"  |  ", 
+		"  |  ",
 		"Current Bal.",
-		"  |  ", 
+		"  |  ",
 		"Currency Code")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, acc := range accounts {
-		tbl.AddRow( 
-		fmt.Sprintf("|%s", institutionName),
-		"  |  ",
-		acc.Name,
-		"  |  ",
-		acc.Type,
-		"  |  ",
-		acc.Subtype,
-		"  |  ",
-		acc.AvailableBalance,
-		"  |  ",
-		acc.CurrentBalance,
-		"  |  ",
-		acc.IsoCurrencyCode)
+		tbl.AddRow(
+			fmt.Sprintf("|%s", institutionName),
+			"  |  ",
+			acc.Name,
+			"  |  ",
+			acc.Type,
+			"  |  ",
+			acc.Subtype,
+			"  |  ",
+			acc.AvailableBalance,
+			"  |  ",
+			acc.CurrentBalance,
+			"  |  ",
+			acc.IsoCurrencyCode)
 	}
 
 	return tbl
 }
 
-//Make table of accounts data to display of all user items
+// Make table of accounts data to display of all user items
 func MakeAccountsTableAllItems(accounts []database.Account) table.Table {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New(
-		"|Institution", 
+		"|Institution",
 		"  |  ",
-		"Name", 
+		"Name",
 		"  |  ",
-		"Type", 
+		"Type",
 		"  |  ",
 		"Subtype",
-		"  |  ", 
+		"  |  ",
 		"Available Bal.",
-		"  |  ", 
+		"  |  ",
 		"Current Bal.",
-		"  |  ", 
+		"  |  ",
 		"Currency Code")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, acc := range accounts {
-		tbl.AddRow( 
-		fmt.Sprintf("|%s", acc.InstitutionName.String),
-		"  |  ",
-		acc.Name,
-		"  |  ",
-		acc.Type,
-		"  |  ",
-		acc.Subtype.String,
-		"  |  ",
-		acc.AvailableBalance.Float64,
-		"  |  ",
-		acc.CurrentBalance.Float64,
-		"  |  ",
-		acc.IsoCurrencyCode.String)
+		tbl.AddRow(
+			fmt.Sprintf("|%s", acc.InstitutionName.String),
+			"  |  ",
+			acc.Name,
+			"  |  ",
+			acc.Type,
+			"  |  ",
+			acc.Subtype.String,
+			"  |  ",
+			acc.AvailableBalance.Float64,
+			"  |  ",
+			acc.CurrentBalance.Float64,
+			"  |  ",
+			acc.IsoCurrencyCode.String)
 	}
 
 	return tbl

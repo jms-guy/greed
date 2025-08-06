@@ -10,7 +10,7 @@ import (
 	"golang.org/x/term"
 )
 
-//Function will read a password without echoing the user input in terminal
+// Function will read a password without echoing the user input in terminal
 func ReadPassword(prompt string) (string, error) {
 	//Create channel for catching interrupt and termination signals
 	sigChan := make(chan os.Signal, 1)
@@ -44,7 +44,7 @@ func ReadPassword(prompt string) (string, error) {
 			return "", fmt.Errorf("error reading password input: %w", err)
 		}
 		return string(password), nil
-	
+
 		//If interrupt or termination signal, restore terminal state
 	case <-sigChan:
 		_ = term.Restore(int(os.Stdin.Fd()), oldState)
@@ -53,7 +53,7 @@ func ReadPassword(prompt string) (string, error) {
 	}
 }
 
-//Validates a password against local database hash
+// Validates a password against local database hash
 func ValidatePasswordHash(hash, password string) error {
 	pass := []byte(password)
 

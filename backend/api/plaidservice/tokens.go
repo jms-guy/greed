@@ -5,6 +5,7 @@ import (
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
+
 /*
 //Sandbox access token generation
 func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
@@ -27,7 +28,7 @@ func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.Item
 		if apiErr, ok := err.(plaid.GenericOpenAPIError); ok {
 			fmt.Println("Plaid error body:", string(apiErr.Body()))
 		}
-		return plaid.ItemPublicTokenExchangeResponse{}, err 
+		return plaid.ItemPublicTokenExchangeResponse{}, err
 	}
 
 	return exchangePublicTokenResp, nil
@@ -48,7 +49,7 @@ func (p *Service) GetLinkToken(ctx context.Context, userID, webhookURL string) (
 
 	transactions := plaid.LinkTokenTransactions{
 		DaysRequested: plaid.PtrInt32(730),
-	  }
+	}
 
 	request.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
 	request.SetTransactions(transactions)
@@ -72,7 +73,7 @@ func (p *Service) GetLinkToken(ctx context.Context, userID, webhookURL string) (
 	return linkToken, nil
 }
 
-//Requests Plaid API for a Link token configured with a user's access token, to initiate Update mode
+// Requests Plaid API for a Link token configured with a user's access token, to initiate Update mode
 func (p *Service) GetLinkTokenForUpdateMode(ctx context.Context, userID, accessToken, webhookURL string) (string, error) {
 	user := plaid.LinkTokenCreateRequestUser{
 		ClientUserId: userID,
@@ -87,7 +88,7 @@ func (p *Service) GetLinkTokenForUpdateMode(ctx context.Context, userID, accessT
 
 	transactions := plaid.LinkTokenTransactions{
 		DaysRequested: plaid.PtrInt32(730),
-	  }
+	}
 
 	request.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
 	request.SetTransactions(transactions)
@@ -112,7 +113,7 @@ func (p *Service) GetLinkTokenForUpdateMode(ctx context.Context, userID, accessT
 	return linkToken, nil
 }
 
-//Exchanges a public token received from client for a permanent access token for item from Plaid API
+// Exchanges a public token received from client for a permanent access token for item from Plaid API
 func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error) {
 
 	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
@@ -121,7 +122,7 @@ func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (model
 		*exchangePublicTokenReq,
 	).Execute()
 	if err != nil {
-		return models.AccessResponse{}, err 
+		return models.AccessResponse{}, err
 	}
 
 	accessToken := exchangePublicTokenResp.GetAccessToken()
@@ -134,16 +135,16 @@ func (p *Service) GetAccessToken(ctx context.Context, publicToken string) (model
 	reqID := httpResp.Header.Get("X-Request-Id")
 
 	response := models.AccessResponse{
-		AccessToken: accessToken,
-		ItemID: itemID,
+		AccessToken:     accessToken,
+		ItemID:          itemID,
 		InstitutionName: instName,
-		RequestID: reqID,
+		RequestID:       reqID,
 	}
 
 	return response, nil
 }
 
-//Invalidates an item's access token, requesting a new one from Plaid API
+// Invalidates an item's access token, requesting a new one from Plaid API
 func (p *Service) InvalidateAccessToken(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error) {
 
 	request := plaid.NewItemAccessTokenInvalidateRequest(accessToken.AccessToken)
@@ -161,14 +162,14 @@ func (p *Service) InvalidateAccessToken(ctx context.Context, accessToken models.
 
 	newToken := models.AccessResponse{
 		AccessToken: newAccessToken,
-		ItemID: itemID,
-		RequestID: reqID,
+		ItemID:      itemID,
+		RequestID:   reqID,
 	}
 
 	return newToken, nil
 }
 
-//Gets the webhook verification key from Plaid 
+// Gets the webhook verification key from Plaid
 func (p *Service) GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error) {
 
 	webhookReq := plaid.NewWebhookVerificationKeyGetRequest(keyID)

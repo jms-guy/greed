@@ -16,9 +16,9 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Get transaction records for given account from the server database.
-//Takes into account optional flags, creating a dynamic query to retrieve and sort the data on.
-//If summary flag is present, overrides most other flags, and returns a transaction summary instead
+// Get transaction records for given account from the server database.
+// Takes into account optional flags, creating a dynamic query to retrieve and sort the data on.
+// If summary flag is present, overrides most other flags, and returns a transaction summary instead
 func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit, pageSize int, summary bool) error {
 
 	var err error
@@ -30,7 +30,7 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 	}
 
 	params := database.GetAccountParams{
-		Name: accountName,
+		Name:   accountName,
 		UserID: creds.User.ID.String(),
 	}
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
@@ -55,7 +55,7 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 	if err != nil {
 		return err
 	}
-	
+
 	if summary {
 		var summaries []models.MerchantSummary
 		if err = json.NewDecoder(res.Body).Decode(&summaries); err != nil {
@@ -78,14 +78,14 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 	currentBalance := account.CurrentBalance.Float64
 	var historicalBalances []float64
 
-	runningBalance := currentBalance 
+	runningBalance := currentBalance
 
 	for _, txn := range txns {
 
-		amountFloat, _ := strconv.ParseFloat(txn.Amount, 64) 
+		amountFloat, _ := strconv.ParseFloat(txn.Amount, 64)
 		historicalBalances = append(historicalBalances, runningBalance)
 
-		runningBalance += amountFloat 
+		runningBalance += amountFloat
 	}
 
 	if order == "ASC" {

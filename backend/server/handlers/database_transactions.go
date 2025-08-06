@@ -11,38 +11,38 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
-//Struct to hold the base database connection, so transactions can use Begin, Rollback, Commit, WithTx, etc.
+// Struct to hold the base database connection, so transactions can use Begin, Rollback, Commit, WithTx, etc.
 type DbTransactionUpdater struct {
-	Db      *sql.DB                  
-	Queries GreedDatabase   
+	Db      *sql.DB
+	Queries GreedDatabase
 }
 
 func NewDBTransactionUpdater(db *sql.DB, queries GreedDatabase) *DbTransactionUpdater {
 	return &DbTransactionUpdater{Db: db, Queries: queries}
 }
 
-//Transaction for expiring a delegation session, if refresh token given is expired
+// Transaction for expiring a delegation session, if refresh token given is expired
 func (updater *DbTransactionUpdater) ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error {
 	tx, err := updater.Db.Begin()
-		if err != nil {
-			return fmt.Errorf("error beginning database transaction: %w", err)
-		}
-		defer tx.Rollback()
+	if err != nil {
+		return fmt.Errorf("error beginning database transaction: %w", err)
+	}
+	defer tx.Rollback()
 
-		qtx := updater.Queries.WithTx(tx)
+	qtx := updater.Queries.WithTx(tx)
 
-		err  = qtx.ExpireToken(ctx, tokenHash)
-		if err != nil {
-			return fmt.Errorf("error expiring refresh token: %w", err)
-		}
-		err = qtx.RevokeDelegationByID(ctx, token.DelegationID)
-		if err != nil {
-			return fmt.Errorf("error revoking session delegation: %w", err)
-		}
-		return tx.Commit()
+	err = qtx.ExpireToken(ctx, tokenHash)
+	if err != nil {
+		return fmt.Errorf("error expiring refresh token: %w", err)
+	}
+	err = qtx.RevokeDelegationByID(ctx, token.DelegationID)
+	if err != nil {
+		return fmt.Errorf("error revoking session delegation: %w", err)
+	}
+	return tx.Commit()
 }
 
-//Transaction for revoking a delegation session, if a token was used more than once
+// Transaction for revoking a delegation session, if a token was used more than once
 func (updater *DbTransactionUpdater) RevokeDelegation(ctx context.Context, token database.RefreshToken) error {
 	tx, err := updater.Db.Begin()
 	if err != nil {
@@ -63,9 +63,8 @@ func (updater *DbTransactionUpdater) RevokeDelegation(ctx context.Context, token
 	return tx.Commit()
 }
 
-
-//Db transaction for updating item transaction history, handling new, modified, and deleted data, 
-//as well as updating the item's transaction cursor.
+// Db transaction for updating item transaction history, handling new, modified, and deleted data,
+// as well as updating the item's transaction cursor.
 func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context, added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, cursor, itemID string) error {
 	tx, err := updater.Db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -76,8 +75,8 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 	qtx := updater.Queries.WithTx(tx)
 
 	var (
-		valueStrings 	[]string
-		valueArgs 		[]any
+		valueStrings []string
+		valueArgs    []any
 	)
 
 	added = append(added, modified...)
@@ -85,7 +84,7 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 	//This loop handles creating the query arguments for upserting data
 	for i, txn := range added {
 		curCode := ""
-		if txn.IsoCurrencyCode.IsSet(){
+		if txn.IsoCurrencyCode.IsSet() {
 			curCode = *txn.IsoCurrencyCode.Get()
 		}
 		merchant := ""
@@ -99,11 +98,11 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 			pfCategory = txn.PersonalFinanceCategory.Get().Primary
 		}
 
-		n := i*8
+		n := i * 8
 		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			n+1, n+2, n+3, n+4, n+5, n+6, n+7, n+8))
 		valueArgs = append(valueArgs,
-			txn.TransactionId, txn.AccountId, txn.Amount, curCode, txnDate, merchant, txn.PaymentChannel, pfCategory,)
+			txn.TransactionId, txn.AccountId, txn.Amount, curCode, txnDate, merchant, txn.PaymentChannel, pfCategory)
 	}
 
 	insertStmt := fmt.Sprintf(`
@@ -129,7 +128,7 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 	if len(removed) > 0 {
 		for _, txn := range removed {
 			params := database.DeleteTransactionParams{
-				ID: txn.TransactionId,
+				ID:        txn.TransactionId,
 				AccountID: txn.AccountId,
 			}
 
@@ -141,12 +140,12 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 	}
 	updatedCursor := sql.NullString{
 		String: cursor,
-		Valid: true,
+		Valid:  true,
 	}
 
 	updateParams := database.UpdateCursorParams{
 		TransactionSyncCursor: updatedCursor,
-		ID: itemID,
+		ID:                    itemID,
 	}
 	err = qtx.UpdateCursor(ctx, updateParams)
 	if err != nil {

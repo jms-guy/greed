@@ -509,7 +509,7 @@ func TestHandlerProcessWebhookRecords(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedBody:   "Webhook records processed",
 		},
-        {
+		{
 			name:            "should err with bad userID in context",
 			userIDInContext: uuid.Nil,
 			requestBody:     `{"item_id":"12345", "webhook_code":"TRANSACTIONS", "webhook_type":"TRANSACTIONS_UPDATES_AVAILABLE"}`,
@@ -521,7 +521,7 @@ func TestHandlerProcessWebhookRecords(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   "Bad userID in context",
 		},
-        {
+		{
 			name:            "should err with bad request data",
 			userIDInContext: testUserID,
 			requestBody:     "",
@@ -533,7 +533,7 @@ func TestHandlerProcessWebhookRecords(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   "Bad request data",
 		},
-        {
+		{
 			name:            "should err on processing webhook records",
 			userIDInContext: testUserID,
 			requestBody:     `{"item_id":"12345", "webhook_code":"TRANSACTIONS", "webhook_type":"TRANSACTIONS_UPDATES_AVAILABLE"}`,

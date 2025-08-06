@@ -8,8 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
-//Function accepts a string password, and hashes it
+// Function accepts a string password, and hashes it
 func (s *Service) HashPassword(password string) (string, error) {
 	pass := []byte(password)
 
@@ -21,7 +20,7 @@ func (s *Service) HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
-//Compares hashed password input against stored password hash
+// Compares hashed password input against stored password hash
 func (s *Service) ValidatePasswordHash(hash, password string) error {
 	pass := []byte(password)
 
@@ -33,7 +32,7 @@ func (s *Service) ValidatePasswordHash(hash, password string) error {
 	return nil
 }
 
-//Validates that a given string represents a valid email address
+// Validates that a given string represents a valid email address
 func (s *Service) EmailValidation(email string) bool {
 	emailRegex := `^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`
 
@@ -42,8 +41,8 @@ func (s *Service) EmailValidation(email string) bool {
 	return re.MatchString(email)
 }
 
-//Function generates a random 8 character string.
-//Creates a new UUID, and returns the first 8 characters of the converted string
+// Function generates a random 8 character string.
+// Creates a new UUID, and returns the first 8 characters of the converted string
 func (s *Service) GenerateCode() string {
 	initial := uuid.New()
 	code := initial.String()[:8]

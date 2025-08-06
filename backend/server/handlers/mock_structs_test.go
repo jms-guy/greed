@@ -29,7 +29,7 @@ var (
 	testAccount     = database.Account{ID: testAccountID, Name: testAccountName}
 	testAccessToken = "testAccessToken"
 	testTxnID       = uuid.MustParse("1a2bc3d4-e5f6-7890-1234-567890abcfed")
-	testDate        = sql.NullTime{Time: time.Now().Truncate(time.Second), Valid: true}
+	testDate        = sql.NullTime{Time: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC), Valid: true}
 	testMerchant    = sql.NullString{String: "testMerchant", Valid: true}
 )
 

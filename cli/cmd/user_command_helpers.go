@@ -6,15 +6,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
+	"net/http"
+	"os"
 )
 
-//Helper for getting password while registering a new user
+// Helper for getting password while registering a new user
 func registerPasswordHelper() (string, error) {
 	var password string
 	for {
@@ -50,7 +50,7 @@ func registerPasswordHelper() (string, error) {
 	return password, nil
 }
 
-//Helper for getting email while registering new user
+// Helper for getting email while registering new user
 func registerEmailHelper() (string, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var email string
@@ -71,7 +71,7 @@ func registerEmailHelper() (string, error) {
 		if email == "exit" {
 			return "exit", nil
 		}
-		
+
 		if auth.EmailValidation(email) {
 			break
 		}
@@ -83,7 +83,7 @@ func registerEmailHelper() (string, error) {
 	return email, nil
 }
 
-//Gets email code from user
+// Gets email code from user
 func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models.EmailVerification) (string, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var code string
@@ -125,7 +125,7 @@ func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models
 	return code, nil
 }
 
-//Helper for performing email verification flow in registering a new user
+// Helper for performing email verification flow in registering a new user
 func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User, emailData models.EmailVerification) (bool, error) {
 
 	fmt.Println(" < It can take up to a couple of minutes for the email to be received > ")
@@ -142,20 +142,20 @@ func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User,
 
 	if code == "continue" {
 		params := database.CreateUserParams{
-			ID: user.ID.String(),
-			Name: user.Name,
-			CreatedAt: user.CreatedAt.Format("2006-01-02"),
-			UpdatedAt: user.UpdatedAt.Format("2006-01-02"),
+			ID:             user.ID.String(),
+			Name:           user.Name,
+			CreatedAt:      user.CreatedAt.Format("2006-01-02"),
+			UpdatedAt:      user.UpdatedAt.Format("2006-01-02"),
 			HashedPassword: user.HashedPassword,
-			Email: user.Email,
-			IsVerified: sql.NullBool{Bool: false, Valid: true},
+			Email:          user.Email,
+			IsVerified:     sql.NullBool{Bool: false, Valid: true},
 		}
-	
+
 		_, err := app.Config.Db.CreateUser(context.Background(), params)
 		if err != nil {
-			return false, fmt.Errorf("error creating local record of user: %w", err)	
+			return false, fmt.Errorf("error creating local record of user: %w", err)
 		}
-	
+
 		fmt.Printf("User: %s has been successfully registered!\n", user.Name)
 		fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
 		return false, nil
@@ -163,7 +163,7 @@ func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User,
 
 	verifyData := models.EmailVerificationWithCode{
 		UserID: user.ID,
-		Code: code,
+		Code:   code,
 	}
 
 	verifyRes, err := app.Config.MakeBasicRequest("POST", verifyURL, "", verifyData)
@@ -171,7 +171,7 @@ func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User,
 		return false, fmt.Errorf("error making http request: %w", err)
 	}
 	defer verifyRes.Body.Close()
-	
+
 	err = checkResponseStatus(verifyRes)
 	if err != nil {
 		return false, err
@@ -180,7 +180,7 @@ func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User,
 	return true, nil
 }
 
-//Helper for fetching user credentials on login
+// Helper for fetching user credentials on login
 func userLoginHelper(app *CLIApp, username, loginURL string) (models.Credentials, error) {
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
@@ -188,7 +188,7 @@ func userLoginHelper(app *CLIApp, username, loginURL string) (models.Credentials
 	}
 
 	req := models.UserDetails{
-		Name: username,
+		Name:     username,
 		Password: pw,
 	}
 
@@ -212,7 +212,7 @@ func userLoginHelper(app *CLIApp, username, loginURL string) (models.Credentials
 	return login, nil
 }
 
-//On user login, checks for existence of items, to know if this is a first login or not
+// On user login, checks for existence of items, to know if this is a first login or not
 func userCheckItemsHelper(app *CLIApp, login models.Credentials, itemsURL string) ([]models.ItemName, error) {
 	var items []models.ItemName
 
@@ -234,7 +234,7 @@ func userCheckItemsHelper(app *CLIApp, login models.Credentials, itemsURL string
 		if err = json.NewDecoder(itemsRes.Body).Decode(&itemsResp); err != nil {
 			return items, fmt.Errorf("error decoding response data: %w", err)
 		}
-		
+
 		if len(itemsResp.Items) != 0 {
 			items = append(items, itemsResp.Items...)
 
@@ -249,7 +249,7 @@ func userCheckItemsHelper(app *CLIApp, login models.Credentials, itemsURL string
 			if err != nil {
 				return items, fmt.Errorf("error storing auth tokens: %w", err)
 			}
-			
+
 			return items, nil
 		}
 	}
@@ -257,9 +257,9 @@ func userCheckItemsHelper(app *CLIApp, login models.Credentials, itemsURL string
 	return items, nil
 }
 
-//On user's first time loggin in, they will go through Plaid's Link flow, consisting of: asking server for
-//Link token, opening browser link with token, getting a Public token from Plaid, and exchanging that public
-//token with the server for a permanent access token
+// On user's first time loggin in, they will go through Plaid's Link flow, consisting of: asking server for
+// Link token, opening browser link with token, getting a Public token from Plaid, and exchanging that public
+// token with the server for a permanent access token
 func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL, accessURL, redirectURL, itemsURL string) (bool, error) {
 	linkRes, err := app.Config.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
 	if err != nil {
@@ -271,7 +271,7 @@ func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL
 	if err != nil {
 		return false, err
 	}
-	
+
 	var link models.LinkResponse
 	if err = json.NewDecoder(linkRes.Body).Decode(&link); err != nil {
 		return false, fmt.Errorf("error decoding response data: %w", err)
@@ -296,9 +296,9 @@ func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL
 
 	request := models.AccessTokenRequest{
 		PublicToken: token,
-		Nickname: name,
+		Nickname:    name,
 	}
-	
+
 	//The following login.AccessTokens are app JWT's, not to be mistaken for Plaid's Access Tokens
 	accessResponse, err := app.Config.MakeBasicRequest("POST", accessURL, login.AccessToken, request)
 	if err != nil {
@@ -329,7 +329,7 @@ func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL
 		if err = json.NewDecoder(itemsResp.Body).Decode(&itemsResponse); err != nil {
 			return false, fmt.Errorf("error decoding response data: %w", err)
 		}
-		
+
 		if len(itemsResponse.Items) != 0 {
 			fmt.Printf(" > Available items for user: %s\n", login.User.Name)
 			fmt.Println(" ~~~~~")
@@ -337,7 +337,7 @@ func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL
 				fmt.Printf(" Institution: %s || Item Name: %s || ItemID: %s\n", i.InstitutionName, i.Nickname, i.ItemId)
 			}
 			fmt.Println("")
-			
+
 			err = auth.StoreTokens(login, app.Config.ConfigFP)
 			if err != nil {
 				return false, fmt.Errorf("error storing auth tokens: %w", err)
@@ -350,43 +350,43 @@ func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL
 	return true, nil
 }
 
-//Simple bufio scanner for getting an item nickname
+// Simple bufio scanner for getting an item nickname
 func promptForItemName() string {
 	scanner := bufio.NewScanner(os.Stdin)
 	var name string
 
-	Loop:
+Loop:
+	for {
+		fmt.Println("Please enter a name for this item: ")
+		fmt.Print(" > ")
+		scanner.Scan()
+
+		name = scanner.Text()
+
+		if name == "" {
+			fmt.Println("No input found")
+			continue
+		}
+
+		fmt.Printf("Set item name to %s? (y/n)\n", name)
 		for {
-			fmt.Println("Please enter a name for this item: ")
-			fmt.Print(" > ")
 			scanner.Scan()
+			confirm := scanner.Text()
 
-			name = scanner.Text()
-
-			if name == "" {
-				fmt.Println("No input found")
-				continue 
-			}
-
-			fmt.Printf("Set item name to %s? (y/n)\n", name)
-			for {
-				scanner.Scan()
-				confirm := scanner.Text()
-
-				if confirm == "y" {
-					break Loop
-				} else if confirm == "n" {
-					break 
-				} else {
-					continue
-				}
+			if confirm == "y" {
+				break Loop
+			} else if confirm == "n" {
+				break
+			} else {
+				continue
 			}
 		}
-	
-		return name
+	}
+
+	return name
 }
 
-//Fetches webhook records from server, and searches for actions that user must take to resolve them
+// Fetches webhook records from server, and searches for actions that user must take to resolve them
 func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemName) error {
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", webhookURL, token, nil)
@@ -410,7 +410,7 @@ func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemN
 		return nil
 	}
 
-	itemsMap := make(map[string]string) 
+	itemsMap := make(map[string]string)
 	for _, item := range items {
 		itemsMap[item.ItemId] = item.Nickname
 	}
@@ -438,7 +438,7 @@ func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemN
 	if loginRequired {
 		fmt.Println("One or more of your bank connections require re-authentication. Please use the 'update' command.")
 	} else if syncRequired {
-	 	fmt.Println("New data is available for one or more accounts. Please use the 'sync <item-name>' command.")
+		fmt.Println("New data is available for one or more accounts. Please use the 'sync <item-name>' command.")
 	}
 
 	return nil

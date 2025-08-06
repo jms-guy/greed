@@ -6,25 +6,25 @@ import (
 	"strconv"
 )
 
-//Configuration struct holding all .env variables for server
+// Configuration struct holding all .env variables for server
 type Config struct {
-	ServerAddress 			string
-	Environment 			string
-	DatabaseURL				string
-	StaticAssetsPath 		string
-	JWTSecret				string
-	JWTIssuer				string
-	JWTAudience				string
-	JWTExpiration			string		// in seconds
-	RefreshExpiration		string		// in seconds
-	RateLimit				float64
-	RateRefresh 			float64		// per second
-	SendGridAPIKey 			string
-	GreedEmail				string
-	PlaidClientID			string 
-	PlaidSecret				string
-	PlaidWebhookURL 		string
-	AESKey 					string
+	ServerAddress     string
+	Environment       string
+	DatabaseURL       string
+	StaticAssetsPath  string
+	JWTSecret         string
+	JWTIssuer         string
+	JWTAudience       string
+	JWTExpiration     string // in seconds
+	RefreshExpiration string // in seconds
+	RateLimit         float64
+	RateRefresh       float64 // per second
+	SendGridAPIKey    string
+	GreedEmail        string
+	PlaidClientID     string
+	PlaidSecret       string
+	PlaidWebhookURL   string
+	AESKey            string
 }
 
 func LoadConfig() (*Config, error) {
@@ -52,7 +52,7 @@ func LoadConfig() (*Config, error) {
 	if jwtSecret == "" {
 		return nil, fmt.Errorf("JWT_SECRET environment variable not set")
 	}
-	
+
 	jwtIssuer := os.Getenv("JWT_ISSUER")
 	if jwtIssuer == "" {
 		return nil, fmt.Errorf("JWT_ISSUER environment variable not set")
@@ -112,7 +112,7 @@ func LoadConfig() (*Config, error) {
 	if plaidSecret == "" {
 		return nil, fmt.Errorf("PLAID_SECRET environment variable not set")
 	}
-	 
+
 	plaidWebhookURL := os.Getenv("PLAID_WEBHOOK_URL")
 	if plaidWebhookURL == "" {
 		return nil, fmt.Errorf("PLAID_WEBHOOK_URL environment variable not set")
@@ -124,23 +124,23 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config := Config{
-		ServerAddress: 				serverAddress,
-		Environment: 				environment,
-		DatabaseURL:				dbURL,
-		StaticAssetsPath: 			staticPath,
-		JWTSecret: 					jwtSecret,
-		JWTIssuer: 					jwtIssuer,
-		JWTAudience: 				jwtAudience,
-		JWTExpiration: 				jwtExpiration,
-		RefreshExpiration: 			refreshExpiration,
-		RateLimit: 					limit,
-		RateRefresh: 				refresh,
-		SendGridAPIKey: 			sendGridAPIKey,
-		GreedEmail: 				greedEmail,
-		PlaidClientID: 				plaidClientID,
-		PlaidSecret: 				plaidSecret,
-		PlaidWebhookURL: 			plaidWebhookURL,
-		AESKey: 					aesKey,
+		ServerAddress:     serverAddress,
+		Environment:       environment,
+		DatabaseURL:       dbURL,
+		StaticAssetsPath:  staticPath,
+		JWTSecret:         jwtSecret,
+		JWTIssuer:         jwtIssuer,
+		JWTAudience:       jwtAudience,
+		JWTExpiration:     jwtExpiration,
+		RefreshExpiration: refreshExpiration,
+		RateLimit:         limit,
+		RateRefresh:       refresh,
+		SendGridAPIKey:    sendGridAPIKey,
+		GreedEmail:        greedEmail,
+		PlaidClientID:     plaidClientID,
+		PlaidSecret:       plaidSecret,
+		PlaidWebhookURL:   plaidWebhookURL,
+		AESKey:            aesKey,
 	}
 
 	return &config, nil

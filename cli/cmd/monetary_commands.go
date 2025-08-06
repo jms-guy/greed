@@ -13,8 +13,8 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Gets an account's income/expense data through querying server database transaction data.
-//Displays data in a visual format based on flag value passed through mode
+// Gets an account's income/expense data through querying server database transaction data.
+// Displays data in a visual format based on flag value passed through mode
 func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
@@ -23,7 +23,7 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 	}
 
 	params := database.GetAccountParams{
-		Name: accountName,
+		Name:   accountName,
 		UserID: creds.User.ID.String(),
 	}
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
@@ -34,7 +34,7 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 	incURL := app.Config.Client.BaseURL + "/api/accounts/" + account.ID + "/transactions/monetary"
 
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
-		return app.Config.MakeBasicRequest("GET", incURL, token, nil) 
+		return app.Config.MakeBasicRequest("GET", incURL, token, nil)
 	})
 	if err != nil {
 		return fmt.Errorf("error making http request: %w", err)
@@ -54,7 +54,7 @@ func (app *CLIApp) commandGetIncome(accountName, mode string) error {
 	if mode == "graph" {
 		charts.MakeIncomeChart(response)
 	}
-	
+
 	tbl, err := tables.MakeTableForMonetaryAggregate(response, accountName)
 	if err != nil {
 		return err

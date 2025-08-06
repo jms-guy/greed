@@ -9,34 +9,34 @@ import (
 	"time"
 )
 
-//Represents an error related to query parameter validation
+// Represents an error related to query parameter validation
 type QueryValidationError struct {
-	Parameter 		string 	`json:"parameter"`
-	Value 			string 	`json:"value"`
-	Message 		string 	`json:"message"`
+	Parameter string `json:"parameter"`
+	Value     string `json:"value"`
+	Message   string `json:"message"`
 }
 
-//Responsible for validating query parameters based on their type. 
-//Holds map of type validators, where key is the type, and value is a function that validates the string value
+// Responsible for validating query parameters based on their type.
+// Holds map of type validators, where key is the type, and value is a function that validates the string value
 type Service struct {
-	typeValidators 	map[string]func(string) bool 
+	typeValidators map[string]func(string) bool
 }
 
-//URL Query service interface
+// URL Query service interface
 type QueryService interface {
 	ValidateParamValue(value, expectedType string) (bool, error)
 	ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []QueryValidationError)
 	BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error)
 }
 
-//Initializes new QueryValidator instance
+// Initializes new QueryValidator instance
 func NewQueryService() *Service {
 	qv := &Service{
 		typeValidators: make(map[string]func(string) bool),
 	}
 
 	qv.typeValidators["number"] = func(v string) bool {
-		matched, _ := regexp.MatchString(`^-?\d+(\.\d+)?$`, v)	//Validator for numerics (int and float)
+		matched, _ := regexp.MatchString(`^-?\d+(\.\d+)?$`, v) //Validator for numerics (int and float)
 		return matched
 	}
 
@@ -50,10 +50,10 @@ func NewQueryService() *Service {
 		return err == nil
 	}
 
-	return qv 
+	return qv
 }
 
-//Validates a query parameter's value based on its expected type.
+// Validates a query parameter's value based on its expected type.
 // - value: Value of parameter to validate
 // - expectedType: Expected data type of query parameter
 // Returns true if value passes validation or no validator exists for expected type
@@ -70,9 +70,9 @@ func (qv *Service) ValidateParamValue(value, expectedType string) (bool, error) 
 	return validator(value), nil
 }
 
-//Validates query parameters based on predefined rules. 
-//Rules is a map of expected query parameters and their expected types. 
-//Returns slice of QueryValidationError if validation fails
+// Validates query parameters based on predefined rules.
+// Rules is a map of expected query parameters and their expected types.
+// Returns slice of QueryValidationError if validation fails
 func (qv *Service) ValidateQuery(queries url.Values, rules map[string]string) (map[string]string, []QueryValidationError) {
 	var errors []QueryValidationError
 
@@ -87,8 +87,8 @@ func (qv *Service) ValidateQuery(queries url.Values, rules map[string]string) (m
 		if !exists {
 			errors = append(errors, QueryValidationError{
 				Parameter: param,
-				Value: value,
-				Message: "unexpected parameter",
+				Value:     value,
+				Message:   "unexpected parameter",
 			})
 			continue
 		}
@@ -97,15 +97,15 @@ func (qv *Service) ValidateQuery(queries url.Values, rules map[string]string) (m
 		if err != nil {
 			errors = append(errors, QueryValidationError{
 				Parameter: param,
-				Value: value,
-				Message: err.Error(),
+				Value:     value,
+				Message:   err.Error(),
 			})
 		}
 		if !ok {
 			errors = append(errors, QueryValidationError{
 				Parameter: param,
-				Value: value,
-				Message: fmt.Sprintf("invalid value for type %s", expectedType),
+				Value:     value,
+				Message:   fmt.Sprintf("invalid value for type %s", expectedType),
 			})
 		}
 	}
@@ -113,7 +113,7 @@ func (qv *Service) ValidateQuery(queries url.Values, rules map[string]string) (m
 	return parsed, errors
 }
 
-//Builds an SQL query for transactions based on optional query arguments
+// Builds an SQL query for transactions based on optional query arguments
 func (qv *Service) BuildSqlQuery(queries map[string]string, accountID string) (string, []any, error) {
 	query := "SELECT * FROM transactions WHERE account_id = $1"
 	args := []any{accountID}
@@ -143,7 +143,7 @@ func (qv *Service) BuildSqlQuery(queries map[string]string, accountID string) (s
 	if val, ok := queries["date"]; ok {
 		_, err := time.Parse("2006-01-02", val)
 		if err != nil {
-			return "", args, err 
+			return "", args, err
 		}
 		query += fmt.Sprintf(" AND DATE(date) = $%d", paramCount)
 		args = append(args, val)
@@ -152,7 +152,7 @@ func (qv *Service) BuildSqlQuery(queries map[string]string, accountID string) (s
 		if start, exists := queries["start"]; exists {
 			_, err := time.Parse("2006-01-02", start)
 			if err != nil {
-				return "", args, err 
+				return "", args, err
 			}
 			query += fmt.Sprintf(" AND DATE(date) >= $%d", paramCount)
 			args = append(args, start)
@@ -192,14 +192,16 @@ func (qv *Service) BuildSqlQuery(queries map[string]string, accountID string) (s
 	}
 
 	query += " ORDER BY date DESC"
-	
+
 	if val, ok := queries["limit"]; ok {
 		if val != "" {
 			limit, err := strconv.Atoi(val)
 			if err != nil {
 				return "", args, err
 			}
-			if limit > 200 {limit = 200}
+			if limit > 200 {
+				limit = 200
+			}
 			query += fmt.Sprintf(" LIMIT $%d", paramCount)
 			args = append(args, limit)
 			paramCount++

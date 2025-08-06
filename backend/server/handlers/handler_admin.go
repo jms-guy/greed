@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"context"
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
-//Function returns list of all user names in database
+// Function returns list of all user names in database
 func (app *AppServer) HandlerGetListOfUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	users, err := app.Db.GetAllUsers(ctx)
@@ -18,17 +18,17 @@ func (app *AppServer) HandlerGetListOfUsers(w http.ResponseWriter, r *http.Reque
 	app.respondWithJSON(w, 200, users)
 }
 
-//Function to reset plaid_items database table
+// Function to reset plaid_items database table
 func (app *AppServer) HandlerResetItems(w http.ResponseWriter, r *http.Request) {
 	err := app.Db.ResetItems(context.Background())
 	if err != nil {
 		app.respondWithError(w, 500, "Could not reset plaid_items table", err)
-		return 
+		return
 	}
 	app.respondWithJSON(w, 200, "Items table cleared successfully")
 }
 
-//Function to reset database accounts table
+// Function to reset database accounts table
 func (app *AppServer) HandlerResetAccounts(w http.ResponseWriter, r *http.Request) {
 	err := app.Db.ResetAccounts(context.Background())
 	if err != nil {
@@ -38,7 +38,7 @@ func (app *AppServer) HandlerResetAccounts(w http.ResponseWriter, r *http.Reques
 	app.respondWithJSON(w, 200, "Accounts table cleared successfully")
 }
 
-//Function will reset database's transactions table
+// Function will reset database's transactions table
 func (app *AppServer) HandlerResetTransactions(w http.ResponseWriter, r *http.Request) {
 	err := app.Db.ClearTransactionsTable(context.Background())
 	if err != nil {
@@ -48,7 +48,7 @@ func (app *AppServer) HandlerResetTransactions(w http.ResponseWriter, r *http.Re
 	app.respondWithJSON(w, 200, "Transactions table cleared successfully")
 }
 
-//Function to reset database for dev testing -> users/accounts tables
+// Function to reset database for dev testing -> users/accounts tables
 func (app *AppServer) HandlerResetUsers(w http.ResponseWriter, r *http.Request) {
 	err := app.Db.ResetUsers(context.Background())
 	if err != nil {

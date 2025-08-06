@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/tables"
 	"github.com/jms-guy/greed/models"
+	"net/http"
 )
 
-//List accounts for a given item name
+// List accounts for a given item name
 func (app *CLIApp) commandListAccounts(args []string) error {
 
 	itemName := args[0]
@@ -39,8 +39,8 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 	}
 
 	var itemID string
-	var itemInst string 
- 	for _, i := range itemsResp.Items {
+	var itemInst string
+	for _, i := range itemsResp.Items {
 		if i.Nickname == itemName {
 			itemID = i.ItemId
 			itemInst = i.InstitutionName
@@ -50,7 +50,7 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 
 	if itemID == "" {
 		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil 
+		return nil
 	}
 
 	accountsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/accounts"
@@ -79,7 +79,7 @@ func (app *CLIApp) commandListAccounts(args []string) error {
 	return nil
 }
 
-//List all accounts for user
+// List all accounts for user
 func (app *CLIApp) commandListAllAccounts() error {
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
@@ -98,7 +98,7 @@ func (app *CLIApp) commandListAllAccounts() error {
 	return nil
 }
 
-//Lists account information for a given account name
+// Lists account information for a given account name
 func (app *CLIApp) commandAccountInfo(args []string) error {
 
 	accountName := args[0]
@@ -109,7 +109,7 @@ func (app *CLIApp) commandAccountInfo(args []string) error {
 	}
 
 	params := database.GetAccountParams{
-		Name: accountName,
+		Name:   accountName,
 		UserID: creds.User.ID.String(),
 	}
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
