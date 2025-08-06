@@ -10,7 +10,7 @@ import (
 	"github.com/rodaine/table"
 )
 
-//Make monetary data aggregate table
+// Make monetary data aggregate table
 func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName string) (table.Table, error) {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
@@ -43,7 +43,6 @@ func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName strin
 		calculatedNetIncome := income - expenses
 		formattedNetIncome := fmt.Sprintf("%.2f", calculatedNetIncome)
 
-
 		tbl.AddRow(
 			fmt.Sprintf("   |%s   ", accountName),
 			"     |     ",
@@ -60,7 +59,7 @@ func MakeTableForMonetaryAggregate(data []models.MonetaryData, accountName strin
 	return tbl, nil
 }
 
-//Make transaction summary table
+// Make transaction summary table
 func MakeTableForSummaries(summaries []models.MerchantSummary, accountName string) table.Table {
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()

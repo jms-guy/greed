@@ -6,16 +6,16 @@ import (
 	"strconv"
 )
 
-//Builds query string for URL
+// Builds query string for URL
 func BuildQueries(merchant, category, channel, date, start, end string, min, max, limit int, summary bool) string {
 
 	queries := map[string]string{
 		"merchant": merchant,
 		"category": category,
-		"channel": channel,
-		"date": date,
-		"start": start,
-		"end": end,
+		"channel":  channel,
+		"date":     date,
+		"start":    start,
+		"end":      end,
 	}
 	if min != math.MinInt64 {
 		queries["min"] = strconv.Itoa(min)

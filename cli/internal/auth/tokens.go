@@ -11,7 +11,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Remove credentials from local machine
+// Remove credentials from local machine
 func RemoveCreds(configPath string) error {
 	base, err := getBaseConfigPath(configPath)
 	if err != nil {
@@ -28,7 +28,7 @@ func RemoveCreds(configPath string) error {
 	return nil
 }
 
-//Get credentials from JSON file
+// Get credentials from JSON file
 func GetCreds(configPath string) (models.Credentials, error) {
 	var creds models.Credentials
 
@@ -59,11 +59,11 @@ func GetCreds(configPath string) (models.Credentials, error) {
 	return creds, nil
 }
 
-//Store auth tokens in a credentials file 
+// Store auth tokens in a credentials file
 func StoreTokens(data models.Credentials, configPath string) error {
 	base, err := getBaseConfigPath(configPath)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	if err := os.MkdirAll(base, 0755); err != nil {
@@ -73,14 +73,14 @@ func StoreTokens(data models.Credentials, configPath string) error {
 	creds := filepath.Join(base, "credentials.json")
 
 	f, err := os.OpenFile(creds, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-    if err != nil {
-        return err
-    }
-    defer f.Close()
+	if err != nil {
+		return err
+	}
+	defer f.Close()
 
-    enc := json.NewEncoder(f)
-    enc.SetIndent("", "  ") // optional, for pretty-print
-    return enc.Encode(data)
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ") // optional, for pretty-print
+	return enc.Encode(data)
 }
 
 func getBaseConfigPath(path string) (string, error) {

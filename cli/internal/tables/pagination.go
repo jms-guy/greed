@@ -9,8 +9,8 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Takes slice of transaction records, and paginates the results into a table, displaying a base number of 20 transaction records at a time.
-//Listens for pgUp/pgDown key presses to view through record pages
+// Takes slice of transaction records, and paginates the results into a table, displaying a base number of 20 transaction records at a time.
+// Listens for pgUp/pgDown key presses to view through record pages
 func PaginateTransactionsTable(txns []models.Transaction, accountName string, balances []float64, pageSize int, isFiltered bool) error {
 
 	if len(txns) == 0 {
@@ -28,7 +28,7 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 		return fmt.Errorf("error initializing terminal screen: %w", err)
 	}
 
-	currentPage := 1 
+	currentPage := 1
 	endIndex := 0
 
 	for {
@@ -36,28 +36,28 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 
 		//Determine indexes of transaction items to display
 		startIndex := (currentPage - 1) * pageSize
-		var displayItems []models.Transaction 
+		var displayItems []models.Transaction
 
 		if startIndex >= len(txns) {
 
-			displayItems = []models.Transaction{} 
+			displayItems = []models.Transaction{}
 
 		} else {
 
-			endIndex = min(startIndex + pageSize, len(txns))
+			endIndex = min(startIndex+pageSize, len(txns))
 			displayItems = txns[startIndex:endIndex]
 		}
 
 		var displayBalances []float64
 
 		if !(startIndex >= len(balances)) {
-			endIndex = min(startIndex + pageSize, len(balances))
+			endIndex = min(startIndex+pageSize, len(balances))
 			displayBalances = balances[startIndex:endIndex]
 		}
 
 		CreateTable(screen, displayItems, accountName, displayBalances, isFiltered)
 		screen.Show()
-		
+
 		event := screen.PollEvent()
 
 		switch event := event.(type) {
@@ -80,7 +80,7 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 	}
 }
 
-//Draws a table of transaction data onto the tcell screen
+// Draws a table of transaction data onto the tcell screen
 func CreateTable(screen tcell.Screen, displayItems []models.Transaction, accountName string, balances []float64, isFiltered bool) {
 	//Define tcell screen styles and variables to create table
 	headerStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen).Underline(true)
@@ -91,7 +91,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 
 	if isFiltered {
 		columnHeaders = []string{"Account", "Date", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code"}
-		columnWidths = []int{10, 12, 10, 20, 15, 15, 10} 
+		columnWidths = []int{10, 12, 10, 20, 15, 15, 10}
 	} else {
 		columnHeaders = []string{"Account", "Date", "Balance", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code"}
 		columnWidths = []int{10, 12, 10, 10, 20, 15, 15, 10}
@@ -115,7 +115,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 	for i, txn := range displayItems {
 		currentX = 10
 
-		accountStr := accountName 
+		accountStr := accountName
 		if len(accountStr) > 10 {
 			accountStr = accountStr[:10]
 		}
@@ -172,7 +172,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 			channelStr = channelStr[:15]
 		}
 		for _, r := range fmt.Sprintf("%-*s", 15, channelStr) {
-			screen.SetContent(currentX, currentY, r , nil, columnStyle)
+			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
 		currentX += columnPadding
@@ -249,7 +249,7 @@ func PaginateSummariesTable(summaries []models.MerchantSummary, accountName, mer
 		return fmt.Errorf("error initializing terminal screen: %w", err)
 	}
 
-	currentPage := 1 
+	currentPage := 1
 	endIndex := 0
 
 	for {
@@ -257,21 +257,21 @@ func PaginateSummariesTable(summaries []models.MerchantSummary, accountName, mer
 
 		//Determine indexes of transaction items to display
 		startIndex := (currentPage - 1) * pageSize
-		var displayItems []models.MerchantSummary 
+		var displayItems []models.MerchantSummary
 
 		if startIndex >= len(summaries) {
 
-			displayItems = []models.MerchantSummary{} 
+			displayItems = []models.MerchantSummary{}
 
 		} else {
 
-			endIndex = min(startIndex + pageSize, len(summaries))
+			endIndex = min(startIndex+pageSize, len(summaries))
 			displayItems = summaries[startIndex:endIndex]
 		}
 
 		CreateSummariesTable(screen, displayItems, accountName, merchant)
 		screen.Show()
-		
+
 		event := screen.PollEvent()
 
 		switch event := event.(type) {
@@ -294,14 +294,14 @@ func PaginateSummariesTable(summaries []models.MerchantSummary, accountName, mer
 	}
 }
 
-//Draws a table of transaction data onto the tcell screen
+// Draws a table of transaction data onto the tcell screen
 func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSummary, accountName, merchant string) {
 	//Define tcell screen styles and variables to create table
 	headerStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen).Underline(true)
 	columnStyle := tcell.StyleDefault.Foreground(tcell.ColorYellow)
 
 	columnHeaders := []string{"Month", "Merchant", "Txn. Count", "Category", "Total Amount"}
-	columnWidths := []int{10, 10, 10, 15, 12} 
+	columnWidths := []int{10, 10, 10, 15, 12}
 	columnPadding := 5
 
 	currentX, currentY := 10, 0
@@ -355,7 +355,7 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 		if len(categoryStr) > columnWidths[3] {
 			categoryStr = categoryStr[:columnWidths[3]]
 		}
-		for _, r := range fmt.Sprintf("%-*s", columnWidths[3],categoryStr) {
+		for _, r := range fmt.Sprintf("%-*s", columnWidths[3], categoryStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
@@ -366,7 +366,7 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 			amountStr = amountStr[:columnWidths[4]]
 		}
 		for _, r := range fmt.Sprintf("%-*s", columnWidths[4], amountStr) {
-			screen.SetContent(currentX, currentY, r , nil, columnStyle)
+			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
 
@@ -381,8 +381,8 @@ func CreateSummariesTable(screen tcell.Screen, displayItems []models.MerchantSum
 		totalAmount := 0.0
 		for _, sum := range displayItems {
 			totalTxns += int(sum.TxnCount)
-			
-			amount, _  := strconv.ParseFloat(sum.TotalAmount, 64)
+
+			amount, _ := strconv.ParseFloat(sum.TotalAmount, 64)
 			totalAmount += amount
 		}
 

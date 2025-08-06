@@ -3,32 +3,32 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/models"
+	"io"
+	"net/http"
 )
 
-//Wrapper function for refreshing JWT token logic
+// Wrapper function for refreshing JWT token logic
 func DoWithAutoRefresh(app *CLIApp, doRequest func(string) (*http.Response, error)) (*http.Response, error) {
 	creds, _ := auth.GetCreds(app.Config.ConfigFP)
 	resp, err := doRequest(creds.AccessToken)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
 	if resp.StatusCode == 401 {
 		resp.Body.Close()
 		if err := refreshCreds(app); err != nil {
-			return nil, err 
+			return nil, err
 		}
-		creds, _  = auth.GetCreds(app.Config.ConfigFP)
+		creds, _ = auth.GetCreds(app.Config.ConfigFP)
 		resp, err = doRequest(creds.AccessToken)
 	}
 	return resp, err
 }
 
-//Refreshs JWT and refresh token for user - logs user out automatically if session is expired
+// Refreshs JWT and refresh token for user - logs user out automatically if session is expired
 func refreshCreds(app *CLIApp) error {
 	refreshURL := app.Config.Client.BaseURL + "/api/auth/refresh"
 
@@ -83,4 +83,4 @@ func refreshCreds(app *CLIApp) error {
 	}
 
 	return nil
-} 
+}

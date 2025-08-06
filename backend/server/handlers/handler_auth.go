@@ -4,16 +4,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strconv"
-	"time"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
+	"net/http"
+	"strconv"
+	"time"
 )
 
-//Function logs out a user, invalidating all session tokens
+// Function logs out a user, invalidating all session tokens
 func (app *AppServer) HandlerUserLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -51,7 +51,7 @@ func (app *AppServer) HandlerUserLogout(w http.ResponseWriter, r *http.Request) 
 	app.respondWithJSON(w, 200, "User logged out successfully")
 }
 
-//Function returns a single user record
+// Function returns a single user record
 func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	delegationExp, err := strconv.Atoi(app.Config.RefreshExpiration)
@@ -84,8 +84,8 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delegationParams := database.CreateDelegationParams{
-		ID: uuid.New(),
-		UserID: user.ID,
+		ID:        uuid.New(),
+		UserID:    user.ID,
 		ExpiresAt: time.Now().Add(time.Duration(delegationExp) * time.Second),
 	}
 
@@ -98,7 +98,7 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	JWT, err := app.Auth.MakeJWT(app.Config, user.ID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating JWT", err)
-		return 
+		return
 	}
 
 	tokenString, err := app.Auth.MakeRefreshToken(app.Db, user.ID, delegation)
@@ -106,25 +106,25 @@ func (app *AppServer) HandlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		app.respondWithError(w, 500, "Error creating refresh token", err)
 		return
 	}
-	
+
 	response := models.Credentials{
 		User: models.User{
-			ID: user.ID,
-			Name: user.Name,
+			ID:        user.ID,
+			Name:      user.Name,
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
-			Email: user.Email,
+			Email:     user.Email,
 		},
 		RefreshToken: tokenString,
-		AccessToken: JWT,
-		TokenType: "Bearer",
-		ExpiresIn: 600,
+		AccessToken:  JWT,
+		TokenType:    "Bearer",
+		ExpiresIn:    600,
 	}
 
 	app.respondWithJSON(w, 200, response)
 }
 
-//Function will create a new user in database
+// Function will create a new user in database
 func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	//Decode request parameters
@@ -142,7 +142,7 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		app.respondWithError(w, 400, "User already exists by that name", nil)
 		return
 	}
-	
+
 	if err != sql.ErrNoRows {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error checking user existence: %w", err))
 		return
@@ -167,10 +167,10 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 
 	//Creates new user in database
 	newUser, err := app.Db.CreateUser(ctx, database.CreateUserParams{
-		Name: params.Name,
-		ID: uuid.New(),
+		Name:           params.Name,
+		ID:             uuid.New(),
 		HashedPassword: hash,
-		Email: givenEmail,
+		Email:          givenEmail,
 	})
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("could not create new user: %w", err))
@@ -179,17 +179,17 @@ func (app *AppServer) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 
 	//Creates return structure
 	user := models.User{
-		ID: newUser.ID,
-		Name: newUser.Name,
+		ID:             newUser.ID,
+		Name:           newUser.Name,
 		HashedPassword: hash,
-		CreatedAt: newUser.CreatedAt,
-		UpdatedAt: newUser.UpdatedAt,
-		Email: newUser.Email,
+		CreatedAt:      newUser.CreatedAt,
+		UpdatedAt:      newUser.UpdatedAt,
+		Email:          newUser.Email,
 	}
 	app.respondWithJSON(w, 201, user)
 }
 
-//Sends a verification code to the user's given email address
+// Sends a verification code to the user's given email address
 func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -218,11 +218,10 @@ func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 	}
 
 	recordParams := database.CreateVerificationRecordParams{
-		UserID: request.UserID,
+		UserID:           request.UserID,
 		VerificationCode: app.Auth.GenerateCode(),
-		ExpiryTime: time.Now().UTC().Add(time.Duration(verificationExpiryTime) * time.Hour),
+		ExpiryTime:       time.Now().UTC().Add(time.Duration(verificationExpiryTime) * time.Hour),
 	}
-	
 
 	vRecord, err := app.Db.CreateVerificationRecord(ctx, recordParams)
 	if err != nil {
@@ -233,12 +232,12 @@ func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 	user, err := app.Db.GetUser(ctx, request.UserID)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
-		return 
+		return
 	}
 
 	emailBody := "The verification code for " + user.Name + " is: " + vRecord.VerificationCode
 	data := sgrid.MailData{
-		Code: vRecord.VerificationCode,
+		Code:     vRecord.VerificationCode,
 		Username: user.Name,
 	}
 	mail := app.SgMail.NewMail(app.Config.GreedEmail, user.Email, "Email verification", emailBody, &data)
@@ -246,13 +245,13 @@ func (app *AppServer) HandlerSendEmailCode(w http.ResponseWriter, r *http.Reques
 	err = app.SgMail.SendMail(mail)
 	if err != nil {
 		app.respondWithError(w, 500, "Error sending verification email", err)
-		return 
+		return
 	}
 
 	app.respondWithJSON(w, 200, "Email sent successfully")
 }
 
-//Function verifies a user's email address with a sent code, updating database record
+// Function verifies a user's email address with a sent code, updating database record
 func (app *AppServer) HandlerVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -261,50 +260,50 @@ func (app *AppServer) HandlerVerifyEmail(w http.ResponseWriter, r *http.Request)
 		app.respondWithError(w, 400, "Bad request", err)
 		return
 	}
-	 
+
 	record, err := app.Db.GetVerificationRecord(ctx, request.Code)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.respondWithError(w, 400, "No verification record found", err)
-			return 
+			return
 		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting verification record: %w", err))
-		return 
+		return
 	}
 
 	if record.ExpiryTime.Before(time.Now()) {
 		err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting expired verification record: %w", err))
-			return 
+			return
 		}
 		app.respondWithError(w, 400, "Verification record is expired", nil)
-		return 
+		return
 	}
 
 	err = app.Db.VerifyUser(ctx, record.UserID)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user record: %w", err))
-		return 
+		return
 	}
 
 	err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting verification record: %w", err))
-		return 
+		return
 	}
 
 	app.respondWithJSON(w, 200, "User email successfully verified")
 }
 
-//Handler for resetting a user's forgotten password
+// Handler for resetting a user's forgotten password
 func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	request := models.ResetPassword{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		app.respondWithError(w, 400, "Bad request", err)
-		return 
+		return
 	}
 
 	user, err := app.Db.GetUserByEmail(ctx, request.Email)
@@ -313,7 +312,7 @@ func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Reques
 			app.respondWithError(w, 400, "No user found with that email", nil)
 		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting user record: %w", err))
-		return 
+		return
 	}
 
 	if !user.IsVerified.Bool {
@@ -327,17 +326,17 @@ func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Reques
 			app.respondWithError(w, 400, "No verification record found", nil)
 		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting old verification record: %w", err))
-		return 
-	} 
+		return
+	}
 
 	if record.ExpiryTime.Before(time.Now()) {
 		err = app.Db.DeleteVerificationRecord(ctx, record.VerificationCode)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting expired verification record: %w", err))
-			return 
+			return
 		}
 		app.respondWithError(w, 400, "Verification record is expired", nil)
-		return 
+		return
 	}
 
 	if user.ID != record.UserID {
@@ -349,20 +348,20 @@ func (app *AppServer) HandlerResetPassword(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		app.respondWithError(w, 500, "Error hashing new password", err)
 		return
-	} 
+	}
 
 	params := database.UpdatePasswordParams{
 		HashedPassword: hashedPass,
-		ID: user.ID,
+		ID:             user.ID,
 	}
 	if err = app.Db.UpdatePassword(ctx, params); err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating user record: %w", err))
-		return 
+		return
 	}
 
 	if err = app.Db.DeleteVerificationRecord(ctx, request.Code); err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error deleting verification record: %w", err))
-		return 
+		return
 	}
 
 	updated := models.UpdatedPassword{

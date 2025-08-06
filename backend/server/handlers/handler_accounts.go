@@ -3,13 +3,13 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
+	"net/http"
 )
 
-//Function will get all accounts for user
+// Function will get all accounts for user
 func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
@@ -34,17 +34,17 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	var accounts []models.Account
 	for _, account := range accs {
 		result := models.Account{
-			Id: account.ID,
-			CreatedAt: account.CreatedAt,
-			UpdatedAt: account.UpdatedAt,
-			Name: account.Name,
-			Type: account.Type,
-			Subtype: account.Subtype.String,
-			Mask: account.Mask.String,
-			OfficialName: account.OfficialName.String,
+			Id:               account.ID,
+			CreatedAt:        account.CreatedAt,
+			UpdatedAt:        account.UpdatedAt,
+			Name:             account.Name,
+			Type:             account.Type,
+			Subtype:          account.Subtype.String,
+			Mask:             account.Mask.String,
+			OfficialName:     account.OfficialName.String,
 			AvailableBalance: account.AvailableBalance.String,
-			CurrentBalance: account.CurrentBalance.String,
-			IsoCurrencyCode: account.IsoCurrencyCode.String,
+			CurrentBalance:   account.CurrentBalance.String,
+			IsoCurrencyCode:  account.IsoCurrencyCode.String,
 		}
 		accounts = append(accounts, result)
 	}
@@ -52,7 +52,7 @@ func (app *AppServer) HandlerGetAccountsForUser(w http.ResponseWriter, r *http.R
 	app.respondWithJSON(w, 200, accounts)
 }
 
-//Returns data of a single account, placed into context value through account middleware
+// Returns data of a single account, placed into context value through account middleware
 func (app *AppServer) HandlerGetAccountData(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -64,24 +64,24 @@ func (app *AppServer) HandlerGetAccountData(w http.ResponseWriter, r *http.Reque
 	}
 
 	response := models.Account{
-		Id: acc.ID,
-		CreatedAt: acc.CreatedAt,
-		UpdatedAt: acc.UpdatedAt,
-		Name: acc.Name,
-		Type: acc.Type,
-		Subtype: acc.Subtype.String,
-		Mask: acc.Mask.String,
-		OfficialName: acc.OfficialName.String,
+		Id:               acc.ID,
+		CreatedAt:        acc.CreatedAt,
+		UpdatedAt:        acc.UpdatedAt,
+		Name:             acc.Name,
+		Type:             acc.Type,
+		Subtype:          acc.Subtype.String,
+		Mask:             acc.Mask.String,
+		OfficialName:     acc.OfficialName.String,
 		AvailableBalance: acc.AvailableBalance.String,
-		CurrentBalance: acc.CurrentBalance.String,
-		IsoCurrencyCode: acc.IsoCurrencyCode.String,
-		ItemId: acc.ItemID,
+		CurrentBalance:   acc.CurrentBalance.String,
+		IsoCurrencyCode:  acc.IsoCurrencyCode.String,
+		ItemId:           acc.ItemID,
 	}
 
 	app.respondWithJSON(w, 200, response)
 }
 
-//Function will delete an account from the database
+// Function will delete an account from the database
 func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
@@ -100,7 +100,7 @@ func (app *AppServer) HandlerDeleteAccount(w http.ResponseWriter, r *http.Reques
 
 	//Delete account from database based on user ID given
 	err := app.Db.DeleteAccount(ctx, database.DeleteAccountParams{
-		ID: acc.ID,
+		ID:     acc.ID,
 		UserID: id,
 	})
 	if err != nil {

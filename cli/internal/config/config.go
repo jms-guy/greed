@@ -2,22 +2,22 @@ package config
 
 import (
 	"fmt"
+	"github.com/jms-guy/greed/cli/internal/database"
+	mySQL "github.com/jms-guy/greed/cli/sql"
 	"os"
 	"path/filepath"
 	"runtime"
-	mySQL "github.com/jms-guy/greed/cli/sql"
-	"github.com/jms-guy/greed/cli/internal/database"
 )
 
-//CLI config struct
+// CLI config struct
 type Config struct {
-	Client				*Client				//Http client for handling server requests
-	Db 					*database.Queries	//Local database queries
-	ConfigFP			string 				//Config file path
-	OperatingSystem 	string 				//Local operating system
+	Client          *Client           //Http client for handling server requests
+	Db              *database.Queries //Local database queries
+	ConfigFP        string            //Config file path
+	OperatingSystem string            //Local operating system
 }
 
-//Initializes configuration struct 
+// Initializes configuration struct
 func LoadConfig() (*Config, error) {
 	serverAddress := os.Getenv("SERVER_ADDRESS")
 	if serverAddress == "" {
@@ -26,7 +26,7 @@ func LoadConfig() (*Config, error) {
 
 	client := NewClient(serverAddress)
 
-	//Database path can either be absolute or just filename, if just a filename is provided, make sure 
+	//Database path can either be absolute or just filename, if just a filename is provided, make sure
 	//it's stored in home directory
 	localDatabase := os.Getenv("LOCAL_DATABASE")
 	if localDatabase == "" {
@@ -55,17 +55,12 @@ func LoadConfig() (*Config, error) {
 
 	os := runtime.GOOS
 
-
 	config := Config{
-		Client: 			client,
-		Db: 				queries,
-		ConfigFP: 			cFP,
-		OperatingSystem: 	os,
+		Client:          client,
+		Db:              queries,
+		ConfigFP:        cFP,
+		OperatingSystem: os,
 	}
 
 	return &config, nil
 }
-
-
-
-

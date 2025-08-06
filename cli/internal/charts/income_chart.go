@@ -10,7 +10,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Format a visual income vs expenses graph for data
+// Format a visual income vs expenses graph for data
 func MakeIncomeChart(data []models.MonetaryData) {
 	income := []float64{}
 	expenses := []float64{}
@@ -29,7 +29,7 @@ func MakeIncomeChart(data []models.MonetaryData) {
 	slices.Reverse(expenses)
 
 	graph := asciigraph.PlotMany(
-		[][]float64{income, expenses}, 
+		[][]float64{income, expenses},
 		asciigraph.SeriesColors(asciigraph.Blue, asciigraph.Red),
 		asciigraph.SeriesLegends("Income", "Expenses"),
 		asciigraph.Caption("Income vs. Expenses - 24 month history"),

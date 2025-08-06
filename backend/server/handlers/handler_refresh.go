@@ -4,20 +4,20 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/jms-guy/greed/models"
 	"net/http"
 	"time"
-	"github.com/jms-guy/greed/models"
 )
 
-//Handler function for generating a new JWT + refresh token for the user. Validates current
-//refresh token, if invalidated then session delegation gets revoked
+// Handler function for generating a new JWT + refresh token for the user. Validates current
+// refresh token, if invalidated then session delegation gets revoked
 func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	params := models.RefreshRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		app.respondWithError(w, 400, "Error decoding JSON parameters", err)
-		return 
+		return
 	}
 
 	tokenHash := app.Auth.HashRefreshToken(params.RefreshToken)
@@ -26,7 +26,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.respondWithError(w, 401, "Refresh token not found", err)
-			return 
+			return
 		}
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting refresh token: %w", err))
 	}
@@ -40,7 +40,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 		app.respondWithError(w, 401, "Token is expired", nil)
 		return
 	}
-	 if token.IsUsed {
+	if token.IsUsed {
 		err = app.TxnUpdater.RevokeDelegation(ctx, token)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error revoking delegation: %w", err))
@@ -53,7 +53,7 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 	newJWT, err := app.Auth.MakeJWT(app.Config, token.UserID)
 	if err != nil {
 		app.respondWithError(w, 500, "Error creating JWT", err)
-		return 
+		return
 	}
 
 	del, err := app.Db.GetDelegation(ctx, token.DelegationID)
@@ -79,9 +79,9 @@ func (app *AppServer) HandlerRefreshToken(w http.ResponseWriter, r *http.Request
 	}
 
 	response := models.RefreshResponse{
-		RefreshToken: 	newToken,
-		AccessToken: 	newJWT,
-		TokenType: 		"Bearer",
+		RefreshToken: newToken,
+		AccessToken:  newJWT,
+		TokenType:    "Bearer",
 	}
 
 	app.respondWithJSON(w, 200, response)

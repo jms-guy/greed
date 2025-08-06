@@ -17,7 +17,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Fetches all transaction records for accounts attached to given item
+// Fetches all transaction records for accounts attached to given item
 func (app *CLIApp) commandGetTransactions(args []string) error {
 
 	itemName := args[0]
@@ -45,7 +45,7 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 	}
 
 	var itemID string
- 	for _, i := range itemsResp.Items {
+	for _, i := range itemsResp.Items {
 		if i.Nickname == itemName {
 			itemID = i.ItemId
 			break
@@ -54,7 +54,7 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 
 	if itemID == "" {
 		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil 
+		return nil
 	}
 
 	txnsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/transactions"
@@ -86,13 +86,13 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 		}
 
 		params := database.CreateTransactionParams{
-			ID: t.Id,
-			AccountID: t.AccountId,
-			Amount: a,
-			IsoCurrencyCode: sql.NullString{String: t.IsoCurrencyCode, Valid: true},
-			Date: sql.NullString{String: t.Date.Format("2006-01-02"), Valid: true},
-			MerchantName: sql.NullString{String: t.MerchantName, Valid: true},
-			PaymentChannel: t.PaymentChannel,
+			ID:                      t.Id,
+			AccountID:               t.AccountId,
+			Amount:                  a,
+			IsoCurrencyCode:         sql.NullString{String: t.IsoCurrencyCode, Valid: true},
+			Date:                    sql.NullString{String: t.Date.Format("2006-01-02"), Valid: true},
+			MerchantName:            sql.NullString{String: t.MerchantName, Valid: true},
+			PaymentChannel:          t.PaymentChannel,
 			PersonalFinanceCategory: t.PersonalFinanceCategory,
 		}
 
@@ -109,7 +109,7 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 	return nil
 }
 
-//Gets all accounts for item
+// Gets all accounts for item
 func (app *CLIApp) commandGetAccounts(args []string) error {
 
 	itemName := args[0]
@@ -143,7 +143,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 
 	var itemID string
 	var itemInst string
- 	for _, i := range itemsResp.Items {
+	for _, i := range itemsResp.Items {
 		if i.Nickname == itemName {
 			itemID = i.ItemId
 			itemInst = i.InstitutionName
@@ -153,7 +153,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 
 	if itemID == "" {
 		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil 
+		return nil
 	}
 
 	accountsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/accounts"
@@ -181,7 +181,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 		fmt.Printf("No accounts found for item: %s\n", itemName)
 		return nil
 	}
-	
+
 	for _, acc := range response.Accounts {
 		avBalance := sql.NullFloat64{}
 		if acc.AvailableBalance != "" {
@@ -192,7 +192,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 			avBalance.Float64 = avBal
 			avBalance.Valid = true
 		}
-	
+
 		curBalance := sql.NullFloat64{}
 		if acc.CurrentBalance != "" {
 			curBal, err := strconv.ParseFloat(acc.CurrentBalance, 64)
@@ -204,19 +204,19 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 		}
 
 		params := database.CreateAccountParams{
-			ID: acc.Id,
-			CreatedAt: time.Now().Format("2006-01-02"),
-			UpdatedAt: time.Now().Format("2006-01-02"),
-			Name: acc.Name,
-			Type: acc.Type,
-			Subtype: sql.NullString{String: acc.Subtype, Valid: true},
-			Mask: sql.NullString{String: acc.Mask, Valid: true},
-			OfficialName: sql.NullString{String: acc.OfficialName, Valid: true},
+			ID:               acc.Id,
+			CreatedAt:        time.Now().Format("2006-01-02"),
+			UpdatedAt:        time.Now().Format("2006-01-02"),
+			Name:             acc.Name,
+			Type:             acc.Type,
+			Subtype:          sql.NullString{String: acc.Subtype, Valid: true},
+			Mask:             sql.NullString{String: acc.Mask, Valid: true},
+			OfficialName:     sql.NullString{String: acc.OfficialName, Valid: true},
 			AvailableBalance: avBalance,
-			CurrentBalance: curBalance,
-			IsoCurrencyCode: sql.NullString{String: acc.IsoCurrencyCode, Valid: true},
-			InstitutionName: sql.NullString{String: itemInst, Valid: true},
-			UserID: creds.User.ID.String(),
+			CurrentBalance:   curBalance,
+			IsoCurrencyCode:  sql.NullString{String: acc.IsoCurrencyCode, Valid: true},
+			InstitutionName:  sql.NullString{String: itemInst, Valid: true},
+			UserID:           creds.User.ID.String(),
 		}
 
 		_, err := app.Config.Db.CreateAccount(context.Background(), params)
@@ -231,7 +231,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 	return nil
 }
 
-//Rename an item
+// Rename an item
 func (app *CLIApp) commandRenameItem(args []string) error {
 
 	itemCurrent := args[0]
@@ -269,7 +269,7 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 
 	if itemID == "" {
 		fmt.Printf("No item found with name: %s\n", itemCurrent)
-		return nil 
+		return nil
 	}
 
 	renameURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/name"
@@ -295,7 +295,7 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 	return nil
 }
 
-//Deletes an item record for user
+// Deletes an item record for user
 func (app *CLIApp) commandDeleteItem(args []string) error {
 
 	itemName := args[0]
@@ -334,7 +334,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 
 	if itemID == "" {
 		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil 
+		return nil
 	}
 
 	pw, err := auth.ReadPassword("Please enter your password > ")
@@ -368,7 +368,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 		scanner.Scan()
 		if scanner.Text() == "n" {
 			fmt.Println("Item deletion aborted.")
-			return nil 
+			return nil
 		} else if scanner.Text() == "y" {
 			break
 		} else {
@@ -376,7 +376,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 		}
 	}
 
-	deleteURL := app.Config.Client.BaseURL + "/api/items/" + itemID 
+	deleteURL := app.Config.Client.BaseURL + "/api/items/" + itemID
 
 	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("DELETE", deleteURL, token, nil)
@@ -393,7 +393,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 
 	params := database.DeleteAccountsParams{
 		InstitutionName: sql.NullString{String: itemInst, Valid: true},
-		UserID: user.ID,
+		UserID:          user.ID,
 	}
 	err = app.Config.Db.DeleteAccounts(context.Background(), params)
 	if err != nil {
@@ -404,7 +404,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 	return nil
 }
 
-//Command resolves Plaid re-authentication issues through Link update flow. Calls sync command immediately afterwards
+// Command resolves Plaid re-authentication issues through Link update flow. Calls sync command immediately afterwards
 func (app *CLIApp) commandUpdate(args []string) error {
 	itemName := args[0]
 
@@ -432,7 +432,7 @@ func (app *CLIApp) commandUpdate(args []string) error {
 	}
 
 	var itemID string
- 	for _, i := range itemsResp.Items {
+	for _, i := range itemsResp.Items {
 		if i.Nickname == itemName {
 			itemID = i.ItemId
 			break
@@ -441,7 +441,7 @@ func (app *CLIApp) commandUpdate(args []string) error {
 
 	if itemID == "" {
 		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil 
+		return nil
 	}
 
 	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token-update/" + itemID
@@ -484,13 +484,13 @@ func (app *CLIApp) commandUpdate(args []string) error {
 
 	err = processWebhookRecords(app, itemID, "ITEM_LOGIN_REQUIRED", "ITEM")
 	if err != nil {
-		return err 
+		return err
 	}
-	err = processWebhookRecords(app, itemID, "ITEM_ERROR", "ITEM") 
+	err = processWebhookRecords(app, itemID, "ITEM_ERROR", "ITEM")
 	if err != nil {
 		return err
 	}
-	err = processWebhookRecords(app, itemID, "ITEM_BAD_STATE", "ITEM") 
+	err = processWebhookRecords(app, itemID, "ITEM_BAD_STATE", "ITEM")
 	if err != nil {
 		return err
 	}

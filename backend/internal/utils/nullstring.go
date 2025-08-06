@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-//Turns a given string into SQL type NullString, so it can be
-//inserted into possible Null fields in database - this version
-//handles strings that will be turned into NUMERIC(16, 2) type
+// Turns a given string into SQL type NullString, so it can be
+// inserted into possible Null fields in database - this version
+// handles strings that will be turned into NUMERIC(16, 2) type
 func CreateMoneyNullString(s string) (sql.NullString, error) {
 	nullString := sql.NullString{}
 
@@ -23,7 +23,7 @@ func CreateMoneyNullString(s string) (sql.NullString, error) {
 	return nullString, nil
 }
 
-//This version will handle text NullStrings
+// This version will handle text NullStrings
 func CreateTextNullString(s string) sql.NullString {
 	nullString := sql.NullString{}
 

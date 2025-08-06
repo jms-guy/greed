@@ -19,33 +19,33 @@ import (
 
 // Holds state of important server structs
 type AppServer struct {
-	Db       	GreedDatabase      			//SQLC generated database queries
-	Auth 		auth.AuthService			//Auth service interface
-	Database 	*sql.DB						//Raw database connection
-	Config   	*config.Config          	//Environment variables configured from .env file
-	Logger   	kitlog.Logger          	 	//Logging interface
-	SgMail   	sgrid.MailService    		//SendGrid mail service
-	Limiter  	*limiter.IPRateLimiter  	//Rate limiter
-	PService  	plaidservice.PlaidService   //Client for Plaid integration
-	TxnUpdater  TxnUpdater					//Used for Db transactions
-	Encryptor 	encrypt.EncryptorService	//Used for encryption and decryption methods
-	Querier		utils.QueryService				//Used for parsing URL queries
+	Db         GreedDatabase             //SQLC generated database queries
+	Auth       auth.AuthService          //Auth service interface
+	Database   *sql.DB                   //Raw database connection
+	Config     *config.Config            //Environment variables configured from .env file
+	Logger     kitlog.Logger             //Logging interface
+	SgMail     sgrid.MailService         //SendGrid mail service
+	Limiter    *limiter.IPRateLimiter    //Rate limiter
+	PService   plaidservice.PlaidService //Client for Plaid integration
+	TxnUpdater TxnUpdater                //Used for Db transactions
+	Encryptor  encrypt.EncryptorService  //Used for encryption and decryption methods
+	Querier    utils.QueryService        //Used for parsing URL queries
 }
 
 //Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
 
-//Database interface 
+// Database interface
 type GreedDatabase interface {
-    GetUserByName(ctx context.Context, name string) (database.User, error)
-    CreateUser(ctx context.Context, params database.CreateUserParams) (database.User, error)
+	GetUserByName(ctx context.Context, name string) (database.User, error)
+	CreateUser(ctx context.Context, params database.CreateUserParams) (database.User, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAllUsers(ctx context.Context) ([]string, error)
 	GetUser(ctx context.Context, id uuid.UUID) (database.User, error)
 	GetUserByEmail(ctx context.Context, email string) (database.User, error)
-	ResetUsers(ctx context.Context) error 
+	ResetUsers(ctx context.Context) error
 	UpdateFreeCalls(ctx context.Context, id uuid.UUID) error
 	UpdateMember(ctx context.Context, id uuid.UUID) error
-	UpdatePassword(ctx context.Context, arg database.UpdatePasswordParams) error 
+	UpdatePassword(ctx context.Context, arg database.UpdatePasswordParams) error
 	VerifyUser(ctx context.Context, id uuid.UUID) error
 	GetAllAccountsForUser(ctx context.Context, userID uuid.UUID) ([]database.Account, error)
 	CreateAccount(ctx context.Context, arg database.CreateAccountParams) (database.Account, error)
@@ -92,12 +92,12 @@ type GreedDatabase interface {
 	GetVerificationRecord(ctx context.Context, verificationCode string) (database.VerificationRecord, error)
 	GetVerificationRecordByUser(ctx context.Context, userID uuid.UUID) (database.VerificationRecord, error)
 	CreatePlaidWebhookRecord(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
-	ProcessWebhookRecordsByType(ctx context.Context, arg database.ProcessWebhookRecordsByTypeParams) error 
+	ProcessWebhookRecordsByType(ctx context.Context, arg database.ProcessWebhookRecordsByTypeParams) error
 	GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error)
 	WithTx(tx *sql.Tx) *database.Queries
 }
 
-//Database transaction interface
+// Database transaction interface
 type TxnUpdater interface {
 	ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error
 	RevokeDelegation(ctx context.Context, token database.RefreshToken) error
@@ -110,4 +110,3 @@ type TxnUpdater interface {
 		itemID string,
 	) error
 }
-

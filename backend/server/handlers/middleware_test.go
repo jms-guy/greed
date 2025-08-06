@@ -5,15 +5,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/server/handlers"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
 )
 
 func TestAuthMiddleware(t *testing.T) {
@@ -27,7 +27,7 @@ func TestAuthMiddleware(t *testing.T) {
 		expectedContext uuid.UUID
 	}{
 		{
-			name:  "should successfully place test userID in context",
+			name:           "should successfully place test userID in context",
 			tokenInContext: "testJWT",
 			mockDb:         &mockDatabaseService{},
 			mockAuth: &mockAuthService{
@@ -42,9 +42,9 @@ func TestAuthMiddleware(t *testing.T) {
 			expectedContext: testUserID,
 		},
 		{
-			name:   "should err with bad token",
+			name:           "should err with bad token",
 			tokenInContext: "testJWT",
-			mockDb: &mockDatabaseService{},
+			mockDb:         &mockDatabaseService{},
 			mockAuth: &mockAuthService{
 				GetBearerTokenFunc: func(headers http.Header) (string, error) {
 					return "testJWT", fmt.Errorf("mock error")
@@ -56,7 +56,7 @@ func TestAuthMiddleware(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:   "should err with invalid JWT",
+			name:           "should err with invalid JWT",
 			tokenInContext: "testJWT",
 			mockDb:         &mockDatabaseService{},
 			mockAuth: &mockAuthService{
@@ -67,7 +67,7 @@ func TestAuthMiddleware(t *testing.T) {
 					return testUserID, fmt.Errorf("mock error")
 				},
 			},
-			expectedStatus:  http.StatusUnauthorized,
+			expectedStatus: http.StatusUnauthorized,
 		},
 	}
 
@@ -124,12 +124,12 @@ func TestAccessTokenMiddleware(t *testing.T) {
 		mockEncryptor   *mockEncryptor
 		expectedStatus  int
 		expectedContext string
-		expectedBody 	string
+		expectedBody    string
 	}{
 		{
-			name:  "should successfully place access token in context",
+			name:            "should successfully place access token in context",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetAccessTokenFunc: func(ctx context.Context, id string) (database.PlaidItem, error) {
 					return database.PlaidItem{UserID: testUserID, AccessToken: testAccessToken}, nil
 				},
@@ -144,9 +144,9 @@ func TestAccessTokenMiddleware(t *testing.T) {
 			expectedContext: testAccessToken,
 		},
 		{
-			name:  "should err with bad userID in context",
+			name:            "should err with bad userID in context",
 			userIDInContext: uuid.Nil,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetAccessTokenFunc: func(ctx context.Context, id string) (database.PlaidItem, error) {
 					return database.PlaidItem{UserID: testUserID, AccessToken: testAccessToken}, nil
 				},
@@ -157,13 +157,13 @@ func TestAccessTokenMiddleware(t *testing.T) {
 					return []byte(testAccessToken), nil
 				},
 			},
-			expectedStatus:  http.StatusBadRequest,
-			expectedBody: "Bad userID in context",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Bad userID in context",
 		},
 		{
-			name:  "should err with no access token found for user",
+			name:            "should err with no access token found for user",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetAccessTokenFunc: func(ctx context.Context, id string) (database.PlaidItem, error) {
 					return database.PlaidItem{UserID: testUserID, AccessToken: testAccessToken}, sql.ErrNoRows
 				},
@@ -174,13 +174,13 @@ func TestAccessTokenMiddleware(t *testing.T) {
 					return []byte(testAccessToken), nil
 				},
 			},
-			expectedStatus:  http.StatusBadRequest,
-			expectedBody: "No item found for user",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "No item found for user",
 		},
 		{
-			name:  "should err on getting access token for user",
+			name:            "should err on getting access token for user",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetAccessTokenFunc: func(ctx context.Context, id string) (database.PlaidItem, error) {
 					return database.PlaidItem{UserID: testUserID, AccessToken: testAccessToken}, fmt.Errorf("mock error")
 				},
@@ -191,13 +191,13 @@ func TestAccessTokenMiddleware(t *testing.T) {
 					return []byte(testAccessToken), nil
 				},
 			},
-			expectedStatus:  http.StatusInternalServerError,
-			expectedBody: "Database error",
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
 		},
 		{
-			name:  "should err with mismatching userIDs",
+			name:            "should err with mismatching userIDs",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetAccessTokenFunc: func(ctx context.Context, id string) (database.PlaidItem, error) {
 					return database.PlaidItem{UserID: uuid.New(), AccessToken: testAccessToken}, nil
 				},
@@ -208,13 +208,13 @@ func TestAccessTokenMiddleware(t *testing.T) {
 					return []byte(testAccessToken), nil
 				},
 			},
-			expectedStatus:  http.StatusForbidden,
-			expectedBody: "UserID does not match item's database record",
+			expectedStatus: http.StatusForbidden,
+			expectedBody:   "UserID does not match item's database record",
 		},
 		{
-			name:  "should err on decrypting access token",
+			name:            "should err on decrypting access token",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetAccessTokenFunc: func(ctx context.Context, id string) (database.PlaidItem, error) {
 					return database.PlaidItem{UserID: testUserID, AccessToken: testAccessToken}, nil
 				},
@@ -225,8 +225,8 @@ func TestAccessTokenMiddleware(t *testing.T) {
 					return []byte(testAccessToken), fmt.Errorf("mock error")
 				},
 			},
-			expectedStatus:  http.StatusInternalServerError,
-			expectedBody: "Error decrypting access token",
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Error decrypting access token",
 		},
 	}
 
@@ -235,15 +235,15 @@ func TestAccessTokenMiddleware(t *testing.T) {
 			req := httptest.NewRequest("POST", "/test", bytes.NewBufferString(tt.requestBody))
 			ctx := context.WithValue(req.Context(), handlers.GetUserIDContextKey(), tt.userIDInContext)
 
-            req = req.WithContext(ctx)
+			req = req.WithContext(ctx)
 
 			rr := httptest.NewRecorder()
 
 			mockApp := &handlers.AppServer{
-				Db:     tt.mockDb,
-				Auth:   tt.mockAuth,
-				Config: &config.Config{},
-				Logger: kitlog.NewNopLogger(),
+				Db:        tt.mockDb,
+				Auth:      tt.mockAuth,
+				Config:    &config.Config{},
+				Logger:    kitlog.NewNopLogger(),
 				Encryptor: tt.mockEncryptor,
 			}
 
@@ -252,7 +252,7 @@ func TestAccessTokenMiddleware(t *testing.T) {
 			dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if val := r.Context().Value(handlers.GetAccessTokenKey()); val != nil {
 					token, ok := val.(string)
-					if ok  {
+					if ok {
 						tokenFromContext = token
 					}
 				}
@@ -273,8 +273,8 @@ func TestAccessTokenMiddleware(t *testing.T) {
 			}
 
 			if !strings.Contains(rr.Body.String(), tt.expectedBody) {
-                t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
-            }
+				t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
+			}
 		})
 	}
 }
@@ -287,12 +287,12 @@ func TestMemberMiddleware(t *testing.T) {
 		mockDb          *mockDatabaseService
 		mockAuth        *mockAuthService
 		expectedStatus  int
-		expectedBody 	string
+		expectedBody    string
 	}{
 		{
-			name:  "should successfully call next handler when user is member",
+			name:            "should successfully call next handler when user is member",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetUserFunc: func(ctx context.Context, id uuid.UUID) (database.User, error) {
 					return database.User{ID: testUserID, IsMember: true, FreeCalls: 5}, nil
 				},
@@ -300,13 +300,13 @@ func TestMemberMiddleware(t *testing.T) {
 					return nil
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusOK,
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusOK,
 		},
 		{
-			name:  "should successfully call next handler when user is not member but has free calls",
+			name:            "should successfully call next handler when user is not member but has free calls",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetUserFunc: func(ctx context.Context, id uuid.UUID) (database.User, error) {
 					return database.User{ID: testUserID, IsMember: false, FreeCalls: 5}, nil
 				},
@@ -314,13 +314,13 @@ func TestMemberMiddleware(t *testing.T) {
 					return nil
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusOK,
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusOK,
 		},
 		{
-			name:  "should err when user is not member and has no free calls",
+			name:            "should err when user is not member and has no free calls",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetUserFunc: func(ctx context.Context, id uuid.UUID) (database.User, error) {
 					return database.User{ID: testUserID, IsMember: false, FreeCalls: 0}, nil
 				},
@@ -328,14 +328,14 @@ func TestMemberMiddleware(t *testing.T) {
 					return nil
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusBadRequest,
-			expectedBody: "Bad request",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Bad request",
 		},
 		{
-			name:  "should err on updating user's free calls",
+			name:            "should err on updating user's free calls",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetUserFunc: func(ctx context.Context, id uuid.UUID) (database.User, error) {
 					return database.User{ID: testUserID, IsMember: false, FreeCalls: 2}, nil
 				},
@@ -343,14 +343,14 @@ func TestMemberMiddleware(t *testing.T) {
 					return fmt.Errorf("mock error")
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusInternalServerError,
-			expectedBody: "Database error",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
 		},
 		{
-			name:  "should err on getting user",
+			name:            "should err on getting user",
 			userIDInContext: testUserID,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetUserFunc: func(ctx context.Context, id uuid.UUID) (database.User, error) {
 					return database.User{ID: testUserID, IsMember: false, FreeCalls: 0}, fmt.Errorf("mock error")
 				},
@@ -358,14 +358,14 @@ func TestMemberMiddleware(t *testing.T) {
 					return nil
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusInternalServerError,
-			expectedBody: "Database error",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
 		},
 		{
-			name:  "should err with bad userID in context",
+			name:            "should err with bad userID in context",
 			userIDInContext: uuid.Nil,
-			mockDb:         &mockDatabaseService{
+			mockDb: &mockDatabaseService{
 				GetUserFunc: func(ctx context.Context, id uuid.UUID) (database.User, error) {
 					return database.User{ID: testUserID, IsMember: false, FreeCalls: 0}, nil
 				},
@@ -373,9 +373,9 @@ func TestMemberMiddleware(t *testing.T) {
 					return nil
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusBadRequest,
-			expectedBody: "Bad userID in context",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Bad userID in context",
 		},
 	}
 
@@ -384,7 +384,7 @@ func TestMemberMiddleware(t *testing.T) {
 			req := httptest.NewRequest("POST", "/test", bytes.NewBufferString(tt.requestBody))
 			ctx := context.WithValue(req.Context(), handlers.GetUserIDContextKey(), tt.userIDInContext)
 
-            req = req.WithContext(ctx)
+			req = req.WithContext(ctx)
 
 			rr := httptest.NewRecorder()
 
@@ -394,7 +394,6 @@ func TestMemberMiddleware(t *testing.T) {
 				Config: &config.Config{},
 				Logger: kitlog.NewNopLogger(),
 			}
-
 
 			dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
@@ -410,8 +409,8 @@ func TestMemberMiddleware(t *testing.T) {
 			}
 
 			if !strings.Contains(rr.Body.String(), tt.expectedBody) {
-                t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
-            }
+				t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
+			}
 		})
 	}
 }
@@ -420,76 +419,76 @@ func TestAccountMiddleware(t *testing.T) {
 	tests := []struct {
 		name            string
 		userIDInContext uuid.UUID
-		pathParams 		map[string]string
+		pathParams      map[string]string
 		requestBody     string
 		mockDb          *mockDatabaseService
 		mockAuth        *mockAuthService
 		expectedStatus  int
 		expectedContext database.Account
-		expectedBody 	string
+		expectedBody    string
 	}{
 		{
-			name:  "should successfully place account in context",
+			name:            "should successfully place account in context",
 			userIDInContext: testUserID,
-			pathParams: map[string]string{"accountid": testAccountID},
-			mockDb:         &mockDatabaseService{
+			pathParams:      map[string]string{"accountid": testAccountID},
+			mockDb: &mockDatabaseService{
 				GetAccountByIdFunc: func(ctx context.Context, arg database.GetAccountByIdParams) (database.Account, error) {
 					return testAccount, nil
 				},
 			},
-			mockAuth: &mockAuthService{},
+			mockAuth:        &mockAuthService{},
 			expectedStatus:  http.StatusOK,
 			expectedContext: testAccount,
 		},
 		{
-			name:  "should err with bad userID in context",
+			name:            "should err with bad userID in context",
 			userIDInContext: uuid.Nil,
-			pathParams: map[string]string{"accountid": testAccountID},
-			mockDb:         &mockDatabaseService{
+			pathParams:      map[string]string{"accountid": testAccountID},
+			mockDb: &mockDatabaseService{
 				GetAccountByIdFunc: func(ctx context.Context, arg database.GetAccountByIdParams) (database.Account, error) {
 					return testAccount, nil
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusBadRequest,
-			expectedBody: "Bad userID in context",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Bad userID in context",
 		},
 		{
-			name:  "should err with no account found",
+			name:            "should err with no account found",
 			userIDInContext: testUserID,
-			pathParams: map[string]string{"accountid": testAccountID},
-			mockDb:         &mockDatabaseService{
+			pathParams:      map[string]string{"accountid": testAccountID},
+			mockDb: &mockDatabaseService{
 				GetAccountByIdFunc: func(ctx context.Context, arg database.GetAccountByIdParams) (database.Account, error) {
 					return testAccount, sql.ErrNoRows
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusNotFound,
-			expectedBody: "Account not found",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "Account not found",
 		},
 		{
-			name:  "should err on getting account from database",
+			name:            "should err on getting account from database",
 			userIDInContext: testUserID,
-			pathParams: map[string]string{"accountid": testAccountID},
-			mockDb:         &mockDatabaseService{
+			pathParams:      map[string]string{"accountid": testAccountID},
+			mockDb: &mockDatabaseService{
 				GetAccountByIdFunc: func(ctx context.Context, arg database.GetAccountByIdParams) (database.Account, error) {
 					return testAccount, fmt.Errorf("mock error")
 				},
 			},
-			mockAuth: &mockAuthService{},
-			expectedStatus:  http.StatusInternalServerError,
-			expectedBody: "Database error",
+			mockAuth:       &mockAuthService{},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest("POST", "/test", bytes.NewBufferString(tt.requestBody))
-            ctx := context.WithValue(req.Context(), handlers.GetUserIDContextKey(), tt.userIDInContext)
+			ctx := context.WithValue(req.Context(), handlers.GetUserIDContextKey(), tt.userIDInContext)
 
-            req = req.WithContext(ctx)
+			req = req.WithContext(ctx)
 
-            rr := httptest.NewRecorder()
+			rr := httptest.NewRecorder()
 
 			mockApp := &handlers.AppServer{
 				Db:     tt.mockDb,
@@ -503,7 +502,7 @@ func TestAccountMiddleware(t *testing.T) {
 			dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if val := r.Context().Value(handlers.GetAccountKey()); val != nil {
 					account, ok := val.(database.Account)
-					if ok  {
+					if ok {
 						accountFromContext = account
 					}
 				}
@@ -524,8 +523,8 @@ func TestAccountMiddleware(t *testing.T) {
 			}
 
 			if !strings.Contains(rr.Body.String(), tt.expectedBody) {
-                t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
-            }
+				t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
+			}
 		})
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//Automatically opens Link URL from client
+// Automatically opens Link URL from client
 func OpenLink(system, link string) error {
 	if system == "linux" && IsWSL() {
 		// Windows default browser for WSL
@@ -26,11 +26,11 @@ func OpenLink(system, link string) error {
 	}
 }
 
-//Detects WSL running
+// Detects WSL running
 func IsWSL() bool {
-    data, err := os.ReadFile("/proc/version")
-    if err != nil {
-        return false
-    }
-    return strings.Contains(strings.ToLower(string(data)), "microsoft")
+	data, err := os.ReadFile("/proc/version")
+	if err != nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(data)), "microsoft")
 }

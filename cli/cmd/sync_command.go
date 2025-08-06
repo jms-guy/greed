@@ -5,17 +5,17 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strconv"
-	"io"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
+	"io"
+	"net/http"
+	"strconv"
 )
 
-//Syncs database with updated account balances, and transaction records
-//Updates account balances, and deletes local transaction records before replacing them with 
-//updated records from server database.
+// Syncs database with updated account balances, and transaction records
+// Updates account balances, and deletes local transaction records before replacing them with
+// updated records from server database.
 func (app *CLIApp) commandSync(args []string) error {
 	itemName := args[0]
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -66,7 +66,7 @@ func (app *CLIApp) commandSync(args []string) error {
 			avBalance.Float64 = avBal
 			avBalance.Valid = true
 		}
-	
+
 		curBalance := sql.NullFloat64{}
 		if acc.CurrentBalance != "" {
 			curBal, err := strconv.ParseFloat(acc.CurrentBalance, 64)
@@ -78,9 +78,9 @@ func (app *CLIApp) commandSync(args []string) error {
 		}
 		params := database.UpdateAccParams{
 			AvailableBalance: avBalance,
-			CurrentBalance: curBalance,
-			ID: acc.Id,
-			UserID: creds.User.ID.String(),
+			CurrentBalance:   curBalance,
+			ID:               acc.Id,
+			UserID:           creds.User.ID.String(),
 		}
 		err = app.Config.Db.UpdateAcc(context.Background(), params)
 		if err != nil {
@@ -118,9 +118,8 @@ func (app *CLIApp) commandSync(args []string) error {
 		}
 		return fmt.Errorf("decoding error for transactions: %w. The response might be malformed or unexpected. Please try syncing again later", err)
 	}
-	
-	fmt.Println(" > Syncing transaction records...")
 
+	fmt.Println(" > Syncing transaction records...")
 
 	err = app.Config.Db.DeleteTransactions(context.Background(), creds.User.ID.String())
 	if err != nil {
@@ -134,13 +133,13 @@ func (app *CLIApp) commandSync(args []string) error {
 		}
 
 		params := database.CreateTransactionParams{
-			ID: t.Id,
-			AccountID: t.AccountId,
-			Amount: a,
-			IsoCurrencyCode: sql.NullString{String: t.IsoCurrencyCode, Valid: true},
-			Date: sql.NullString{String: t.Date.Format("2006-01-02"), Valid: true},
-			MerchantName: sql.NullString{String: t.MerchantName, Valid: true},
-			PaymentChannel: t.PaymentChannel,
+			ID:                      t.Id,
+			AccountID:               t.AccountId,
+			Amount:                  a,
+			IsoCurrencyCode:         sql.NullString{String: t.IsoCurrencyCode, Valid: true},
+			Date:                    sql.NullString{String: t.Date.Format("2006-01-02"), Valid: true},
+			MerchantName:            sql.NullString{String: t.MerchantName, Valid: true},
+			PaymentChannel:          t.PaymentChannel,
 			PersonalFinanceCategory: t.PersonalFinanceCategory,
 		}
 
@@ -156,15 +155,15 @@ func (app *CLIApp) commandSync(args []string) error {
 
 	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "TRANSACTIONS_UPDATES_AVAILABLE")
 	if err != nil {
-		return err 
+		return err
 	}
 	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "TRANSACTIONS_REMOVED")
 	if err != nil {
-		return err 
+		return err
 	}
 	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "DEFAULT_UPDATE")
 	if err != nil {
-		return err 
+		return err
 	}
 
 	return nil

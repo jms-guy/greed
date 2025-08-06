@@ -6,16 +6,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
-	"time"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
+	"net/http"
+	"os"
+	"time"
 )
 
-//Function creates a new user record on server, and in loca database
+// Function creates a new user record on server, and in loca database
 func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	username := args[0]
@@ -33,16 +33,16 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	//Get user email
 	email, err := registerEmailHelper()
 	if err != nil {
-		return err 
+		return err
 	}
 	if email == "exit" {
 		return nil
 	}
 
 	reqData := models.UserDetails{
-		Name: username,
+		Name:     username,
 		Password: password,
-		Email: email,
+		Email:    email,
 	}
 
 	res, err := app.Config.MakeBasicRequest("POST", registerURL, "", reqData)
@@ -64,7 +64,7 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 
 	emailData := models.EmailVerification{
 		UserID: user.ID,
-		Email: user.Email,
+		Email:  user.Email,
 	}
 
 	emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
@@ -81,34 +81,34 @@ func (app *CLIApp) commandRegisterUser(args []string) error {
 	//Email verification flow
 	verified, err := verifyEmailHelper(app, sendURL, verifyURL, user, emailData)
 	if err != nil {
-		return err 
+		return err
 	}
 	if !verified {
-		return nil 
+		return nil
 	}
 
 	params := database.CreateUserParams{
-		ID: user.ID.String(),
-		Name: username,
-		CreatedAt: user.CreatedAt.Format("2006-01-02"),
-		UpdatedAt: user.UpdatedAt.Format("2006-01-02"),
+		ID:             user.ID.String(),
+		Name:           username,
+		CreatedAt:      user.CreatedAt.Format("2006-01-02"),
+		UpdatedAt:      user.UpdatedAt.Format("2006-01-02"),
 		HashedPassword: user.HashedPassword,
-		Email: user.Email,
-		IsVerified: sql.NullBool{Bool: true, Valid: true},
+		Email:          user.Email,
+		IsVerified:     sql.NullBool{Bool: true, Valid: true},
 	}
 
 	_, err = app.Config.Db.CreateUser(context.Background(), params)
 	if err != nil {
-		return fmt.Errorf("error creating local record of user: %w", err)	
+		return fmt.Errorf("error creating local record of user: %w", err)
 	}
 
 	fmt.Printf("User: %s has been successfully registered!\n", username)
 	fmt.Println("As a demo user, you have 10 total uses for commands (fetch, sync). The intial fetch will use 2, and each sync afterwards will also use 2.")
-	
+
 	return nil
 }
 
-//Function creates a login session for user, getting auth tokens
+// Function creates a login session for user, getting auth tokens
 func (app *CLIApp) commandUserLogin(args []string) error {
 
 	username := args[0]
@@ -134,12 +134,12 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	if len(items) != 0 {
 		return checkForWebhookRecords(app, webhookURL, items)
 	}
-	
+
 	//If no items for user found, this is determined to be first time login
 	//Go through first time Plaid Link flow
 	linked, err := userFirstTimePlaidLinkHelper(app, login, linkURL, accessURL, redirectURL, itemsURL)
 	if err != nil {
-		return err 
+		return err
 	}
 	if linked {
 		return nil
@@ -153,7 +153,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 	return nil
 }
 
-//Logs a user out, by deleting their local credentials file, and expiring their session delegation server side
+// Logs a user out, by deleting their local credentials file, and expiring their session delegation server side
 func (app *CLIApp) commandUserLogout() error {
 
 	logoutURL := app.Config.Client.BaseURL + "/api/auth/logout"
@@ -182,14 +182,14 @@ func (app *CLIApp) commandUserLogout() error {
 	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
 		fmt.Printf("Error logging out - %s\n", err)
-		return nil 
+		return nil
 	}
 
 	fmt.Println("Logged out successfully!")
 	return nil
 }
 
-//Delete a user's records locally, and server side
+// Delete a user's records locally, and server side
 func (app *CLIApp) commandDeleteUser(args []string) error {
 
 	username := args[0]
@@ -210,7 +210,7 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 		scanner.Scan()
 		if scanner.Text() == "n" {
 			fmt.Println("User deletion aborted.")
-			return nil 
+			return nil
 		} else if scanner.Text() == "y" {
 			break
 		} else {
@@ -222,7 +222,7 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No user found on machine with that name")
-			return nil 
+			return nil
 		}
 		return fmt.Errorf("error getting user from local database: %w", err)
 	}
@@ -254,14 +254,14 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
 		fmt.Printf("Error removing credentials - %s\n", err)
-		return nil 
+		return nil
 	}
 
 	fmt.Printf("All records for %s have been successfully deleted\n", username)
 	return nil
 }
 
-//Verifies a user's email address
+// Verifies a user's email address
 func (app *CLIApp) commandVerifyEmail() error {
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
@@ -285,7 +285,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 
 	sendReq := models.EmailVerification{
 		UserID: creds.User.ID,
-		Email: user.Email,
+		Email:  user.Email,
 	}
 
 	sendResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", sendReq)
@@ -301,7 +301,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 
 	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, sendReq)
 	if err != nil {
-		return err 
+		return err
 	}
 	if code == "" {
 		return nil
@@ -309,7 +309,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 
 	verifyData := models.EmailVerificationWithCode{
 		UserID: creds.User.ID,
-		Code: code,
+		Code:   code,
 	}
 
 	verifyRes, err := app.Config.MakeBasicRequest("POST", verifyURL, "", verifyData)
@@ -317,7 +317,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 		return fmt.Errorf("error making http request: %w", err)
 	}
 	defer verifyRes.Body.Close()
-	
+
 	err = checkResponseStatus(verifyRes)
 	if err != nil {
 		return err
@@ -325,8 +325,8 @@ func (app *CLIApp) commandVerifyEmail() error {
 
 	verifyParams := database.VerifyEmailParams{
 		IsVerified: sql.NullBool{Bool: true, Valid: true},
-		UpdatedAt: time.Now().Format("2006-01-02"),
-		Name: user.Name,
+		UpdatedAt:  time.Now().Format("2006-01-02"),
+		Name:       user.Name,
 	}
 
 	err = app.Config.Db.VerifyEmail(context.Background(), verifyParams)
@@ -339,7 +339,7 @@ func (app *CLIApp) commandVerifyEmail() error {
 	return nil
 }
 
-//Lists all items attached to a specific user
+// Lists all items attached to a specific user
 func (app *CLIApp) commandUserItems() error {
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -369,7 +369,7 @@ func (app *CLIApp) commandUserItems() error {
 		if err = json.NewDecoder(resp.Body).Decode(&itemsResponse); err != nil {
 			return fmt.Errorf("error decoding response data: %w", err)
 		}
-		
+
 		if len(itemsResponse.Items) != 0 {
 			fmt.Printf(" > Available items for user: %s\n", creds.User.Name)
 			fmt.Println(" ~~~~~")
@@ -382,7 +382,7 @@ func (app *CLIApp) commandUserItems() error {
 	return nil
 }
 
-//Updates a user's password in record. Requires verified email address to send code to
+// Updates a user's password in record. Requires verified email address to send code to
 func (app *CLIApp) commandChangePassword() error {
 
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"
@@ -411,7 +411,7 @@ func (app *CLIApp) commandChangePassword() error {
 
 	request := models.EmailVerification{
 		UserID: creds.User.ID,
-		Email: creds.User.Email,
+		Email:  creds.User.Email,
 	}
 
 	emailResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
@@ -435,7 +435,7 @@ func (app *CLIApp) commandChangePassword() error {
 
 	updateReq := models.UpdatePassword{
 		NewPassword: password,
-		Code: code,
+		Code:        code,
 	}
 
 	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
@@ -459,8 +459,8 @@ func (app *CLIApp) commandChangePassword() error {
 
 	params := database.UpdatePasswordParams{
 		HashedPassword: updated.HashPassword,
-		UpdatedAt: time.Now().Format("2006-01-02"),
-		Name: creds.User.Name,
+		UpdatedAt:      time.Now().Format("2006-01-02"),
+		Name:           creds.User.Name,
 	}
 
 	err = app.Config.Db.UpdatePassword(context.Background(), params)
@@ -472,7 +472,7 @@ func (app *CLIApp) commandChangePassword() error {
 	return nil
 }
 
-//Resets a user's forgotten password, allowing for account recovery. Requires a verified email address.
+// Resets a user's forgotten password, allowing for account recovery. Requires a verified email address.
 func (app *CLIApp) commandResetPassword(args []string) error {
 
 	email := args[0]
@@ -492,7 +492,7 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 
 	request := models.EmailVerification{
 		UserID: uuid.MustParse(user.ID),
-		Email: user.Email,
+		Email:  user.Email,
 	}
 
 	emailResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
@@ -508,15 +508,15 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 
 	code, err := getEmailCodeHelper(app, email, sendURL, request)
 	if err != nil {
-		return err 
+		return err
 	}
 	if code == "" {
 		return nil
 	}
 
 	resetReq := models.ResetPassword{
-		Email: user.Email,
-		Code: code,
+		Email:       user.Email,
+		Code:        code,
 		NewPassword: password,
 	}
 
@@ -539,8 +539,8 @@ func (app *CLIApp) commandResetPassword(args []string) error {
 
 	params := database.UpdatePasswordParams{
 		HashedPassword: updated.HashPassword,
-		UpdatedAt: time.Now().Format("2006-01-02"),
-		Name: user.Name,
+		UpdatedAt:      time.Now().Format("2006-01-02"),
+		Name:           user.Name,
 	}
 
 	err = app.Config.Db.UpdatePassword(context.Background(), params)

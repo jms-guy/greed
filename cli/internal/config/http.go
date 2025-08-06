@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-//Structure a basic Http request with required data
+// Structure a basic Http request with required data
 func (c *Config) MakeBasicRequest(method, url, token string, data any) (*http.Response, error) {
 	var reqBody io.Reader
 	if data != nil {
@@ -25,7 +25,7 @@ func (c *Config) MakeBasicRequest(method, url, token string, data any) (*http.Re
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
-		req.Header.Set("Authorization", "Bearer " + token)
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
 	res, err := c.Client.HttpClient.Do(req)
@@ -35,4 +35,3 @@ func (c *Config) MakeBasicRequest(method, url, token string, data any) (*http.Re
 
 	return res, nil
 }
- 

@@ -19,23 +19,22 @@ import (
 	"github.com/jms-guy/greed/backend/server/handlers"
 )
 
-
 func TestHandlerRefreshToken(t *testing.T) {
-    tests := []struct {
-        name            string
-        userIDInContext uuid.UUID
-		requestBody 	string
-        mockDb          *mockDatabaseService
-		mockAuth 		*mockAuthService
+	tests := []struct {
+		name            string
+		userIDInContext uuid.UUID
+		requestBody     string
+		mockDb          *mockDatabaseService
+		mockAuth        *mockAuthService
 		mockTxnUpdater  *mockTxnUpdaterService
-        expectedStatus  int 
-        expectedBody    string  
-    }{
+		expectedStatus  int
+		expectedBody    string
+	}{
 		{
-            name: "should successfully create a refresh token",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should successfully create a refresh token",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -62,14 +61,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusOK,
-            expectedBody: "JWT",
-        },
+			expectedStatus: http.StatusOK,
+			expectedBody:   "JWT",
+		},
 		{
-            name: "should err on decoding request",
-            userIDInContext: testUserID,
-			requestBody: "",
-            mockDb: &mockDatabaseService{
+			name:            "should err on decoding request",
+			userIDInContext: testUserID,
+			requestBody:     "",
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -96,14 +95,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusBadRequest,
-            expectedBody: "Error decoding JSON parameters",
-        },
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Error decoding JSON parameters",
+		},
 		{
-            name: "should err with no refresh token found",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err with no refresh token found",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, sql.ErrNoRows
 				},
@@ -130,14 +129,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusUnauthorized,
-            expectedBody: "Refresh token not found",
-        },
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Refresh token not found",
+		},
 		{
-            name: "should err on getting refresh token",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err on getting refresh token",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, fmt.Errorf("mock error")
 				},
@@ -164,16 +163,16 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Database error",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
 		{
-            name: "should err expiring expired delegation token",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err expiring expired delegation token",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
-					return database.RefreshToken{ExpiresAt: time.Now().Add(-1*time.Hour)}, nil
+					return database.RefreshToken{ExpiresAt: time.Now().Add(-1 * time.Hour)}, nil
 				},
 				ExpireTokenFunc: func(ctx context.Context, hashedToken string) error {
 					return nil
@@ -198,16 +197,16 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Database error",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
 		{
-            name: "should err with expired delegation token",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err with expired delegation token",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
-					return database.RefreshToken{ExpiresAt: time.Now().Add(-1*time.Hour)}, nil
+					return database.RefreshToken{ExpiresAt: time.Now().Add(-1 * time.Hour)}, nil
 				},
 				ExpireTokenFunc: func(ctx context.Context, hashedToken string) error {
 					return nil
@@ -232,14 +231,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusUnauthorized,
-            expectedBody: "Token is expired",
-        },
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Token is expired",
+		},
 		{
-            name: "should err on revoking delegation",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err on revoking delegation",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour), IsUsed: true}, nil
 				},
@@ -266,14 +265,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return fmt.Errorf("mock error")
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Database error",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
 		{
-            name: "should err with revoked delegation",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err with revoked delegation",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour), IsUsed: true}, nil
 				},
@@ -300,14 +299,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusUnauthorized,
-            expectedBody: "Refresh token has already been used",
-        },
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Refresh token has already been used",
+		},
 		{
-            name: "should err on creating JWT",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err on creating JWT",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -334,14 +333,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Error creating JWT",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Error creating JWT",
+		},
 		{
-            name: "should err with delegation not found",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err with delegation not found",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -371,14 +370,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusUnauthorized,
-            expectedBody: "Session delegation not found",
-        },
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Session delegation not found",
+		},
 		{
-            name: "should err on getting delegation",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err on getting delegation",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -408,14 +407,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Database error",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
 		{
-            name: "should err on making refresh token",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err on making refresh token",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -445,14 +444,14 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Error creating new refresh token",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Error creating new refresh token",
+		},
 		{
-            name: "should err on expiring refresh token",
-            userIDInContext: testUserID,
-			requestBody: `{"refresh_token": "token"}`,
-            mockDb: &mockDatabaseService{
+			name:            "should err on expiring refresh token",
+			userIDInContext: testUserID,
+			requestBody:     `{"refresh_token": "token"}`,
+			mockDb: &mockDatabaseService{
 				GetTokenFunc: func(ctx context.Context, hashedToken string) (database.RefreshToken, error) {
 					return database.RefreshToken{ExpiresAt: time.Now().Add(time.Hour)}, nil
 				},
@@ -482,35 +481,35 @@ func TestHandlerRefreshToken(t *testing.T) {
 					return nil
 				},
 			},
-            expectedStatus: http.StatusInternalServerError,
-            expectedBody: "Database error",
-        },
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
 	}
 
 	for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            req := httptest.NewRequest("POST", "/api/auth/refresh", bytes.NewBufferString(tt.requestBody))
-            req.Header.Set("Content-Type", "application/json")
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/api/auth/refresh", bytes.NewBufferString(tt.requestBody))
+			req.Header.Set("Content-Type", "application/json")
 
-            rr := httptest.NewRecorder()
+			rr := httptest.NewRecorder()
 
-            mockApp := &handlers.AppServer{
-                Db: tt.mockDb,
-				Auth: tt.mockAuth,
+			mockApp := &handlers.AppServer{
+				Db:         tt.mockDb,
+				Auth:       tt.mockAuth,
 				TxnUpdater: tt.mockTxnUpdater,
-				Config: &config.Config{},
-                Logger: kitlog.NewNopLogger(),
-            }
+				Config:     &config.Config{},
+				Logger:     kitlog.NewNopLogger(),
+			}
 
-            mockApp.HandlerRefreshToken(rr, req)
+			mockApp.HandlerRefreshToken(rr, req)
 
-            // --- Assertions ---
-            if status := rr.Code; status != tt.expectedStatus {
-                t.Errorf("handler returned wrong status code: got %v want %v. Body: %s", status, tt.expectedStatus, rr.Body.String())
-            }
-            if !strings.Contains(rr.Body.String(), tt.expectedBody) {
-                t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
-            }
-        })
-    }
+			// --- Assertions ---
+			if status := rr.Code; status != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v. Body: %s", status, tt.expectedStatus, rr.Body.String())
+			}
+			if !strings.Contains(rr.Body.String(), tt.expectedBody) {
+				t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), tt.expectedBody)
+			}
+		})
+	}
 }

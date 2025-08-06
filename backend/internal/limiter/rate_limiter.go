@@ -6,25 +6,25 @@ import (
 )
 
 type RateLimiter struct {
-	Tokens 				float64		//Current number of tokens
-	MaxTokens 			float64 	//Max number of tokens
-	RefillRate 			float64  	//Tokens added per second
-	LastRefillTime		time.Time 	//Last time tokens were refilled
-	Mutex				sync.Mutex
+	Tokens         float64   //Current number of tokens
+	MaxTokens      float64   //Max number of tokens
+	RefillRate     float64   //Tokens added per second
+	LastRefillTime time.Time //Last time tokens were refilled
+	Mutex          sync.Mutex
 }
 
-//Maps IP addresses to their respective rate limiters
+// Maps IP addresses to their respective rate limiters
 type IPRateLimiter struct {
-	Limiters 		map[string]*RateLimiter
-	Mutex 			sync.Mutex
+	Limiters map[string]*RateLimiter
+	Mutex    sync.Mutex
 }
 
-//Creates new instance of a RateLimiter
+// Creates new instance of a RateLimiter
 func NewRateLimiter(maxTokens, refillRate float64) *RateLimiter {
 	return &RateLimiter{
-		Tokens: 		maxTokens,
-		MaxTokens: 		maxTokens,
-		RefillRate: 	refillRate,
+		Tokens:         maxTokens,
+		MaxTokens:      maxTokens,
+		RefillRate:     refillRate,
 		LastRefillTime: time.Now(),
 	}
 }
@@ -35,7 +35,7 @@ func NewIPRateLimiter() *IPRateLimiter {
 	}
 }
 
-//Gets limiter for IP address from struct map
+// Gets limiter for IP address from struct map
 func (i *IPRateLimiter) GetLimiter(ip string, limit, refresh float64) *RateLimiter {
 	i.Mutex.Lock()
 	defer i.Mutex.Unlock()
@@ -49,7 +49,7 @@ func (i *IPRateLimiter) GetLimiter(ip string, limit, refresh float64) *RateLimit
 	return limiter
 }
 
-//Refill available tokens in limiter struct
+// Refill available tokens in limiter struct
 func (r *RateLimiter) RefillTokens() {
 
 	now := time.Now()
@@ -63,7 +63,7 @@ func (r *RateLimiter) RefillTokens() {
 	r.LastRefillTime = now
 }
 
-//Determines whether a request will be allowed or rejected
+// Determines whether a request will be allowed or rejected
 func (r *RateLimiter) Allow() bool {
 	r.Mutex.Lock()
 	defer r.Mutex.Unlock()
@@ -77,6 +77,3 @@ func (r *RateLimiter) Allow() bool {
 
 	return false
 }
-
-
-

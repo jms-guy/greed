@@ -14,8 +14,8 @@ import (
 	"github.com/jms-guy/greed/cli/internal/utils"
 )
 
-//Function gets the export directory determined by operating system, retrieves transaction records from local database,
-//and creates an exported .csv file containing those records
+// Function gets the export directory determined by operating system, retrieves transaction records from local database,
+// and creates an exported .csv file containing those records
 func (app *CLIApp) commandExportData(args []string) error {
 	accountName := args[0]
 
@@ -29,14 +29,14 @@ func (app *CLIApp) commandExportData(args []string) error {
 	if len(args) == 2 {
 		exportDirectory = args[1]
 	}
-	
+
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
 	params := database.GetAccountParams{
-		Name: accountName,
+		Name:   accountName,
 		UserID: creds.User.ID.String(),
 	}
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
@@ -51,10 +51,10 @@ func (app *CLIApp) commandExportData(args []string) error {
 
 	if len(txns) == 0 {
 		fmt.Printf("No transaction records found for account %s\n", accountName)
-		return nil 
+		return nil
 	}
 
-	filename :=fmt.Sprintf("%s.csv", accountName)
+	filename := fmt.Sprintf("%s.csv", accountName)
 	exportFile := filepath.Join(exportDirectory, filename)
 
 	err = os.MkdirAll(exportDirectory, 0755)
@@ -92,7 +92,7 @@ func (app *CLIApp) commandExportData(args []string) error {
 	return nil
 }
 
-//Gets the base export directory to send exported .csv files to. Directory is based on operating system
+// Gets the base export directory to send exported .csv files to. Directory is based on operating system
 func (app *CLIApp) getExportDirectory() string {
 	var baseDir string
 

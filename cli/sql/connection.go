@@ -24,7 +24,7 @@ func OpenLocalDatabase(dbPath string) (*database.Queries, error) {
 	goose.SetLogger(log.New(io.Discard, "", 0))
 
 	if err = goose.SetDialect("sqlite"); err != nil {
-		return nil, err 
+		return nil, err
 	}
 
 	if err = goose.Up(db, "schema"); err != nil {

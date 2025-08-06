@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-//Function opens a temporary local webserver, to wait for the Plaid public token received after Link flow completion
+// Function opens a temporary local webserver, to wait for the Plaid public token received after Link flow completion
 func ListenForPlaidCallback() (string, error) {
 
 	mux := http.NewServeMux()
 	server := http.Server{
 		Handler: mux,
-		Addr: ":8080",
+		Addr:    ":8080",
 	}
 
 	publicTokenChan := make(chan string)
@@ -37,8 +37,8 @@ func ListenForPlaidCallback() (string, error) {
 
 	mux.HandleFunc("/plaid-update-callback", func(w http.ResponseWriter, r *http.Request) {
 
-    	fmt.Println(" > Plaid Link Update successful")
-		
+		fmt.Println(" > Plaid Link Update successful")
+
 		fmt.Fprintf(w, "Bank connection updated! You can close this window.")
 		w.(http.Flusher).Flush()
 		publicTokenChan <- ""
@@ -54,10 +54,9 @@ func ListenForPlaidCallback() (string, error) {
 		} else {
 			fmt.Fprintf(w, "Plaid Link flow cancelled. You can close this window.")
 		}
-		publicTokenChan <- "" 
+		publicTokenChan <- ""
 
 	})
-
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -65,14 +64,14 @@ func ListenForPlaidCallback() (string, error) {
 		}
 	}()
 
-	timeout := 5 * time.Minute 
+	timeout := 5 * time.Minute
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
 	select {
 	case token := <-publicTokenChan:
-		
-		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
@@ -84,7 +83,7 @@ func ListenForPlaidCallback() (string, error) {
 		return "", err
 
 	case <-exitSignalChan:
-		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
@@ -94,7 +93,7 @@ func ListenForPlaidCallback() (string, error) {
 		return "", fmt.Errorf("plaid Link flow was cancelled or encountered an error")
 
 	case <-timer.C:
-		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {

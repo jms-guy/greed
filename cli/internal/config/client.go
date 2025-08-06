@@ -6,11 +6,11 @@ import (
 )
 
 type Client struct {
-	HttpClient		*http.Client
-	BaseURL			string
+	HttpClient *http.Client
+	BaseURL    string
 }
 
-//Initializes a new Client struct
+// Initializes a new Client struct
 func NewClient(address string) *Client {
 	return &Client{
 		HttpClient: &http.Client{

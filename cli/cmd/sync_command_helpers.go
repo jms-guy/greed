@@ -8,7 +8,7 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-//Gets list of items from server, finds a specific item based on name and returns the ID
+// Gets list of items from server, finds a specific item based on name and returns the ID
 func findItemHelper(app *CLIApp, itemName, itemsURL string) (string, error) {
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
@@ -31,7 +31,7 @@ func findItemHelper(app *CLIApp, itemName, itemsURL string) (string, error) {
 	}
 
 	var itemID string
- 	for _, i := range itemsResp.Items {
+	for _, i := range itemsResp.Items {
 		if i.Nickname == itemName {
 			itemID = i.ItemId
 			break
@@ -45,8 +45,8 @@ func findItemHelper(app *CLIApp, itemName, itemsURL string) (string, error) {
 	return itemID, nil
 }
 
-//Slightly more in depth status code handling for sync command http responses
-func parseAndReturnServerError(resp *http.Response, ) error {
+// Slightly more in depth status code handling for sync command http responses
+func parseAndReturnServerError(resp *http.Response) error {
 	if resp.StatusCode != http.StatusOK {
 		var serverErr map[string]string
 		if decodeErr := json.NewDecoder(resp.Body).Decode(&serverErr); decodeErr == nil && serverErr["error"] != "" {
@@ -58,12 +58,12 @@ func parseAndReturnServerError(resp *http.Response, ) error {
 	return nil
 }
 
-//Makes server request to process webhooks of a certain type
+// Makes server request to process webhooks of a certain type
 func processWebhookRecords(app *CLIApp, itemID, webhookCode, webhookType string) error {
 	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
 
 	request := models.ProcessWebhook{
-		ItemID: itemID,
+		ItemID:      itemID,
 		WebhookCode: webhookCode,
 		WebhookType: webhookType,
 	}
@@ -78,7 +78,7 @@ func processWebhookRecords(app *CLIApp, itemID, webhookCode, webhookType string)
 
 	err = checkResponseStatus(res)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	return nil
