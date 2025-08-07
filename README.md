@@ -1,10 +1,6 @@
 
 # GREED
 
-## Project Status
-![Test Status](https://github.com/jms-guy/greed/actions/workflows/CI.yml/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jms-guy/greed)](https://goreportcard.com/report/github.com/jms-guy/greed)
-
 ## Overview
 
 Greed is a financial application written almost entirely in Golang, used to view/track data easily across financial institutions/accounts. It utilizes the third-party API [Plaid](https://plaid.com) to connect your account with your financial institutions, and obtain your account and transaction history. This data can then be viewed in a user friendly format, which can be used to track past expenditures and plan future ones.
@@ -42,7 +38,11 @@ Unless you are running your own server for this application, CLI users are restr
     - Viewable in tables and graphs
 - Export data into a CSV file
 
-### To-Do List
+## Project Status
+![Test Status](https://github.com/jms-guy/greed/actions/workflows/CI.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jms-guy/greed)](https://goreportcard.com/report/github.com/jms-guy/greed)
+
+## To-Do List
 
 - CLI tests + backend integration tests
 - Deploy + C/I 

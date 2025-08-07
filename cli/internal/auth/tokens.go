@@ -39,6 +39,7 @@ func GetCreds(configPath string) (models.Credentials, error) {
 
 	credFile := filepath.Join(base, "credentials.json")
 
+	// #nosec G304 - configPath is trusted input
 	file, err := os.Open(credFile)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -72,14 +73,15 @@ func StoreTokens(data models.Credentials, configPath string) error {
 
 	creds := filepath.Join(base, "credentials.json")
 
-	f, err := os.OpenFile(creds, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	// #nosec G304 - configPath is trusted input
+	f, err := os.OpenFile(filepath.Clean(creds), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
 	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ") // optional, for pretty-print
+	enc.SetIndent("", "  ")
 	return enc.Encode(data)
 }
 

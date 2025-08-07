@@ -290,10 +290,10 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 
 func (app *CLIApp) exportData() *cobra.Command {
 	return &cobra.Command{
-		Use:     "export <account-name> [directory]",
+		Use:     "export <account-name>",
 		Aliases: []string{"Export", "EXPORT"},
 		Short:   "Export an account's transaction data into a .csv file",
-		Args:    cobra.RangeArgs(1, 2),
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.commandExportData(args)
 		},

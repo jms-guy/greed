@@ -24,11 +24,12 @@ func (app *CLIApp) commandExportData(args []string) error {
 	accountName = strings.TrimSuffix(accountName, "'")
 	accountName = strings.TrimPrefix(accountName, "\"")
 	accountName = strings.TrimSuffix(accountName, "\"")
+	//Input sanitization
+	accountName = strings.ReplaceAll(accountName, "/", "")
+	accountName = strings.ReplaceAll(accountName, "\\", "")
+	accountName = strings.ReplaceAll(accountName, "..", "")
 
 	exportDirectory := app.getExportDirectory()
-	if len(args) == 2 {
-		exportDirectory = args[1]
-	}
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {

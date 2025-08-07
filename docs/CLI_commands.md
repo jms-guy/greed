@@ -42,8 +42,11 @@
 - `info <account-name>`
     - View extended information for a given account
 
-- `export <account-name> [directory]`
-    - Export an account's transaction history into a CSV file. Specify a directory in the command, else a default directory will be used
+- `export <account-name>`
+    - Export an account's transaction history into a CSV file
+    - Export directory is based on operating system
+        - Windows: C:\\Users\\user\\Documents\\greed_exports
+        - Linux: /home/user/greed_exports
 
 ### Get
 

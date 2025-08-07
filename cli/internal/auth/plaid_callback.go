@@ -11,8 +11,9 @@ import (
 func ListenForPlaidCallback() (string, error) {
 	mux := http.NewServeMux()
 	server := http.Server{
-		Handler: mux,
-		Addr:    ":8080",
+		Handler:           mux,
+		Addr:              ":8080",
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	publicTokenChan := make(chan string)

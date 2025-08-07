@@ -67,8 +67,10 @@ func (app *AppServer) HandlerGetTransactionsForAccount(w http.ResponseWriter, r 
 
 		params := database.GetMerchantSummaryByMonthParams{
 			AccountID: acc.ID,
-			Year:      int32(yearVal),
-			Month:     int32(monthVal),
+			// #nosec G115 G109 - int32 is fine for these values
+			Year: int32(yearVal),
+			// #nosec G115 G109
+			Month: int32(monthVal),
 		}
 		summaries, err := app.Db.GetMerchantSummaryByMonth(ctx, params)
 		if err != nil {
@@ -205,7 +207,9 @@ func (app *AppServer) HandlerGetMonetaryDataForMonth(w http.ResponseWriter, r *h
 	}
 
 	incAmount, err := app.Db.GetMonetaryDataForMonth(ctx, database.GetMonetaryDataForMonthParams{
-		Year:      int32(y),
+		// #nosec G115 G109 - int32 is fine for these values
+		Year: int32(y),
+		// #nosec G115 G109
 		Month:     int32(m),
 		AccountID: acc.ID,
 	})

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	kitlog "github.com/go-kit/log"
@@ -236,13 +237,21 @@ func Run() error {
 		})
 	})
 
+	server := &http.Server{
+		Addr:         app.Config.ServerAddress,
+		Handler:      r,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
 	/////Start server/////
 	app.Logger.Log(
 		"transport", "HTTP",
 		"address", app.Config.ServerAddress,
 		"msg", "listening",
 	)
-	err = http.ListenAndServe(app.Config.ServerAddress, r)
+	err = server.ListenAndServe()
 	if err != nil {
 		app.Logger.Log(
 			"level", "error",

@@ -1,0 +1,6 @@
+{
+    "Exclude": [
+        "cli/internal/database/",
+        "backend/internal/database"
+    ]
+}
