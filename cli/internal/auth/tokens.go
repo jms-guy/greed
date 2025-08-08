@@ -67,7 +67,7 @@ func StoreTokens(data models.Credentials, configPath string) error {
 		return err
 	}
 
-	if err := os.MkdirAll(base, 0o755); err != nil {
+	if err := os.MkdirAll(base, 0o700); err != nil {
 		return fmt.Errorf("error creating config dir: %w", err)
 	}
 

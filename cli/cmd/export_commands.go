@@ -63,6 +63,7 @@ func (app *CLIApp) commandExportData(args []string) error {
 		return fmt.Errorf("error creating export directory %s: %w", exportDirectory, err)
 	}
 
+	// #nosec G304 - file variables are controlled, no user input
 	file, err := os.Create(exportFile)
 	if err != nil {
 		return fmt.Errorf("error creating export file: %w", err)
@@ -98,25 +99,14 @@ func (app *CLIApp) getExportDirectory() string {
 	var baseDir string
 
 	if app.Config.OperatingSystem == "linux" && utils.IsWSL() {
-		baseDir = os.Getenv("CSV_EXPORT_BASE_DIR_LINUX_MAC")
-		if baseDir == "" {
-			baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
-		}
+		baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
 		return baseDir
 	}
 
 	if app.Config.OperatingSystem == "windows" {
-		baseDir = os.Getenv("CSV_EXPORT_BASE_DIR_WINDOWS")
+		baseDir = filepath.Join(os.Getenv("USERPROFILE"), "Documents", "greed_exports")
 	} else {
-		baseDir = os.Getenv("CSV_EXPORT_BASE_DIR_LINUX_MAC")
-	}
-
-	if baseDir == "" {
-		if app.Config.OperatingSystem == "windows" {
-			baseDir = filepath.Join(os.Getenv("USERPROFILE"), "Documents", "greed_exports")
-		} else {
-			baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
-		}
+		baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
 	}
 
 	return baseDir

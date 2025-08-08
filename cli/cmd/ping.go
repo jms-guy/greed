@@ -9,6 +9,7 @@ import (
 func (app *CLIApp) commandPing() error {
 	healthURL := app.Config.Client.BaseURL + "/api/health"
 
+	// #nosec G107 - BaseURL is user-configurable for user-hosted backends; scheme (http/https) is validated in LoadConfig.
 	resp, err := http.Get(healthURL)
 	if err != nil {
 		fmt.Printf("Error sending health check: %s\n", err)

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -23,6 +24,14 @@ func LoadConfig() (*Config, error) {
 	serverAddress := os.Getenv("SERVER_ADDRESS")
 	if serverAddress == "" {
 		return nil, fmt.Errorf("SERVER_ADDRESS environment variable not set")
+	}
+
+	parsedAddress, err := url.Parse(serverAddress)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing server address: %w", err)
+	}
+	if parsedAddress.Scheme != "http" && parsedAddress.Scheme != "https" {
+		return nil, fmt.Errorf("unsupported URL scheme in SERVER_ADDRESS: only 'http' and 'https' are allowed, got: %s", parsedAddress.Scheme)
 	}
 
 	client := NewClient(serverAddress)
