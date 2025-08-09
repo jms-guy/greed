@@ -105,6 +105,7 @@ func (updater *DbTransactionUpdater) ApplyTransactionUpdates(ctx context.Context
 			txn.TransactionId, txn.AccountId, txn.Amount, curCode, txnDate, merchant, txn.PaymentChannel, pfCategory)
 	}
 
+	// #nosec G201 - using parameterized placeholders, not user data
 	insertStmt := fmt.Sprintf(`
 		INSERT INTO transactions (
 			id, account_id, amount, iso_currency_code, date, merchant_name, payment_channel, personal_finance_category 

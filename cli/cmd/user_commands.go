@@ -1,13 +1,11 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -187,6 +185,7 @@ func (app *CLIApp) commandUserLogout() error {
 	return nil
 }
 
+/*
 // Delete a user's records locally, and server side
 func (app *CLIApp) commandDeleteUser(args []string) error {
 	username := args[0]
@@ -257,7 +256,7 @@ func (app *CLIApp) commandDeleteUser(args []string) error {
 	fmt.Printf("All records for %s have been successfully deleted\n", username)
 	return nil
 }
-
+*/
 // Verifies a user's email address
 func (app *CLIApp) commandVerifyEmail() error {
 	sendURL := app.Config.Client.BaseURL + "/api/auth/email/send"

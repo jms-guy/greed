@@ -55,7 +55,10 @@ func GetCreds(configPath string) (models.Credentials, error) {
 		return creds, fmt.Errorf("error reading credentials.json: %w", err)
 	}
 
-	json.Unmarshal(byteVal, &creds)
+	err = json.Unmarshal(byteVal, &creds)
+	if err != nil {
+		return creds, fmt.Errorf("error unmarshalling data: %w", err)
+	}
 
 	return creds, nil
 }

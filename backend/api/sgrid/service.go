@@ -65,14 +65,14 @@ func (ms *SGMailService) SendMail(mailReq *Mail) error {
 
 	response, err := ms.Client.Send(message)
 	if err != nil {
-		ms.Logger.Log(
+		_ = ms.Logger.Log(
 			"level", "error",
 			"msg", "error sending email",
 			"err", err,
 		)
 		return err
 	} else {
-		ms.Logger.Log(
+		_ = ms.Logger.Log(
 			"statusCode", response.StatusCode,
 			"to", mailReq.To)
 	}

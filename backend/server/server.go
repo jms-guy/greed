@@ -36,7 +36,7 @@ func Run() error {
 	// Load the .env file
 	err := godotenv.Load()
 	if err != nil {
-		kitLogger.Log(
+		_ = kitLogger.Log(
 			"level", "error",
 			"msg", "failed to load .env file",
 			"err", err,
@@ -46,7 +46,7 @@ func Run() error {
 
 	config, err := config.LoadConfig()
 	if err != nil {
-		kitLogger.Log(
+		_ = kitLogger.Log(
 			"level", "error",
 			"msg", "failed to load application configuration",
 			"err", err,
@@ -57,7 +57,7 @@ func Run() error {
 	// Open the database connection
 	db, err := sql.Open("postgres", config.DatabaseURL)
 	if err != nil {
-		kitLogger.Log(
+		_ = kitLogger.Log(
 			"level", "error",
 			"msg", "failed to open database connection",
 			"err", err,
@@ -112,7 +112,14 @@ func Run() error {
 	// FileServer Operations
 	r.Group(func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Index"))
+			_, err := w.Write([]byte("Index"))
+			if err != nil {
+				_ = kitLogger.Log(
+					"level", "error",
+					"msg", "failure to write",
+					"err", err,
+				)
+			}
 		})
 
 		workDir, _ := os.Getwd()
@@ -129,7 +136,14 @@ func Run() error {
 	r.Get("/api/health", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		io.WriteString(w, "OK")
+		_, err = io.WriteString(w, "OK")
+		if err != nil {
+			_ = kitLogger.Log(
+				"level", "error",
+				"msg", "WriteString for server health fail",
+				"err", err,
+			)
+		}
 	})
 
 	// Webhooks
@@ -246,14 +260,15 @@ func Run() error {
 	}
 
 	/////Start server/////
-	app.Logger.Log(
+	_ = app.Logger.Log(
 		"transport", "HTTP",
 		"address", app.Config.ServerAddress,
 		"msg", "listening",
 	)
+
 	err = server.ListenAndServe()
 	if err != nil {
-		app.Logger.Log(
+		_ = app.Logger.Log(
 			"level", "error",
 			"err", err)
 		return err

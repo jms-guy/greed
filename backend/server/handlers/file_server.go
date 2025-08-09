@@ -10,7 +10,7 @@ import (
 // Sets up a http.FileServer handler for serving static files from a http.FileSystem
 func (app *AppServer) FileServer(r chi.Router, path string, root http.FileSystem) {
 	if strings.Contains(path, "{}*") {
-		app.Logger.Log(
+		_ = app.Logger.Log(
 			"level", "error",
 			"msg", "FileServer does not permit any URL parameters",
 		)

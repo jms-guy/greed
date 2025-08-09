@@ -63,17 +63,18 @@ func (app *CLIApp) deleteCmd() *cobra.Command {
 	}
 }
 
-func (app *CLIApp) deleteUserCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "user <username>",
-		Short: "Delete a user",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandDeleteUser(args)
-		},
+/*
+	func (app *CLIApp) deleteUserCmd() *cobra.Command {
+		return &cobra.Command{
+			Use:   "user <username>",
+			Short: "Delete a user",
+			Args:  cobra.ExactArgs(1),
+			RunE: func(cmd *cobra.Command, args []string) error {
+				return app.commandDeleteUser(args)
+			},
+		}
 	}
-}
-
+*/
 func (app *CLIApp) deleteItemCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "item <item-name>",

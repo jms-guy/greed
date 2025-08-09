@@ -43,7 +43,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 		},
 	}
 	dCmd := app.deleteCmd()
-	dCmd.AddCommand(app.deleteUserCmd())
+	//dCmd.AddCommand(app.deleteUserCmd())
 	dCmd.AddCommand(app.deleteItemCmd())
 
 	gCmd := app.getCmd()

@@ -14,6 +14,7 @@
 
 - `delete <user | item> <username_or_item_name>`
     - Deletes a specified user/item record from database. Must be logged in to use
+    - Delete user is currently unavailable, only allows for deleting of items
 
 - `verify`
     - Verifies a user's submitted email address, if verification was skipped during user registration 

@@ -19,9 +19,9 @@ func DoWithAutoRefresh(app *CLIApp, doRequest func(string) (*http.Response, erro
 	}
 
 	if resp.StatusCode == 401 {
-		resp.Body.Close()
-		if err := refreshCreds(app); err != nil {
-			return nil, err
+		_ = resp.Body.Close()
+		if refreshErr := refreshCreds(app); refreshErr != nil {
+			return nil, refreshErr
 		}
 		creds, _ = auth.GetCreds(app.Config.ConfigFP)
 		resp, err = doRequest(creds.AccessToken)

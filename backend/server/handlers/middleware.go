@@ -192,7 +192,7 @@ func LoggingMiddleware(Logger log.Logger) func(http.Handler) http.Handler {
 			defer func() {
 				if err := recover(); err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					Logger.Log(
+					_ = Logger.Log(
 						"requestID", requestID,
 						"err", err,
 						"trace", debug.Stack(),
@@ -203,7 +203,7 @@ func LoggingMiddleware(Logger log.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			wrapped := wrapResponseWriter(w)
 			next.ServeHTTP(wrapped, r)
-			Logger.Log(
+			_ = Logger.Log(
 				"requestID", requestID,
 				"status", wrapped.status,
 				"method", r.Method,
@@ -223,7 +223,7 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			app.Logger.Log(
+			_ = app.Logger.Log(
 				"level", "error",
 				"msg", "invalid IP",
 				"err", err,
@@ -236,7 +236,7 @@ func (app *AppServer) RateLimitMiddleware(next http.Handler) http.Handler {
 		if limiter.Allow() {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		} else {
-			app.Logger.Log(
+			_ = app.Logger.Log(
 				"level", "trace",
 				"msg", "rate limit exceeded",
 				"ip", ip,
@@ -254,7 +254,7 @@ func (app *AppServer) DevAuthMiddleware(next http.Handler) http.Handler {
 		if isDev {
 			next.ServeHTTP(w, r)
 		} else {
-			app.Logger.Log(
+			_ = app.Logger.Log(
 				"level", "warn",
 				"msg", "attempted access to admin route in non-dev environment",
 				"ip", r.RemoteAddr,

@@ -58,7 +58,7 @@ func (app *CLIApp) commandExportData(args []string) error {
 	filename := fmt.Sprintf("%s.csv", accountName)
 	exportFile := filepath.Join(exportDirectory, filename)
 
-	err = os.MkdirAll(exportDirectory, 0o755)
+	err = os.MkdirAll(exportDirectory, 0o750)
 	if err != nil {
 		return fmt.Errorf("error creating export directory %s: %w", exportDirectory, err)
 	}

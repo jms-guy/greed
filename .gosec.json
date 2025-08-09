@@ -1,6 +1,10 @@
 {
-    "Exclude": [
-        "cli/internal/database/",
-        "backend/internal/database"
-    ]
+    "global": {
+        "exclude": {
+            "paths": [
+                "cli/internal/database",
+                "backend/internal/database"
+            ]
+        }
+    }
 }
