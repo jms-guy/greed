@@ -24,7 +24,7 @@ func (app *CLIApp) commandExportData(args []string) error {
 	accountName = strings.TrimSuffix(accountName, "'")
 	accountName = strings.TrimPrefix(accountName, "\"")
 	accountName = strings.TrimSuffix(accountName, "\"")
-	//Input sanitization
+	// Input sanitization
 	accountName = strings.ReplaceAll(accountName, "/", "")
 	accountName = strings.ReplaceAll(accountName, "\\", "")
 	accountName = strings.ReplaceAll(accountName, "..", "")
