@@ -8,8 +8,8 @@ on:
       - '.github/workflows/CLI_CD.yml'
 
 jobs:
-  deploy-frontend:
-    name: Deploy
+  dockerize-cli:
+    name: Dockerize CLI
     runs-on: ubuntu-latest 
 
     steps:
@@ -36,8 +36,3 @@ jobs:
     - name: Push to Docker Hub
       run: docker push jmsguy/greed-cli:latest
 
-    - name: Build binaries
-      run:  |
-        cd cli
-        GOOS=windows GOARCH=amd64 go build -o greed-cli.exe
-        GOOS=linux GOARCH=amd64 go build -o greed-cli
