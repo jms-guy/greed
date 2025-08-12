@@ -8,7 +8,7 @@ import (
 
 // Configuration struct holding all .env variables for server
 type Config struct {
-	ServerAddress     string
+	Port              string
 	Environment       string
 	DatabaseURL       string
 	StaticAssetsPath  string
@@ -28,9 +28,9 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	serverAddress := os.Getenv("SERVER_ADDRESS")
-	if serverAddress == "" {
-		return nil, fmt.Errorf("SERVER_ADDRESS environment variable not set")
+	port := os.Getenv("PORT")
+	if port == "" {
+		return nil, fmt.Errorf("PORT environment variable not set")
 	}
 
 	environment := os.Getenv("ENVIRONMENT")
@@ -124,7 +124,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config := Config{
-		ServerAddress:     serverAddress,
+		Port:              port,
 		Environment:       environment,
 		DatabaseURL:       dbURL,
 		StaticAssetsPath:  staticPath,
