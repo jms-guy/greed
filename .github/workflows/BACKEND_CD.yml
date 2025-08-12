@@ -19,7 +19,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.23.0"
+        go-version: "1.24.0"
 
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
@@ -32,7 +32,7 @@ jobs:
         project_id: greed-468623
 
     - name: Build Docker image
-      run: gcloud builds submit . --tag us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest --file backend/Dockerfile
+      run: gcloud builds submit . --tag us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest --dockerfile backend/Dockerfile
 
     - name: Deploy to Cloud Run
       run: |
