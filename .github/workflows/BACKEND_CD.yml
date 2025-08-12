@@ -31,12 +31,6 @@ jobs:
       with:
         project_id: greed-468623
 
-    - name: Enable required APIs
-      run: |
-        gcloud services enable cloudbuild.googleapis.com
-        gcloud services enable artifactregistry.googleapis.com
-        gcloud services enable run.googleapis.com
-
     - name: Configure Docker for Artifact Registry
       run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
@@ -45,7 +39,7 @@ jobs:
 
     - name: Push Docker image
       run: docker push us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest
-
+      
     - name: Deploy to Cloud Run
       run: |
        gcloud run deploy greed \
