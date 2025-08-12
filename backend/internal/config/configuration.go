@@ -30,7 +30,7 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	port := os.Getenv("PORT")
 	if port == "" {
-		return nil, fmt.Errorf("PORT environment variable not set")
+		port = "8080"
 	}
 
 	environment := os.Getenv("ENVIRONMENT")
