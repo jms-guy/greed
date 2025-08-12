@@ -250,7 +250,7 @@ func Run() error {
 	})
 
 	server := &http.Server{
-		Addr:         app.Config.ServerAddress,
+		Addr:         ":" + app.Config.Port,
 		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -260,7 +260,7 @@ func Run() error {
 	/////Start server/////
 	_ = app.Logger.Log(
 		"transport", "HTTP",
-		"address", app.Config.ServerAddress,
+		"address", app.Config.Port,
 		"msg", "listening",
 	)
 
