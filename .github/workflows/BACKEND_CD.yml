@@ -31,9 +31,15 @@ jobs:
       with:
         project_id: greed-468623
 
-    - name: Build Docker image
-      run: gcloud builds submit . --tag us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest --dockerfile backend/Dockerfile
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
+    - name: Build Docker image
+      run: docker build -f backend/Dockerfile -t us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest .
+
+    - name: Push Docker image
+      run: docker push us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest
+      
     - name: Deploy to Cloud Run
       run: |
        gcloud run deploy greed \
