@@ -34,14 +34,16 @@ func Run() error {
 	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
 
 	// Load the .env file
-	err := godotenv.Load()
-	if err != nil {
-		_ = kitLogger.Log(
-			"level", "error",
-			"msg", "failed to load .env file",
-			"err", err,
-		)
-		return err
+	if _, err := os.Stat(".env"); err == nil {
+		err := godotenv.Load()
+		if err != nil {
+			_ = kitLogger.Log(
+				"level", "error",
+				"msg", "failed to load .env file",
+				"err", err,
+			)
+			return err
+		}
 	}
 
 	config, err := config.LoadConfig()
