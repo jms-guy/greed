@@ -41,12 +41,11 @@ jobs:
       run: docker push us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest
       
     - name: Deploy to Cloud Run
-      run: |
-       gcloud run deploy greed \
-        --image us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest \
-        --region us-central1 \
-        --allow-unauthenticated \
-        --project greed-468623  \
-        --set-env-vars  ENVIRONMENT=${{ vars.ENVIRONMENT }},DATABASE_URL=${{ secrets.DATABASE_URL }},STATIC_ASSETS_PATH=${{ vars.STATIC_ASSETS_PATH }},JWT_ISSUER=${{ vars.JWT_ISSUER }},JWT_AUDIENCE=${{ vars.JWT_AUDIENCE }},JWT_EXPIRATION=${{ vars.JWT_EXPIRATION }},JWT_SECRET=${{ secrets.JWT_SECRET }},REFRESH_EXPIRATION=${{ vars.REFRESH_EXPIRATION }},RATE_LIMIT=${{ vars.RATE_LIMIT }},RATE_REFRESH=${{ vars.RATE_REFRESH }},SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }},GREED_EMAIL=${{ vars.GREED_EMAIL }},PLAID_CLIENT_ID=${{ secrets.PLAID_CLIENT_ID }},PLAID_SECRET=${{ secrets.PLAID_SECRET }},PLAID_SANDBOX=${{ secrets.PLAID_SANDBOX }},PLAID_WEBHOOK_URL=${{ secrets.PLAID_WEBHOOK_URL }},AES_KEY=${{ secrets.AES_KEY }}
-
+  run: |
+    gcloud run deploy greed \
+      --image us-central1-docker.pkg.dev/greed-468623/greed-ar-repo/greed:latest \
+      --region us-central1 \
+      --allow-unauthenticated \
+      --project greed-468623 \
+      --set-env-vars ENVIRONMENT=${{ vars.ENVIRONMENT }},DATABASE_URL=${{ secrets.DATABASE_URL }},STATIC_ASSETS_PATH=${{ vars.STATIC_ASSETS_PATH }},JWT_ISSUER=${{ vars.JWT_ISSUER }},JWT_AUDIENCE=${{ vars.JWT_AUDIENCE }},JWT_EXPIRATION=${{ vars.JWT_EXPIRATION }},JWT_SECRET=${{ secrets.JWT_SECRET }},REFRESH_EXPIRATION=${{ vars.REFRESH_EXPIRATION }},RATE_LIMIT=${{ vars.RATE_LIMIT }},RATE_REFRESH=${{ vars.RATE_REFRESH }},SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }},GREED_EMAIL=${{ vars.GREED_EMAIL }},PLAID_CLIENT_ID=${{ secrets.PLAID_CLIENT_ID }},PLAID_SECRET=${{ secrets.PLAID_SECRET }},PLAID_SANDBOX=${{ secrets.PLAID_SANDBOX }},PLAID_WEBHOOK_URL=${{ secrets.PLAID_WEBHOOK_URL }},AES_KEY=${{ secrets.AES_KEY }}
           
