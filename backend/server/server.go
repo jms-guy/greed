@@ -23,12 +23,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-/* Future enhancements
--For bulk database queries, track success/failures and log as such
--Add log management system
--Add way for users to upgrade to member(maybe)
-*/
-
 func Run() error {
 	// Main logging struct
 	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
