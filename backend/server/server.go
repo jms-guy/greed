@@ -57,17 +57,26 @@ func Run() error {
 	}
 
 	// Open the database connection
-	db, err := sql.Open("postgres", config.DatabaseURL)
-	if err != nil {
+	var db *sql.DB
+	var dbQueries *database.Queries
+	if config.DatabaseURL == "unset" {
 		_ = kitLogger.Log(
-			"level", "error",
-			"msg", "failed to open database connection",
-			"err", err,
+			"level", "warning",
+			"msg", "database URL not set, starting with no database connection",
 		)
-		return err
-	}
+	} else {
+		db, err = sql.Open("postgres", config.DatabaseURL)
+		if err != nil {
+			_ = kitLogger.Log(
+				"level", "error",
+				"msg", "failed to open database connection",
+				"err", err,
+			)
+			return err
+		}
 
-	dbQueries := database.New(db)
+		dbQueries = database.New(db)
+	}
 
 	// Auth service interface
 	authService := &auth_pkg.Service{}

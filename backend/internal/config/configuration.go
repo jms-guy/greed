@@ -41,7 +41,7 @@ func LoadConfig() (*Config, error) {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
+		dbURL = "unset"
 	}
 
 	staticPath := os.Getenv("STATIC_ASSETS_PATH")
