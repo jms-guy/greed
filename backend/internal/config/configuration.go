@@ -40,9 +40,6 @@ func LoadConfig() (*Config, error) {
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "unset"
-	}
 
 	staticPath := os.Getenv("STATIC_ASSETS_PATH")
 	if staticPath == "" {
