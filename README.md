@@ -70,15 +70,16 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     ```
     
     - Add an alias for easy input:
-    **Linux/macOS:**
-    ```bash
-    alias greed='docker run -v ~/.greed:/root/.config/greed jmsguy/greed-cli'
-    ```
-    
-    **Windows (PowerShell):**
-    ```powershell
-    function greed { docker run -v "$env:USERPROFILE\.greed:/root/.config/greed" jmsguy/greed-cli $args }
-    ```
+        
+        - **Linux/macOS:**
+        ```bash
+        alias greed='docker run -v ~/.greed:/root/.config/greed jmsguy/greed-cli'
+        ```
+        
+        - **Windows (PowerShell):**
+        ```powershell
+        function greed { docker run -v "$env:USERPROFILE\.greed:/root/.config/greed" jmsguy/greed-cli $args }
+        ```
 
     - Run commands!
     ```bash
