@@ -73,7 +73,7 @@ jobs:
         sleep 10 
         
     - name: Run database migrations
-      run:  goose -dir backend/sql/schema postgres "${{ secrets.DATABASE_URL }}" up
+      run:  goose -dir backend/sql/schema postgres "${{ secrets.MIGRATION_DB_URL }}" up
 
     - name: Deploy to Cloud Run
       run: |
