@@ -81,6 +81,19 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         function greed { docker run -v "$env:USERPROFILE\.greed:/root/.config/greed" jmsguy/greed-cli $args }
         ```
 
+        - To make the alias permanent, add it to your shell profile:
+            - **Linux/macOS:**
+            ```bash
+            echo "alias greed='docker run -v ~/.greed:/root/.config/greed jmsguy/greed-cli'" >> ~/.bashrc
+            source ~/.bashrc
+            ```
+
+            - **Windows PowerShell:**
+            ```powershell
+            Add-Content $PROFILE "function greed { docker run -v `"`$env:USERPROFILE\.greed:/root/.config/greed`" jmsguy/greed-cli `$args }"
+            . $PROFILE
+            ```
+
     - Run commands!
     ```bash
     greed register ExampleUser
