@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -21,46 +20,26 @@ type Config struct {
 
 // Initializes configuration struct
 func LoadConfig() (*Config, error) {
-	serverAddress := os.Getenv("SERVER_ADDRESS")
-	if serverAddress == "" {
-		return nil, fmt.Errorf("SERVER_ADDRESS environment variable not set")
-	}
-
-	parsedAddress, err := url.Parse(serverAddress)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing server address: %w", err)
-	}
-	if parsedAddress.Scheme != "http" && parsedAddress.Scheme != "https" {
-		return nil, fmt.Errorf("unsupported URL scheme in SERVER_ADDRESS: only 'http' and 'https' are allowed, got: %s", parsedAddress.Scheme)
-	}
+	serverAddress := "https://greed-614554014047.us-central1.run.app"
 
 	client := NewClient(serverAddress)
 
-	// Database path can either be absolute or just filename, if just a filename is provided, make sure
-	// it's stored in home directory
-	localDatabase := os.Getenv("LOCAL_DATABASE")
-	if localDatabase == "" {
-		return nil, fmt.Errorf("LOCAL_DATABASE environment variable not set")
+	localDatabase := "greed.db"
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("error finding home directory: %w", err)
 	}
-	var localDb string
-	if filepath.IsAbs(localDatabase) {
-		localDb = localDatabase
-	} else {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return nil, fmt.Errorf("error finding home directory: %w", err)
-		}
-		localDb = filepath.Join(homeDir, localDatabase)
-	}
+	localDb := filepath.Join(homeDir, localDatabase)
 
 	queries, err := mySQL.OpenLocalDatabase(localDb)
 	if err != nil {
 		return nil, fmt.Errorf("error opening local database connection: %w", err)
 	}
 
-	cFP := os.Getenv("CONFIG_FILEPATH")
-	if cFP == "" {
-		cFP = ".config/greed" // Default
+	configDir := filepath.Join(homeDir, ".config", "greed")
+	if err := os.MkdirAll(configDir, 0750); err != nil {
+		return nil, fmt.Errorf("error creating config directory: %w", err)
 	}
 
 	os := runtime.GOOS
@@ -68,7 +47,7 @@ func LoadConfig() (*Config, error) {
 	config := Config{
 		Client:          client,
 		Db:              queries,
-		ConfigFP:        cFP,
+		ConfigFP:        configDir,
 		OperatingSystem: os,
 	}
 

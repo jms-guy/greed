@@ -1,5 +1,18 @@
+![Test Status](https://github.com/jms-guy/greed/actions/workflows/CI.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jms-guy/greed)](https://goreportcard.com/report/github.com/jms-guy/greed)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 # GREED
+
+## Table of Contents
+- [Overview](#overview)
+- [Server Features](#server-features)
+- [CLI Features](#cli-features)
+- [Installation](#installation-options)
+- [Usage](#usage)
+- [To-Do List](#to-do-list)
+- [Contributing & Issues](#contributing--issues)
 
 ## Overview
 
@@ -15,7 +28,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 - No storing of sensitive personal or financial information, with the exception of Plaid Access Tokens, which are encrypted at rest
 - JWT authentication
 - Integration with financial data aggregator [Plaid](https://plaid.com/)
-- Plaid webhooks, allowing notification of users of updates avilable for their items
+- Plaid webhooks, allowing notification of users of updates available for their items
 - Account-email verification utilizing [SendGrid](https://sendgrid.com/en-us)
 
 ### CLI Features
@@ -38,15 +51,73 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     - Viewable in tables and graphs
 - Export data into a CSV file
 
-## Project Status
-![Test Status](https://github.com/jms-guy/greed/actions/workflows/CI.yml/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jms-guy/greed)](https://goreportcard.com/report/github.com/jms-guy/greed)
+## System Requirements
+- No dependencies for binary installation
+- Docker (for Docker installation)
+- Go 1.24+ (for source installation)
+
+## Installation Options
+
+1. Download Binary (Recommended)
+    - Download from [Releases](link)
+    - No installation required - just run!
+
+2. Docker
+    - Have [Docker](https://www.docker.com/) installed
+    - Pull the image:
+    ```bash
+    docker pull jmsguy/greed-cli
+    ```
+    
+    - Add an alias for easy input:
+    **Linux/macOS:**
+    ```bash
+    alias greed='docker run -v ~/.greed:/root/.config/greed jmsguy/greed-cli'
+    ```
+    
+    **Windows (PowerShell):**
+    ```powershell
+    function greed { docker run -v "$env:USERPROFILE\.greed:/root/.config/greed" jmsguy/greed-cli $args }
+    ```
+
+    - Run commands!
+    ```bash
+    greed register ExampleUser
+    greed login ExampleUser
+    ```
+
+3. Install directly
+    - Requires Go
+    ```bash
+    go install github.com/jms-guy/greed@latest
+    greed --help
+    ```
+
+4. Clone repo
+    - Requires Go
+    ```bash
+    git clone https://github.com/jms-guy/greed
+    cd greed
+    go build
+    ./greed --help
+    ```
+
+## Usage
+
+- List of CLI commands found [here](https://github.com/jms-guy/greed/blob/main/docs/CLI_commands.md)
+- Help can be found with the command:
+```bash
+greed --help
+```
 
 ## To-Do List
 
 - CLI tests + backend integration tests
-- Deploy + C/I 
 - Recurring transaction detection
 - Custom transaction tags and filtering
     - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)
 - Web frontend?
+
+## Contributing & Issues
+
+To contribute, clone the repo as described above in **Installation Options**. Please fork the repository and open a pull request to the `main` branch. If you have an issue, please report it [here](https://github.com/jms-guy/greed/issues).
