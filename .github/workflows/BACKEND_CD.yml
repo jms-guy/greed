@@ -64,6 +64,13 @@ jobs:
 
     - name: Install goose
       run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+    - name: Setup Cloud SQL Proxy
+      run: |
+        wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+        chmod +x cloud_sql_proxy
+        ./cloud_sql_proxy -instances=greed-468623:us-central1:greed-db=tcp:5432 &
+        sleep 10 
         
     - name: Run database migrations
       run:  goose -dir backend/sql/schema postgres "${{ secrets.DATABASE_URL }}" up
@@ -75,4 +82,5 @@ jobs:
           --region us-central1 \
           --allow-unauthenticated \
           --project greed-468623 \
+          --add-cloudsql-instances greed-468623:us-central1:greed-db \
           --env-vars-file env.yaml      
