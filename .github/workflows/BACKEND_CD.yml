@@ -62,6 +62,12 @@ jobs:
         AES_KEY: ${{ secrets.AES_KEY }}
         EOF
 
+    - name: Install goose
+      run: go install github.com/pressly/goose/v3/cmd/goose@latest
+        
+    - name: Run database migrations
+      run:  goose -dir backend/sql/schema postgres "${{ secrets.DATABASE_URL }}" up
+
     - name: Deploy to Cloud Run
       run: |
         gcloud run deploy greed \
