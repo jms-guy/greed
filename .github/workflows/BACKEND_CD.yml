@@ -71,7 +71,12 @@ jobs:
         chmod +x cloud_sql_proxy
         ./cloud_sql_proxy -instances=greed-468623:us-central1:greed-db=tcp:5432 &
         sleep 10 
-        
+
+    - name: Create application database
+      run: |
+        sudo apt-get update && sudo apt-get install -y postgresql-client
+        psql "postgres://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/postgres" -c "CREATE DATABASE \"greed_app\";" || echo "Database already exists, continuing..."
+    
     - name: Run database migrations
       run:  goose -dir backend/sql/schema postgres "${{ secrets.MIGRATION_DB_URL }}" up
 
