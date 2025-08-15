@@ -27,6 +27,8 @@
                 return;
             }
 
+            const baseUrl = getBaseUrl();
+
             const handler = Plaid.create({
                 token: linkToken,
                 onSuccess: function (public_token, metadata) {
