@@ -93,7 +93,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         
         - **Linux/macOS:**
         ```bash
-        alias greed='docker run -it -p 8080:8080 -v ~/.config/greed:/root/.config/greed jmsguy/greed-cli'
+        alias greed='docker run -it -p 8080:8080 --user $(id -u):$(id -g) -v ~/.config/greed:/root/.config/greed jmsguy/greed-cli'
         ```
         
         - **Windows (PowerShell):**
@@ -104,12 +104,13 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         - Docker flags breakdown:
             - '-it': Run the docker image in an interactive terminal session, for getting input after the original command
             - '-p 8080:8080': Maps the container's port 8080 to host, allowing the CLI to open a temp server to listen for Link callback
+            - '--user': Runs docker container as your user instead of root, granting user correct read/write permissions for volume
             - '-v': Mounts a docker volume to the image, allowing for client-side database use 
 
         - To make the alias permanent, add it to your shell profile:
             - **Linux/macOS:**
             ```bash
-            echo "alias greed='docker run -it -p 8080:8080 -v ~/.config/greed:/root/.config/greed jmsguy/greed-cli''" >> ~/.bashrc
+            echo "alias greed='docker run -it -p 8080:8080 --user $(id -u):$(id -g) -v ~/.config/greed:/root/.config/greed jmsguy/greed-cli'" >> ~/.bashrc
             source ~/.bashrc
             ```
 
