@@ -28,6 +28,11 @@ VALUES (
     $10,
     $11
 )
+ON CONFLICT (id) DO UPDATE SET 
+    name = EXCLUDED.name,
+    current_balance = EXCLUDED.current_balance,
+    available_balance = EXCLUDED.available_balance,
+    updated_at = NOW()
 RETURNING *;
 
 -- name: ResetAccounts :exec

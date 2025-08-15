@@ -42,6 +42,11 @@ VALUES (
     $10,
     $11
 )
+ON CONFLICT (id) DO UPDATE SET 
+    name = EXCLUDED.name,
+    current_balance = EXCLUDED.current_balance,
+    available_balance = EXCLUDED.available_balance,
+    updated_at = NOW()
 RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, item_id, user_id
 `
 
