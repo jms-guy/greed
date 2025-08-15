@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -28,4 +29,15 @@ func (app *AppServer) FileServer(r chi.Router, path string, root http.FileSystem
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
 		fs.ServeHTTP(w, r)
 	})
+}
+
+// Handles the browser page for Plaid's Link flow
+func (app *AppServer) HandlerPlaidLink(w http.ResponseWriter, r *http.Request) {
+	filePath := filepath.Join("server", "data", "link.html")
+	http.ServeFile(w, r, filePath)
+}
+
+func (app *AppServer) HandlerPlaidLinkUpdate(w http.ResponseWriter, r *http.Request) {
+	filePath := filepath.Join("server", "data", "link_update_mode.html")
+	http.ServeFile(w, r, filePath)
 }

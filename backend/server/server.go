@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -127,14 +126,8 @@ func Run() error {
 			}
 		})
 
-		workDir, _ := os.Getwd()
-		staticPath := filepath.Join(workDir, app.Config.StaticAssetsPath)
-		r.Get("/link", func(w http.ResponseWriter, r *http.Request) { // Provides redirect URL for handling Plaid Link flow
-			http.ServeFile(w, r, filepath.Join(staticPath, "link.html"))
-		})
-		r.Get("/link-update-mode", func(w http.ResponseWriter, r *http.Request) { // Redirect URL for handling Plaid's Link Update mode
-			http.ServeFile(w, r, filepath.Join(staticPath, "link_update_mode.html"))
-		})
+		r.Get("/link", app.HandlerPlaidLink)                   // Provides redirect URL for handling Plaid Link flow
+		r.Get("/link-update-mode", app.HandlerPlaidLinkUpdate) // Redirect URL for handling Plaid's Link Update mode
 	})
 
 	// Server health																			//Returns a basic server ping
