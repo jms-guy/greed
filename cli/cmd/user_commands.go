@@ -112,9 +112,6 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 
 	loginURL := app.Config.Client.BaseURL + "/api/auth/login"
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
-	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token"
-	redirectURL := app.Config.Client.BaseURL + "/link"
-	accessURL := app.Config.Client.BaseURL + "/plaid/get-access-token"
 	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
 
 	// Get user credentials
@@ -134,7 +131,7 @@ func (app *CLIApp) commandUserLogin(args []string) error {
 
 	// If no items for user found, this is determined to be first time login
 	// Go through first time Plaid Link flow
-	linked, err := userFirstTimePlaidLinkHelper(app, login, linkURL, accessURL, redirectURL, itemsURL)
+	linked, err := userFirstTimePlaidLinkHelper(app, login, itemsURL)
 	if err != nil {
 		return err
 	}

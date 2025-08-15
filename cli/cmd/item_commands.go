@@ -506,3 +506,25 @@ func (app *CLIApp) commandUpdate(args []string) error {
 
 	return nil
 }
+
+func (app *CLIApp) commandAddItem() error {
+	itemsURL := app.Config.Client.BaseURL + "/api/items"
+
+	creds, err := auth.GetCreds(app.Config.ConfigFP)
+	if err != nil {
+		fmt.Printf("File error: %s\n", err)
+		return nil
+	}
+
+	linked, err := userFirstTimePlaidLinkHelper(app, creds, itemsURL)
+	if err != nil {
+		return fmt.Errorf("error linking account : %w", err)
+	}
+
+	if !linked {
+		fmt.Printf("Linking account to financial institution failed")
+		return nil
+	}
+
+	return nil
+}

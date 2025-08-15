@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/jms-guy/greed/cli/internal/config"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -17,10 +16,6 @@ type CLIApp struct {
 
 // Initializes a new app struct
 func NewCLIApp() *CLIApp {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -49,7 +44,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	gCmd := app.getCmd()
 	gCmd.AddCommand(app.getAccountsCmd())
 	gCmd.AddCommand(app.getTransactionsCmd())
-	gCmd.AddCommand(app.getIncomeData())
+	gCmd.AddCommand(app.getIncomeDataCmd())
 
 	rootCmd.AddCommand(dCmd)
 	rootCmd.AddCommand(gCmd)
@@ -66,7 +61,8 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	rootCmd.AddCommand(app.updateCmd())
 	rootCmd.AddCommand(app.renameCmd())
 	rootCmd.AddCommand(app.infoCmd())
-	rootCmd.AddCommand(app.exportData())
+	rootCmd.AddCommand(app.exportDataCmd())
+	rootCmd.AddCommand(app.addItemCmd())
 
 	return rootCmd
 }

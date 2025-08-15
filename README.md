@@ -7,8 +7,9 @@
 
 ## Table of Contents
 - [Overview](#overview)
-- [Server Features](#server-features)
-- [CLI Features](#cli-features)
+    - [Server Features](#server-features)
+    - [CLI Features](#cli-features)
+- [System Requirements](#system-requirements)
 - [Installation](#installation-options)
 - [Usage](#usage)
 - [To-Do List](#to-do-list)
@@ -59,7 +60,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 ## Installation Options
 
 1. Download Binary (Recommended)
-    - Download from [Releases](link)
+    - Download from [Releases](link) based on your operating system
     - No installation required - just run!
 
 2. Docker
@@ -126,11 +127,11 @@ greed --help
 
 ## To-Do List
 
-- CLI tests + backend integration tests
+- CLI tests + integration tests
 - Recurring transaction detection
 - Custom transaction tags and filtering
     - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)
-- Web frontend?
+- Web client
 
 ## Contributing & Issues
 

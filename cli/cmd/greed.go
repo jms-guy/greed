@@ -269,7 +269,7 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 	return cmd
 }
 
-func (app *CLIApp) getIncomeData() *cobra.Command {
+func (app *CLIApp) getIncomeDataCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "income <account-name>",
 		Aliases: []string{"Income", "INCOME", "inc", "INC"},
@@ -289,7 +289,7 @@ func (app *CLIApp) getIncomeData() *cobra.Command {
 	return cmd
 }
 
-func (app *CLIApp) exportData() *cobra.Command {
+func (app *CLIApp) exportDataCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "export <account-name>",
 		Aliases: []string{"Export", "EXPORT"},
@@ -297,6 +297,18 @@ func (app *CLIApp) exportData() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.commandExportData(args)
+		},
+	}
+}
+
+func (app *CLIApp) addItemCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "add-item",
+		Aliases: []string{"Add-Item", "ADD-ITEM"},
+		Short:   "Connect a financial institution to your account",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandAddItem()
 		},
 	}
 }

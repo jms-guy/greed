@@ -19,6 +19,9 @@
 - `verify`
     - Verifies a user's submitted email address, if verification was skipped during user registration 
 
+- `add-item`
+    - Connect a financial institution to your account
+
 - `items` 
     - Lists a user's item records. An item is a link to a financial institution, containing all account records for that institution
 

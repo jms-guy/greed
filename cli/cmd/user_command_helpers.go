@@ -260,7 +260,11 @@ func userCheckItemsHelper(app *CLIApp, login models.Credentials, itemsURL string
 // On user's first time loggin in, they will go through Plaid's Link flow, consisting of: asking server for
 // Link token, opening browser link with token, getting a Public token from Plaid, and exchanging that public
 // token with the server for a permanent access token
-func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, linkURL, accessURL, redirectURL, itemsURL string) (bool, error) {
+func userFirstTimePlaidLinkHelper(app *CLIApp, login models.Credentials, itemsURL string) (bool, error) {
+	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token"
+	redirectURL := app.Config.Client.BaseURL + "/link"
+	accessURL := app.Config.Client.BaseURL + "/plaid/get-access-token"
+
 	linkRes, err := app.Config.MakeBasicRequest("POST", linkURL, login.AccessToken, nil)
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)
