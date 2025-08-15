@@ -9,4 +9,5 @@ RUN cd backend && CGO_ENABLED=0 GOOS=linux go build -o greed
 # Runtime
 FROM gcr.io/distroless/static
 COPY --from=builder /app/backend/greed /greed
+COPY --from=builder /app/backend/server/data/ /server/data/
 ENTRYPOINT ["/greed"]

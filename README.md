@@ -54,8 +54,8 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 
 ## System Requirements
 - No dependencies for binary installation
-- Docker (for Docker installation)
-- Go 1.24+ (for source installation)
+- [Docker](https://www.docker.com/) (for Docker installation)
+- [Go](https://go.dev/doc/install) 1.24+ (for source installation)
 
 ## Installation Options
 
@@ -83,7 +83,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         ```
 
 2. Docker
-    - Have [Docker](https://www.docker.com/) installed
+    - Have Docker installed
     - Pull the image:
     ```bash
     docker pull jmsguy/greed-cli
