@@ -10,90 +10,6 @@ import (
 	"database/sql"
 )
 
-const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts(
-    id,
-    created_at,
-    updated_at,
-    name, 
-    type,
-    subtype,
-    mask, 
-    official_name,
-    available_balance, 
-    current_balance, 
-    iso_currency_code, 
-    institution_name,
-    user_id)
-VALUES (
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?
-)
-RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, institution_name, user_id
-`
-
-type CreateAccountParams struct {
-	ID               string
-	CreatedAt        string
-	UpdatedAt        string
-	Name             string
-	Type             string
-	Subtype          sql.NullString
-	Mask             sql.NullString
-	OfficialName     sql.NullString
-	AvailableBalance sql.NullFloat64
-	CurrentBalance   sql.NullFloat64
-	IsoCurrencyCode  sql.NullString
-	InstitutionName  sql.NullString
-	UserID           string
-}
-
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount,
-		arg.ID,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-		arg.Name,
-		arg.Type,
-		arg.Subtype,
-		arg.Mask,
-		arg.OfficialName,
-		arg.AvailableBalance,
-		arg.CurrentBalance,
-		arg.IsoCurrencyCode,
-		arg.InstitutionName,
-		arg.UserID,
-	)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Name,
-		&i.Type,
-		&i.Subtype,
-		&i.Mask,
-		&i.OfficialName,
-		&i.AvailableBalance,
-		&i.CurrentBalance,
-		&i.IsoCurrencyCode,
-		&i.InstitutionName,
-		&i.UserID,
-	)
-	return i, err
-}
-
 const deleteAccounts = `-- name: DeleteAccounts :exec
 DELETE FROM accounts
 WHERE institution_name = ?
@@ -184,25 +100,90 @@ func (q *Queries) GetAllAccounts(ctx context.Context, userID string) ([]Account,
 	return items, nil
 }
 
-const updateAcc = `-- name: UpdateAcc :exec
-UPDATE accounts
-SET available_balance = ?, current_balance = ?
-WHERE id = ? AND user_id = ?
+const upsertAccount = `-- name: UpsertAccount :one
+INSERT INTO accounts(
+    id,
+    created_at,
+    updated_at,
+    name, 
+    type,
+    subtype,
+    mask, 
+    official_name,
+    available_balance, 
+    current_balance, 
+    iso_currency_code, 
+    institution_name,
+    user_id)
+VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+)
+ON CONFLICT (id) DO UPDATE SET 
+    available_balance = EXCLUDED.available_balance,
+    current_balance = EXCLUDED.current_balance,
+    updated_at = NOW()
+RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, institution_name, user_id
 `
 
-type UpdateAccParams struct {
+type UpsertAccountParams struct {
+	ID               string
+	CreatedAt        string
+	UpdatedAt        string
+	Name             string
+	Type             string
+	Subtype          sql.NullString
+	Mask             sql.NullString
+	OfficialName     sql.NullString
 	AvailableBalance sql.NullFloat64
 	CurrentBalance   sql.NullFloat64
-	ID               string
+	IsoCurrencyCode  sql.NullString
+	InstitutionName  sql.NullString
 	UserID           string
 }
 
-func (q *Queries) UpdateAcc(ctx context.Context, arg UpdateAccParams) error {
-	_, err := q.db.ExecContext(ctx, updateAcc,
+func (q *Queries) UpsertAccount(ctx context.Context, arg UpsertAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, upsertAccount,
+		arg.ID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Name,
+		arg.Type,
+		arg.Subtype,
+		arg.Mask,
+		arg.OfficialName,
 		arg.AvailableBalance,
 		arg.CurrentBalance,
-		arg.ID,
+		arg.IsoCurrencyCode,
+		arg.InstitutionName,
 		arg.UserID,
 	)
-	return err
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Type,
+		&i.Subtype,
+		&i.Mask,
+		&i.OfficialName,
+		&i.AvailableBalance,
+		&i.CurrentBalance,
+		&i.IsoCurrencyCode,
+		&i.InstitutionName,
+		&i.UserID,
+	)
+	return i, err
 }

@@ -201,7 +201,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 			curBalance.Valid = true
 		}
 
-		params := database.CreateAccountParams{
+		params := database.UpsertAccountParams{
 			ID:               acc.Id,
 			CreatedAt:        time.Now().Format("2006-01-02"),
 			UpdatedAt:        time.Now().Format("2006-01-02"),
@@ -217,7 +217,7 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 			UserID:           creds.User.ID.String(),
 		}
 
-		_, err := app.Config.Db.CreateAccount(context.Background(), params)
+		_, err := app.Config.Db.UpsertAccount(context.Background(), params)
 		if err != nil {
 			return fmt.Errorf("error creating local account record: %w", err)
 		}

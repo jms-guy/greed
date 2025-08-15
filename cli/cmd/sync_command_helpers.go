@@ -8,41 +8,43 @@ import (
 	"github.com/jms-guy/greed/models"
 )
 
-// Gets list of items from server, finds a specific item based on name and returns the ID
-func findItemHelper(app *CLIApp, itemName, itemsURL string) (string, error) {
+// Gets list of items from server, finds a specific item based on name and returns the ID and institution
+func findItemHelper(app *CLIApp, itemName, itemsURL string) (string, string, error) {
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
-		return "", fmt.Errorf("error making http request: %w", err)
+		return "", "", fmt.Errorf("error making http request: %w", err)
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		return "", fmt.Errorf("error decoding response data: %w", err)
+		return "", "", fmt.Errorf("error decoding response data: %w", err)
 	}
 
 	var itemID string
+	var itemInst string
 	for _, i := range itemsResp.Items {
 		if i.Nickname == itemName {
 			itemID = i.ItemId
+			itemInst = i.InstitutionName
 			break
 		}
 	}
 
 	if itemID == "" {
-		return "", fmt.Errorf("no item found with name: %s", itemName)
+		return "", "", fmt.Errorf("no item found with name: %s", itemName)
 	}
 
-	return itemID, nil
+	return itemID, itemInst, nil
 }
 
 // Slightly more in depth status code handling for sync command http responses

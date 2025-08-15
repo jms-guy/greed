@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
@@ -26,8 +27,8 @@ func (app *CLIApp) commandSync(args []string) error {
 		return fmt.Errorf("error getting credentials: %w", err)
 	}
 
-	// Get item ID
-	itemID, err := findItemHelper(app, itemName, itemsURL)
+	// Get item ID and institution
+	itemID, itemInst, err := findItemHelper(app, itemName, itemsURL)
 	if err != nil {
 		return err
 	}
@@ -42,7 +43,7 @@ func (app *CLIApp) commandSync(args []string) error {
 	}
 	defer resp.Body.Close()
 
-	var accUpdates []models.UpdatedBalance
+	var accUpdates models.Accounts
 
 	serverErr := parseAndReturnServerError(resp)
 	if serverErr != nil {
@@ -57,7 +58,7 @@ func (app *CLIApp) commandSync(args []string) error {
 
 	fmt.Println(" > Syncing account balances...")
 
-	for _, acc := range accUpdates {
+	for _, acc := range accUpdates.Accounts {
 		avBalance := sql.NullFloat64{}
 		if acc.AvailableBalance != "" {
 			avBal, err := strconv.ParseFloat(acc.AvailableBalance, 64)
@@ -77,13 +78,22 @@ func (app *CLIApp) commandSync(args []string) error {
 			curBalance.Float64 = curBal
 			curBalance.Valid = true
 		}
-		params := database.UpdateAccParams{
+		params := database.UpsertAccountParams{
+			ID:               acc.Id,
+			CreatedAt:        time.Now().Format("2006-01-02"),
+			UpdatedAt:        time.Now().Format("2006-01-02"),
+			Name:             acc.Name,
+			Type:             acc.Type,
+			Subtype:          sql.NullString{String: acc.Subtype, Valid: true},
+			Mask:             sql.NullString{String: acc.Mask, Valid: true},
+			OfficialName:     sql.NullString{String: acc.OfficialName, Valid: true},
 			AvailableBalance: avBalance,
 			CurrentBalance:   curBalance,
-			ID:               acc.Id,
+			IsoCurrencyCode:  sql.NullString{String: acc.IsoCurrencyCode, Valid: true},
+			InstitutionName:  sql.NullString{String: itemInst, Valid: true},
 			UserID:           creds.User.ID.String(),
 		}
-		err = app.Config.Db.UpdateAcc(context.Background(), params)
+		_, err = app.Config.Db.UpsertAccount(context.Background(), params)
 		if err != nil {
 			fmt.Printf("Error updating balance of acc #%v: %s\n", acc.Id, err)
 			continue

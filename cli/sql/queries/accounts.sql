@@ -1,4 +1,4 @@
--- name: CreateAccount :one
+-- name: UpsertAccount :one
 INSERT INTO accounts(
     id,
     created_at,
@@ -28,6 +28,10 @@ VALUES (
     ?,
     ?
 )
+ON CONFLICT (id) DO UPDATE SET 
+    available_balance = EXCLUDED.available_balance,
+    current_balance = EXCLUDED.current_balance,
+    updated_at = NOW()
 RETURNING *; 
 
 -- name: GetAccount :one
@@ -43,8 +47,3 @@ WHERE user_id = ?;
 DELETE FROM accounts
 WHERE institution_name = ?
 AND user_id = ?;
-
--- name: UpdateAcc :exec 
-UPDATE accounts
-SET available_balance = ?, current_balance = ?
-WHERE id = ? AND user_id = ?;

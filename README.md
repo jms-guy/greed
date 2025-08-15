@@ -93,7 +93,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         
         - **Linux/macOS:**
         ```bash
-        alias greed='docker run -it -p 8080:8080 --user $(id -u):$(id -g) -v ~/.config/greed:/root/.config/greed jmsguy/greed-cli'
+        alias greed='docker run -it -p 8080:8080 --user $(id -u):$(id -g) -e HOME=/home/user -v ~/.config/greed:/home/user/.config/greed jmsguy/greed-cli'
         ```
         
         - **Windows (PowerShell):**
@@ -110,7 +110,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         - To make the alias permanent, add it to your shell profile:
             - **Linux/macOS:**
             ```bash
-            echo "alias greed='docker run -it -p 8080:8080 --user $(id -u):$(id -g) -v ~/.config/greed:/root/.config/greed jmsguy/greed-cli'" >> ~/.bashrc
+            echo "alias greed='docker run -it -p 8080:8080 --user $(id -u):$(id -g) -e HOME=/home/user -v ~/.config/greed:/home/user/.config/greed jmsguy/greed-cli'" >> ~/.bashrc
             source ~/.bashrc
             ```
 
