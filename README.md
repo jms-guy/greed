@@ -93,24 +93,29 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         
         - **Linux/macOS:**
         ```bash
-        alias greed='docker run -it -v ~/.greed:/root/.config/greed jmsguy/greed-cli'
+        alias greed='docker run -it -p 8080:8080 -v ~/.greed:/root/.config/greed jmsguy/greed-cli'
         ```
         
         - **Windows (PowerShell):**
         ```powershell
-        function greed { docker run -it -v "$env:USERPROFILE\.greed:/root/.config/greed" jmsguy/greed-cli $args }
+        function greed { docker run -it -p 8080:8080 -v "$env:USERPROFILE\.greed:/root/.config/greed" jmsguy/greed-cli $args }
         ```
+
+        - Docker flags breakdown:
+            - '-it': Run the docker image in an interactive terminal session, for getting input after the original command
+            - '-p 8080:8080': Maps the container's port 8080 to host, allowing the CLI to open a temp server to listen for Link callback
+            - '-v': Mounts a docker volume to the image, allowing for client-side database use 
 
         - To make the alias permanent, add it to your shell profile:
             - **Linux/macOS:**
             ```bash
-            echo "alias greed='docker run -it -v ~/.greed:/root/.config/greed jmsguy/greed-cli'" >> ~/.bashrc
+            echo "alias greed='docker run -it -p 8080:8080 -v ~/.greed:/root/.config/greed jmsguy/greed-cli'" >> ~/.bashrc
             source ~/.bashrc
             ```
 
             - **Windows PowerShell:**
             ```powershell
-            Add-Content $PROFILE "function greed { docker run -it -v `"`$env:USERPROFILE\.greed:/root/.config/greed`" jmsguy/greed-cli `$args }"
+            Add-Content $PROFILE "function greed { docker run -it -p 8080:8080 -v `"`$env:USERPROFILE\.greed:/root/.config/greed`" jmsguy/greed-cli `$args }"
             . $PROFILE
             ```
 

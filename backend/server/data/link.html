@@ -27,15 +27,13 @@
                 return;
             }
 
-            const baseUrl = getBaseUrl();
-
             const handler = Plaid.create({
                 token: linkToken,
                 onSuccess: function (public_token, metadata) {
-                    window.location.href = baseUrl + '/plaid-callback?public_token=' + public_token;
+                    window.location.href = 'http://localhost:8080/plaid-callback?public_token=' + public_token;
                 },
                 onExit: function (err, metadata) {
-                    let exitUrl = baseUrl + '/plaid-exit';
+                    let exitUrl = 'http://localhost:8080/plaid-exit';
 
                     if (err != null) {
                         exitUrl += '?error_code=' + err.error_code + '&error_type=' + err.error_type;

@@ -32,10 +32,10 @@
             const handler = Plaid.create({
                 token: linkToken,
                 onSuccess: function (public_token, metadata) {
-                    window.location.href = baseUrl + '/plaid-update-callback?item_id=' + metadata.item_id;
+                    window.location.href = 'http://localhost:8080/plaid-update-callback?item_id=' + metadata.item_id;
                 },
                 onExit: function (err, metadata) {
-                    let exitUrl = baseUrl + '/plaid-exit';
+                    let exitUrl = 'http://localhost:8080/plaid-exit';
 
                     if (err != null) {
                         exitUrl += '?error_code=' + err.error_code + '&error_type=' + err.error_type;
