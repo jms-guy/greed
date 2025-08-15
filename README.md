@@ -120,6 +120,8 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     greed login ExampleUser
     ```
 
+    - **Note for Docker users:** Link opening is not supported in containers. The CLI will display the link for you to copy and paste into your browser.
+
 3. Install directly
     - Requires Go
     ```bash
