@@ -10,7 +10,7 @@ import (
 
 /*
 	This package controls the email service for sending email verification codes necessary for account verification,
-	as well as password resetting
+	as well as password resetting for user accounts
 */
 
 // Interface for the mail service
