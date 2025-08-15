@@ -22,15 +22,23 @@ jobs:
         go-version: "1.24.0"
 
     - name: Build binaries
-      run:  |
+      run: |
         cd cli
-        GOOS=windows GOARCH=amd64 go build -o greed-cli.exe
-        GOOS=linux GOARCH=amd64 go build -o greed-cli
+        GOOS=windows GOARCH=amd64 go build -o greed-cli-windows-amd64.exe
+        GOOS=linux GOARCH=amd64 go build -o greed-cli-linux-amd64
+
+    - name: Generate checksums
+      run: |
+        cd cli
+        sha256sum greed-cli* > checksums.txt
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          cli/greed-cli.exe
-          cli/greed-cli
+          cli/greed-cli-windows-amd64.exe
+          cli/greed-cli-linux-amd64
+          cli/checksums.txt  # Don't forget to include this!
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
