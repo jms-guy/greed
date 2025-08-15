@@ -24,22 +24,21 @@ func LoadConfig() (*Config, error) {
 
 	client := NewClient(serverAddress)
 
-	localDatabase := "greed.db"
-
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("error finding home directory: %w", err)
-	}
-	localDb := filepath.Join(homeDir, localDatabase)
-
-	queries, err := mySQL.OpenLocalDatabase(localDb)
-	if err != nil {
-		return nil, fmt.Errorf("error opening local database connection: %w", err)
 	}
 
 	configDir := filepath.Join(homeDir, ".config", "greed")
 	if err := os.MkdirAll(configDir, 0750); err != nil {
 		return nil, fmt.Errorf("error creating config directory: %w", err)
+	}
+
+	localDb := filepath.Join(configDir, "greed.db")
+
+	queries, err := mySQL.OpenLocalDatabase(localDb)
+	if err != nil {
+		return nil, fmt.Errorf("error opening local database connection: %w", err)
 	}
 
 	os := runtime.GOOS
