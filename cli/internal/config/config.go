@@ -46,7 +46,7 @@ func LoadConfig() (*Config, error) {
 	config := Config{
 		Client:          client,
 		Db:              queries,
-		ConfigFP:        configDir,
+		ConfigFP:        ".config/greed",
 		OperatingSystem: os,
 	}
 
