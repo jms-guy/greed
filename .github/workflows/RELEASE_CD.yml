@@ -41,4 +41,4 @@ jobs:
           cli/greed-cli-linux-amd64
           cli/checksums.txt  # Don't forget to include this!
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
