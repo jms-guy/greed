@@ -69,7 +69,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         chmod +x greed-cli-linux-amd64
         ./greed-cli-linux-amd64 --help
         
-        #Optional: Rename for easier use
+        # Optional: Rename for easier use
         mv greed-cli-linux-amd64 greed
         ./greed register ExampleUser
         ```
