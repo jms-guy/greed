@@ -60,8 +60,27 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 ## Installation Options
 
 1. Download Binary (Recommended)
-    - Download from [Releases](link) based on your operating system
-    - No installation required - just run!
+    - Download from [Releases](https://github.com/jms-guy/greed/releases)
+    - Make it executable and run:
+
+        - **Linux:**
+        ```bash
+        # Download the appropriate binary for your machine
+        chmod +x greed-cli-linux-amd64
+        ./greed-cli-linux-amd64 --help
+        
+        #Optional: Rename for easier use
+        mv greed-cli-linux-amd64 greed
+        ./greed register ExampleUser
+        ```
+
+        - **Windows:**
+        ```powershell
+        # Download greed-cli-windows-amd64.exe
+        # No chmod needed, just run directly
+        greed-cli-windows-amd64.exe --help
+        greed-cli-windows-amd64.exe register ExampleUser
+        ```
 
 2. Docker
     - Have [Docker](https://www.docker.com/) installed
