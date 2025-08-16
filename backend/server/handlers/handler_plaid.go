@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -372,7 +373,7 @@ func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	responseAccounts := []models.UpdatedBalance{}
+	responseAccounts := models.Accounts{}
 	for _, acc := range accs.Accounts {
 
 		accBalAvail := sql.NullString{}
@@ -394,21 +395,27 @@ func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Reque
 			ItemID:           accs.Item.ItemId,
 		}
 
-		updatedAcc, err := app.Db.UpdateBalances(ctx, params)
+		_, err := app.Db.UpdateBalances(ctx, params)
 		if err != nil {
 			app.respondWithError(w, 500, "Database error", fmt.Errorf("error updating account record: %w", err))
 			return
 		}
 
-		updatedRecord := models.UpdatedBalance{
-			Id:               updatedAcc.ID,
+		updatedRecord := models.Account{
+			Id:               acc.AccountId,
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
+			Name:             acc.Name,
+			Type:             string(acc.Type),
+			Subtype:          string(acc.GetSubtype()),
+			Mask:             acc.GetMask(),
+			OfficialName:     acc.GetOfficialName(),
 			AvailableBalance: accBalAvail.String,
 			CurrentBalance:   accBalCur.String,
-			ItemId:           accs.Item.ItemId,
-			RequestID:        reqID,
+			IsoCurrencyCode:  acc.Balances.GetIsoCurrencyCode(),
 		}
 
-		responseAccounts = append(responseAccounts, updatedRecord)
+		responseAccounts.Accounts = append(responseAccounts.Accounts, updatedRecord)
 	}
 
 	app.respondWithJSON(w, 200, responseAccounts)
