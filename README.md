@@ -88,6 +88,15 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     ```bash
     docker pull jmsguy/greed-cli
     ```
+    - Create directories:
+        - **Linux:**
+        ```bash
+        mkdir -p ~/.config/greed
+        ```
+        - **Windows:**
+        ```powershell
+        mkdir "$env:USERPROFILE\.config\greed"
+        ```
     
     - Add an alias for easy input:
         
@@ -105,7 +114,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
             - '-it': Run the docker image in an interactive terminal session, for getting input after the original command
             - '-p 8080:8080': Maps the container's port 8080 to host, allowing the CLI to open a temp server to listen for Link callback
             - '--user': Runs docker container as your user instead of root, granting user correct read/write permissions for volume
-            - '-v': Mounts a docker volume to the image, allowing for client-side database use 
+            - '-v': Mounts a docker volume to the image, allowing for client-side database use and export functionality
 
         - To make the alias permanent, add it to your shell profile:
             - **Linux/macOS:**
@@ -116,7 +125,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 
             - **Windows PowerShell:**
             ```powershell
-            Add-Content $PROFILE "function greed { docker run -it -p 8080:8080 -v "$env:USERPROFILE\.config\greed:/root/.config/greed" jmsguy/greed-cli $args }"
+            Add-Content $PROFILE "function greed { docker run -it -p 8080:8080 -v `"`$env:USERPROFILE\.config\greed:/root/.config/greed`" jmsguy/greed-cli `$args }"
             . $PROFILE
             ```
 

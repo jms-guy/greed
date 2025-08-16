@@ -99,14 +99,14 @@ func (app *CLIApp) getExportDirectory() string {
 	var baseDir string
 
 	if app.Config.OperatingSystem == "linux" && utils.IsWSL() {
-		baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
+		baseDir = filepath.Join(os.Getenv("HOME"), ".config", "greed", "exports")
 		return baseDir
 	}
 
 	if app.Config.OperatingSystem == "windows" {
 		baseDir = filepath.Join(os.Getenv("USERPROFILE"), "Documents", "greed_exports")
 	} else {
-		baseDir = filepath.Join(os.Getenv("HOME"), "greed_exports")
+		baseDir = filepath.Join(os.Getenv("HOME"), ".config", "greed", "exports")
 	}
 
 	return baseDir
