@@ -89,7 +89,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     2. **Chrome**: Click "Keep" on the download warning
     3. **Add exception**: Add the download folder to Windows Defender exclusions
 
-The source code is available for inspection, and you can build from source if preferred.
+    The source code is available for inspection, and you can build from source if preferred.
 
 2. Docker
     - Have Docker installed
