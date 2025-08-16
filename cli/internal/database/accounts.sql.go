@@ -133,7 +133,7 @@ VALUES (
 ON CONFLICT (id) DO UPDATE SET 
     available_balance = EXCLUDED.available_balance,
     current_balance = EXCLUDED.current_balance,
-    updated_at = DATE('now')
+    updated_at = DATETIME('now')
 RETURNING id, created_at, updated_at, name, type, subtype, mask, official_name, available_balance, current_balance, iso_currency_code, institution_name, user_id
 `
 
