@@ -91,7 +91,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         It's recommended to use [Windows Terminal](https://aka.ms/terminal) for the best experience:
         - Download from Microsoft Store or GitHub releases
         - Full support for colors, tables, and interactive features
-        - Works with PowerShell, Command Prompt, and WSL
+        - Use default PowerShell tab
 
         **If Windows Terminal isn't available:** Use Command Prompt (cmd.exe) as a fallback. Powershell will crash with paginated table views.
 
