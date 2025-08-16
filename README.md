@@ -82,7 +82,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         greed-cli-windows-amd64.exe register ExampleUser
         ```
 
-    # Windows Security Warning
+    ### Windows Security Warning
     Windows Defender may flag the executable as suspicious. This is a false positive common with Go applications. To resolve:
 
     1. **Windows Defender**: Click "More info" → "Run anyway"
