@@ -65,9 +65,9 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 
         - **Linux:**
         ```bash
-        # Download the appropriate binary for your machine
+        # Download greed-cli-linux-amd64
         chmod +x greed-cli-linux-amd64
-        ./greed-cli-linux-amd64 --help
+        ./greed-cli-linux-amd64 ping
         
         # Optional: Rename for easier use
         mv greed-cli-linux-amd64 greed
@@ -78,9 +78,22 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         ```powershell
         # Download greed-cli-windows-amd64.exe
         # No chmod needed, just run directly
-        greed-cli-windows-amd64.exe --help
-        greed-cli-windows-amd64.exe register ExampleUser
+        # Cd into download directory (ex. Downloads)
+        cd .\Downloads\
+        .\greed-cli-windows-amd64.exe ping
+
+        # Rename in file explorer, or in command line
+        ren greed-cli-windows-amd64.exe greed.exe
+        .\greed.exe register ExampleUser
         ```
+
+        **Windows Users:**
+        It's recommended to use [Windows Terminal](https://aka.ms/terminal) for the best experience:
+        - Download from Microsoft Store or GitHub releases
+        - Full support for colors, tables, and interactive features
+        - Works with PowerShell, Command Prompt, and WSL
+
+        **If Windows Terminal isn't available:** Use Command Prompt (cmd.exe) as a fallback. Powershell will crash wish paginated table views.
 
     ### Windows Security Warning
     Windows Defender may flag the executable as suspicious. This is a false positive common with Go applications. To resolve:
@@ -165,6 +178,11 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 ## Usage
 
 - List of CLI commands found [here](https://github.com/jms-guy/greed/blob/main/docs/CLI_commands.md)
+- Typical user interaction will begin with:
+    - Register
+    - Login
+    - Fetch
+    - Update (occasionally required after first fetch)
 - Help can be found with the command:
 ```bash
 greed --help
