@@ -31,7 +31,7 @@ VALUES (
 ON CONFLICT (id) DO UPDATE SET 
     available_balance = EXCLUDED.available_balance,
     current_balance = EXCLUDED.current_balance,
-    updated_at = NOW()
+    updated_at = DATE('now')
 RETURNING *; 
 
 -- name: GetAccount :one
