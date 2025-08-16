@@ -82,6 +82,15 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         greed-cli-windows-amd64.exe register ExampleUser
         ```
 
+    # Windows Security Warning
+    Windows Defender may flag the executable as suspicious. This is a false positive common with Go applications. To resolve:
+
+    1. **Windows Defender**: Click "More info" → "Run anyway"
+    2. **Chrome**: Click "Keep" on the download warning
+    3. **Add exception**: Add the download folder to Windows Defender exclusions
+
+The source code is available for inspection, and you can build from source if preferred.
+
 2. Docker
     - Have Docker installed
     - Pull the image:
