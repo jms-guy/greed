@@ -12,6 +12,7 @@
 - [System Requirements](#system-requirements)
 - [Installation](#installation-options)
 - [Usage](#usage)
+- [Quick Start](#quick-start)
 - [To-Do List](#to-do-list)
 - [Contributing & Issues](#contributing--issues)
 
@@ -186,6 +187,19 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 - Help can be found with the command:
 ```bash
 greed --help
+```
+
+## Quick Start
+```bash
+# Register and connect your bank
+greed register myusername
+greed login myusername
+greed fetch itemname
+
+# View your financial data
+greed get accounts
+greed get txns "Account Name"
+greed export "Account Name"
 ```
 
 ## To-Do List
