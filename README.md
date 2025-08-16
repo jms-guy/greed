@@ -93,7 +93,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
         - Full support for colors, tables, and interactive features
         - Works with PowerShell, Command Prompt, and WSL
 
-        **If Windows Terminal isn't available:** Use Command Prompt (cmd.exe) as a fallback. Powershell will crash wish paginated table views.
+        **If Windows Terminal isn't available:** Use Command Prompt (cmd.exe) as a fallback. Powershell will crash with paginated table views.
 
     ### Windows Security Warning
     Windows Defender may flag the executable as suspicious. This is a false positive common with Go applications. To resolve:
