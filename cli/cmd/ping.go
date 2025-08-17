@@ -3,16 +3,18 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/spf13/cobra"
 )
 
 // Sends a simple ping to the server health endpoint, for checking server connection
-func (app *CLIApp) commandPing() error {
+func (app *CLIApp) commandPing(cmd *cobra.Command) error {
 	healthURL := app.Config.Client.BaseURL + "/api/health"
 
-	// #nosec G107 - BaseURL is user-configurable for user-hosted backends; scheme (http/https) is validated in LoadConfig.
+	// #nosec G107 - BaseURL non-configurable.
 	resp, err := http.Get(healthURL)
 	if err != nil {
-		fmt.Printf("Error sending health check: %s\n", err)
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
 		return nil
 	}
 	defer resp.Body.Close()

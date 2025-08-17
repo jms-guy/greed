@@ -9,7 +9,7 @@
 - `login <name>`
     - Create a new user session with the server
 
-- `logout <name>`
+- `logout`
     - Exits current user session
 
 - `delete <user | item> <username_or_item_name>`

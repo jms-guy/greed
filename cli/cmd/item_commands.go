@@ -15,10 +15,11 @@ import (
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
+	"github.com/spf13/cobra"
 )
 
 // Fetches all transaction records for accounts attached to given item
-func (app *CLIApp) commandGetTransactions(args []string) error {
+func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) error {
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -27,20 +28,23 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
+		return nil
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	var itemID string
@@ -62,18 +66,21 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 		return app.Config.MakeBasicRequest("POST", txnsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
+		return nil
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	var txns []models.Transaction
 	if err = json.NewDecoder(resp.Body).Decode(&txns); err != nil {
-		return fmt.Errorf("decoding error: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	fmt.Println("Creating local records...")
@@ -81,7 +88,8 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 	for _, t := range txns {
 		a, err := strconv.ParseFloat(t.Amount, 64)
 		if err != nil {
-			return fmt.Errorf("error converting string value: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error converting string value: %w", err), "Data error")
+			return nil
 		}
 
 		params := database.CreateTransactionParams{
@@ -97,7 +105,8 @@ func (app *CLIApp) commandGetTransactions(args []string) error {
 
 		_, err = app.Config.Db.CreateTransaction(context.Background(), params)
 		if err != nil {
-			return fmt.Errorf("error creating local record: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error creating transaction record: %w", err), "Local database error")
+			return nil
 		}
 
 		fmt.Printf("\r%v", t.Id)
@@ -224,13 +233,13 @@ func (app *CLIApp) commandGetAccounts(args []string) error {
 
 	}
 
-	fmt.Println(" > Account information fetched successfully.")
+	fmt.Println(" > Account data fetched successfully.")
 
 	return nil
 }
 
 // Rename an item
-func (app *CLIApp) commandRenameItem(args []string) error {
+func (app *CLIApp) commandRenameItem(cmd *cobra.Command, args []string) error {
 	itemCurrent := args[0]
 	itemRename := args[1]
 
@@ -240,20 +249,23 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return nil
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	var itemID string
@@ -279,13 +291,15 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 		return app.Config.MakeBasicRequest("PUT", renameURL, token, request)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return nil
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	fmt.Printf("Item name successfully updated from %s to %s\n", itemCurrent, itemRename)
@@ -293,7 +307,7 @@ func (app *CLIApp) commandRenameItem(args []string) error {
 }
 
 // Deletes an item record for user
-func (app *CLIApp) commandDeleteItem(args []string) error {
+func (app *CLIApp) commandDeleteItem(cmd *cobra.Command, args []string) error {
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -302,20 +316,23 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return nil
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	var itemID string
@@ -335,17 +352,20 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 
 	pw, err := auth.ReadPassword("Please enter your password > ")
 	if err != nil {
-		return fmt.Errorf("error getting password: %w", err)
+		LogError(app.Config.Db, cmd, err, "Error getting password")
+		return nil
 	}
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
-		return fmt.Errorf("error getting credentials: %w", err)
+		LogError(app.Config.Db, cmd, err, "Error getting credentials")
+		return nil
 	}
 
 	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
 	if err != nil {
-		return fmt.Errorf("error getting local user record: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error getting user record: %w", err), "Local database error")
+		return nil
 	}
 
 	err = auth.ValidatePasswordHash(user.HashedPassword, pw)
@@ -378,13 +398,15 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 		return app.Config.MakeBasicRequest("DELETE", deleteURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return nil
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	params := database.DeleteAccountsParams{
@@ -393,7 +415,8 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 	}
 	err = app.Config.Db.DeleteAccounts(context.Background(), params)
 	if err != nil {
-		return fmt.Errorf("error deleting local records: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error deleting account record: %w", err), "Local database error")
+		return nil
 	}
 
 	fmt.Println("Item records deleted successfully")
@@ -401,7 +424,7 @@ func (app *CLIApp) commandDeleteItem(args []string) error {
 }
 
 // Command resolves Plaid re-authentication issues through Link update flow. Calls sync command immediately afterwards
-func (app *CLIApp) commandUpdate(args []string) error {
+func (app *CLIApp) commandUpdate(cmd *cobra.Command, args []string) error {
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
@@ -411,20 +434,23 @@ func (app *CLIApp) commandUpdate(args []string) error {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return nil
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		return nil
 	}
 
 	var itemsResp struct {
 		Items []models.ItemName `json:"items"`
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		return fmt.Errorf("error decoding response data: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	var itemID string
@@ -446,18 +472,21 @@ func (app *CLIApp) commandUpdate(args []string) error {
 		return app.Config.MakeBasicRequest("POST", linkURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return nil
 	}
 	defer linkRes.Body.Close()
 
 	serverErr := parseAndReturnServerError(linkRes)
 	if serverErr != nil {
-		return serverErr
+		LogError(app.Config.Db, cmd, serverErr, "Error contacting server")
+		return nil
 	}
 
 	var response models.LinkResponse
 	if err = json.NewDecoder(linkRes.Body).Decode(&response); err != nil {
-		return fmt.Errorf("error decoding response: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	if response.LinkToken == "" {
@@ -470,33 +499,24 @@ func (app *CLIApp) commandUpdate(args []string) error {
 
 	err = utils.OpenLink(app.Config.OperatingSystem, fullBrowserURL)
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error opening outside link")
+		return nil
 	}
 
 	_, err = auth.ListenForPlaidCallback()
 	if err != nil {
-		return err
+		LogError(app.Config.Db, cmd, err, "Error connecting financial institution")
+		return nil
 	}
 
-	err = processWebhookRecords(app, itemID, "ITEM_LOGIN_REQUIRED", "ITEM")
-	if err != nil {
-		return err
-	}
-	err = processWebhookRecords(app, itemID, "ITEM_ERROR", "ITEM")
-	if err != nil {
-		return err
-	}
-	err = processWebhookRecords(app, itemID, "ITEM_BAD_STATE", "ITEM")
-	if err != nil {
-		return err
-	}
-	err = processWebhookRecords(app, itemID, "NEW_ACCOUNTS_AVAILABLE", "ITEM")
-	if err != nil {
-		return err
-	}
-	err = processWebhookRecords(app, itemID, "PENDING_DISCONNECT", "ITEM")
-	if err != nil {
-		return err
+	webhookCodes := []string{"ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT", "ERROR"}
+
+	for _, code := range webhookCodes {
+		err = processWebhookRecords(app, itemID, code, "ITEM")
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error contacting server")
+			return nil
+		}
 	}
 
 	err = app.commandSync([]string{itemName})
@@ -507,18 +527,19 @@ func (app *CLIApp) commandUpdate(args []string) error {
 	return nil
 }
 
-func (app *CLIApp) commandAddItem() error {
+func (app *CLIApp) commandAddItem(cmd *cobra.Command) error {
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
-		fmt.Printf("File error: %s\n", err)
+		LogError(app.Config.Db, cmd, err, "Error getting credentials")
 		return nil
 	}
 
 	linked, err := userFirstTimePlaidLinkHelper(app, creds, itemsURL)
 	if err != nil {
-		return fmt.Errorf("error linking account : %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error linking: %w", err), "Error connecting financial institution")
+		return nil
 	}
 
 	if !linked {

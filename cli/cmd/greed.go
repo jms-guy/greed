@@ -13,7 +13,7 @@ func (app *CLIApp) pingCmd() *cobra.Command {
 		Short:   "Pings the server, checking connection health",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandPing()
+			return app.commandPing(cmd)
 		},
 	}
 }
@@ -25,7 +25,7 @@ func (app *CLIApp) registerCmd() *cobra.Command {
 		Short:   "Register a new user",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandRegisterUser(args)
+			return app.commandRegisterUser(cmd, args)
 		},
 	}
 }
@@ -37,7 +37,7 @@ func (app *CLIApp) loginCmd() *cobra.Command {
 		Short:   "Login as a user",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUserLogin(args)
+			return app.commandUserLogin(cmd, args)
 		},
 	}
 }
@@ -49,7 +49,7 @@ func (app *CLIApp) logoutCmd() *cobra.Command {
 		Short:   "Logs out of user credentials",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUserLogout()
+			return app.commandUserLogout(cmd)
 		},
 	}
 }
@@ -81,7 +81,7 @@ func (app *CLIApp) deleteItemCmd() *cobra.Command {
 		Short: "Delete an item",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandDeleteItem(args)
+			return app.commandDeleteItem(cmd, args)
 		},
 	}
 }
@@ -94,7 +94,7 @@ func (app *CLIApp) verifyCmd() *cobra.Command {
 		Long:    "Sends a verification code to user's email address",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandVerifyEmail()
+			return app.commandVerifyEmail(cmd)
 		},
 	}
 }
@@ -107,7 +107,7 @@ func (app *CLIApp) itemsCmd() *cobra.Command {
 		Long:    "Lists a user's item records. Items are financial institution connections, with each institution being one item",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUserItems()
+			return app.commandUserItems(cmd)
 		},
 	}
 }
@@ -119,7 +119,7 @@ func (app *CLIApp) changepwCmd() *cobra.Command {
 		Short:   "Updates a user's password",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandChangePassword()
+			return app.commandChangePassword(cmd)
 		},
 	}
 }
@@ -131,7 +131,7 @@ func (app *CLIApp) resetpwCmd() *cobra.Command {
 		Short:   "Resets a user's forgotten password",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandResetPassword(args)
+			return app.commandResetPassword(cmd, args)
 		},
 	}
 }
@@ -146,9 +146,10 @@ func (app *CLIApp) fetchCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := app.commandGetAccounts(args)
 			if err != nil {
-				return err
+				LogError(app.Config.Db, cmd, err, "Error getting accounts")
+				return nil
 			}
-			return app.commandGetTransactions(args)
+			return app.commandGetTransactions(cmd, args)
 		},
 	}
 }
@@ -172,7 +173,7 @@ func (app *CLIApp) updateCmd() *cobra.Command {
 		Short:   "Re-authenticates user's financial institution through Plaid",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUpdate(args)
+			return app.commandUpdate(cmd, args)
 		},
 	}
 }
@@ -184,7 +185,7 @@ func (app *CLIApp) renameCmd() *cobra.Command {
 		Short:   "Rename an item",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandRenameItem(args)
+			return app.commandRenameItem(cmd, args)
 		},
 	}
 }
@@ -308,7 +309,7 @@ func (app *CLIApp) addItemCmd() *cobra.Command {
 		Short:   "Connect a financial institution to your account",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandAddItem()
+			return app.commandAddItem(cmd)
 		},
 	}
 }

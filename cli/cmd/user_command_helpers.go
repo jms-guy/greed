@@ -391,7 +391,9 @@ Loop:
 }
 
 // Fetches webhook records from server, and searches for actions that user must take to resolve them
-func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemName) error {
+func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
+	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
+
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", webhookURL, token, nil)
 	})
@@ -429,9 +431,9 @@ func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemN
 		}
 
 		switch record.WebhookCode {
-		case "ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT":
+		case "ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT", "ERROR":
 			loginRequired = true
-		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED":
+		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE":
 			if !loginRequired {
 				syncRequired = true
 			}

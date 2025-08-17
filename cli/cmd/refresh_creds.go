@@ -8,6 +8,7 @@ import (
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/models"
+	"github.com/spf13/cobra"
 )
 
 // Wrapper function for refreshing JWT token logic
@@ -58,10 +59,10 @@ func refreshCreds(app *CLIApp) error {
 		var errResp struct {
 			Error string `json:"error"`
 		}
-		if err := json.Unmarshal(body, &errResp); err == nil {
+		if err = json.Unmarshal(body, &errResp); err == nil {
 			if errResp.Error == "Token is expired" {
 				fmt.Println(" < User's session is expired, please re-login. > ")
-				if err := app.commandUserLogout(); err != nil {
+				if err = app.commandUserLogout(&cobra.Command{Use: "logout"}); err != nil {
 					return fmt.Errorf("error logging user out: %w", err)
 				}
 			}

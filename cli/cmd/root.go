@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/spf13/cobra"
@@ -73,6 +72,6 @@ func Execute() {
 
 	if err := app.RootCmd().Execute(); err != nil {
 		fmt.Printf("An error occurred while executing: %s\n", err)
-		os.Exit(1)
+		return
 	}
 }
