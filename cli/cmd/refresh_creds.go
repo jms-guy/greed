@@ -62,7 +62,7 @@ func refreshCreds(app *CLIApp) error {
 		if err = json.Unmarshal(body, &errResp); err == nil {
 			if errResp.Error == "Token is expired" {
 				fmt.Println(" < User's session is expired, please re-login. > ")
-				if err = app.commandUserLogout(&cobra.Command{Use: "logout"}); err != nil {
+				if err = app.commandUserLogout(&cobra.Command{Use: "auto-logout"}); err != nil {
 					return fmt.Errorf("error logging user out: %w", err)
 				}
 			}

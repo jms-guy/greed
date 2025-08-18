@@ -13,7 +13,6 @@ import (
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
-	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
 	"github.com/spf13/cobra"
 )
@@ -428,7 +427,6 @@ func (app *CLIApp) commandUpdate(cmd *cobra.Command, args []string) error {
 	itemName := args[0]
 
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
-	redirectURL := app.Config.Client.BaseURL + "/link-update-mode"
 
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
@@ -466,60 +464,13 @@ func (app *CLIApp) commandUpdate(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	linkURL := app.Config.Client.BaseURL + "/plaid/get-link-token-update/" + itemID
-
-	linkRes, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
-		return app.Config.MakeBasicRequest("POST", linkURL, token, nil)
-	})
+	err = linkUpdateModeFlow(app, cmd, itemID)
 	if err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
-		return nil
-	}
-	defer linkRes.Body.Close()
-
-	serverErr := parseAndReturnServerError(linkRes)
-	if serverErr != nil {
-		LogError(app.Config.Db, cmd, serverErr, "Error contacting server")
+		LogError(app.Config.Db, cmd, err, "Error during financial institution re-authentication")
 		return nil
 	}
 
-	var response models.LinkResponse
-	if err = json.NewDecoder(linkRes.Body).Decode(&response); err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
-	}
-
-	if response.LinkToken == "" {
-		return fmt.Errorf("backend did not return a link token for item update")
-	}
-
-	fullBrowserURL := fmt.Sprintf("%s?token=%s", redirectURL, response.LinkToken)
-	fmt.Printf("Opening Plaid Link in your browser to update '%s'. Please complete the flow.\n", itemName)
-	fmt.Printf("If the browser does not open automatically, please navigate to: %s\n", fullBrowserURL)
-
-	err = utils.OpenLink(app.Config.OperatingSystem, fullBrowserURL)
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error opening outside link")
-		return nil
-	}
-
-	_, err = auth.ListenForPlaidCallback()
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error connecting financial institution")
-		return nil
-	}
-
-	webhookCodes := []string{"ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT", "ERROR"}
-
-	for _, code := range webhookCodes {
-		err = processWebhookRecords(app, itemID, code, "ITEM")
-		if err != nil {
-			LogError(app.Config.Db, cmd, err, "Error contacting server")
-			return nil
-		}
-	}
-
-	err = app.commandSync([]string{itemName})
+	err = app.commandSync(&cobra.Command{Use: "update"}, []string{itemName})
 	if err != nil {
 		return err
 	}

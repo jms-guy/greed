@@ -8,29 +8,38 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/models"
+	"github.com/spf13/cobra"
 )
 
 // Syncs database with updated account balances, and transaction records
 // Updates account balances, and deletes local transaction records before replacing them with
 // updated records from server database.
-func (app *CLIApp) commandSync(args []string) error {
+func (app *CLIApp) commandSync(cmd *cobra.Command, args []string) error {
 	itemName := args[0]
 	itemsURL := app.Config.Client.BaseURL + "/api/items"
 
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
-		return fmt.Errorf("error getting credentials: %w", err)
+		LogError(app.Config.Db, cmd, err, "Error getting credentials")
+		return nil
 	}
 
 	// Get item ID and institution
 	itemID, itemInst, err := findItemHelper(app, itemName, itemsURL)
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(), "no item found") {
+			LogError(app.Config.Db, cmd, err, "No item found")
+			return nil
+		} else {
+			LogError(app.Config.Db, cmd, err, "Error contacting server")
+			return nil
+		}
 	}
 
 	updateBalanceURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/access/balances"
@@ -39,7 +48,8 @@ func (app *CLIApp) commandSync(args []string) error {
 		return app.Config.MakeBasicRequest("PUT", updateBalanceURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
+		return nil
 	}
 	defer resp.Body.Close()
 
@@ -47,13 +57,16 @@ func (app *CLIApp) commandSync(args []string) error {
 
 	serverErr := parseAndReturnServerError(resp)
 	if serverErr != nil {
-		return serverErr
+		LogError(app.Config.Db, cmd, serverErr, "Error contacting server")
+		return nil
 	}
 	if err = json.NewDecoder(resp.Body).Decode(&accUpdates); err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("decoding error: received an empty or incomplete response for accounts. This often indicates a temporary issue with Plaid or the financial institution. Please try syncing again later")
+			LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+			return nil
 		}
-		return fmt.Errorf("decoding error for account balances: %w. The response might be malformed or unexpected. Please try syncing again later", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	fmt.Println(" > Syncing account balances...")
@@ -63,7 +76,8 @@ func (app *CLIApp) commandSync(args []string) error {
 		if acc.AvailableBalance != "" {
 			avBal, err := strconv.ParseFloat(acc.AvailableBalance, 64)
 			if err != nil {
-				return fmt.Errorf("error converting balance to float: %w", err)
+				LogError(app.Config.Db, cmd, fmt.Errorf("error converting string value: %w", err), "Data error")
+				return nil
 			}
 			avBalance.Float64 = avBal
 			avBalance.Valid = true
@@ -73,7 +87,8 @@ func (app *CLIApp) commandSync(args []string) error {
 		if acc.CurrentBalance != "" {
 			curBal, err := strconv.ParseFloat(acc.CurrentBalance, 64)
 			if err != nil {
-				return fmt.Errorf("error converting balance to float: %w", err)
+				LogError(app.Config.Db, cmd, fmt.Errorf("error converting string value: %w", err), "Data error")
+				return nil
 			}
 			curBalance.Float64 = curBal
 			curBalance.Valid = true
@@ -95,12 +110,13 @@ func (app *CLIApp) commandSync(args []string) error {
 		}
 		_, err = app.Config.Db.UpsertAccount(context.Background(), params)
 		if err != nil {
-			fmt.Printf("Error updating balance of acc #%v: %s\n", acc.Id, err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error updating account record: %w", err), "Local database error")
 			continue
 		}
 	}
 
 	fmt.Println(" > Account balances synced successfully.")
+	fmt.Println(" > Fetching transaction data...")
 
 	err = processWebhookRecords(app, itemID, "ITEM", "DEFAULT_UPDATE")
 	if err != nil {
@@ -113,34 +129,40 @@ func (app *CLIApp) commandSync(args []string) error {
 		return app.Config.MakeBasicRequest("POST", syncTxnsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
+		return nil
 	}
 	defer response.Body.Close()
 
 	serverErr = parseAndReturnServerError(response)
 	if serverErr != nil {
-		return serverErr
+		LogError(app.Config.Db, cmd, serverErr, "Error contacting server")
+		return nil
 	}
 
 	var txns []models.Transaction
 	if err = json.NewDecoder(response.Body).Decode(&txns); err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("decoding error: received an empty or incomplete response for transactions. This often indicates a temporary issue with Plaid or the financial institution. Please try syncing again later")
+			LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+			return nil
 		}
-		return fmt.Errorf("decoding error for transactions: %w. The response might be malformed or unexpected. Please try syncing again later", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return nil
 	}
 
 	fmt.Println(" > Syncing transaction records...")
 
 	err = app.Config.Db.DeleteTransactions(context.Background(), creds.User.ID.String())
 	if err != nil {
-		return fmt.Errorf("error clearing local records: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error clearing local records: %w", err), "Local database error")
+		return nil
 	}
 
 	for _, t := range txns {
 		a, err := strconv.ParseFloat(t.Amount, 64)
 		if err != nil {
-			return fmt.Errorf("error converting string value: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error converting string value: %w", err), "Data error")
+			return nil
 		}
 
 		params := database.CreateTransactionParams{
@@ -156,7 +178,8 @@ func (app *CLIApp) commandSync(args []string) error {
 
 		_, err = app.Config.Db.CreateTransaction(context.Background(), params)
 		if err != nil {
-			return fmt.Errorf("error creating local record: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error creating local records: %w", err), "Local database error")
+			return nil
 		}
 
 		fmt.Printf("\r > %v", t.Id)
@@ -164,17 +187,14 @@ func (app *CLIApp) commandSync(args []string) error {
 
 	fmt.Println("\r > Transaction records synced successfully.")
 
-	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "TRANSACTIONS_UPDATES_AVAILABLE")
-	if err != nil {
-		return err
-	}
-	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "TRANSACTIONS_REMOVED")
-	if err != nil {
-		return err
-	}
-	err = processWebhookRecords(app, itemID, "TRANSACTIONS", "DEFAULT_UPDATE")
-	if err != nil {
-		return err
+	webhookCodes := []string{"TRANSACTIONS_UPDATES_AVAILABLE", "TRANSACTIONS_REMOVED", "DEFAULT_UPDATE", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE"}
+
+	for _, code := range webhookCodes {
+		err = processWebhookRecords(app, itemID, code, "TRANSACTIONS")
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error contacting server")
+			return nil
+		}
 	}
 
 	return nil

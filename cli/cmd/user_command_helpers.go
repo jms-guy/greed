@@ -13,6 +13,7 @@ import (
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
+	"github.com/spf13/cobra"
 )
 
 // Helper for getting password while registering a new user
@@ -423,6 +424,8 @@ func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
 
 	loginRequired := false
 	syncRequired := false
+	itemsToUpdate := []string{}
+	itemsToSync := []string{}
 
 	for _, record := range webhookRecords {
 		_, found := itemsMap[record.ItemID]
@@ -433,18 +436,29 @@ func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
 		switch record.WebhookCode {
 		case "ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT", "ERROR":
 			loginRequired = true
+			itemsToUpdate = append(itemsToUpdate, record.ItemID)
 		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE":
 			if !loginRequired {
 				syncRequired = true
+				itemsToSync = append(itemsToSync, record.ItemID)
 			}
 		default:
 		}
 	}
 
 	if loginRequired {
-		fmt.Println("One or more of your bank connections require re-authentication. Please use the 'update' command.")
+		item := itemsToUpdate[0]
+		fmt.Println("One or more of your bank connections require re-authentication.")
+		fmt.Printf("Beginning update for item with ID: %s", item)
+		updateErr := linkUpdateModeFlow(app, &cobra.Command{Use: "auto-update"}, item)
+		if updateErr != nil {
+			return updateErr
+		}
 	} else if syncRequired {
-		fmt.Println("New data is available for one or more accounts. Please use the 'sync <item-name>' command.")
+		item := itemsToSync[0]
+		fmt.Println("New data is available for one or more accounts.")
+		fmt.Printf("Beginning sync for item with ID: %s")
+
 	}
 
 	return nil

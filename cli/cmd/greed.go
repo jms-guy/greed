@@ -161,7 +161,7 @@ func (app *CLIApp) syncCmd() *cobra.Command {
 		Short:   "Updates account and transaction data for an item, providing real-time data",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandSync(args)
+			return app.commandSync(cmd, args)
 		},
 	}
 }
@@ -197,7 +197,7 @@ func (app *CLIApp) infoCmd() *cobra.Command {
 		Short:   "Lists extended information for a given account",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandAccountInfo(args)
+			return app.commandAccountInfo(cmd, args)
 		},
 	}
 }
@@ -220,9 +220,9 @@ func (app *CLIApp) getAccountsCmd() *cobra.Command {
 		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 {
-				return app.commandListAccounts(args)
+				return app.commandListAccounts(cmd, args)
 			} else {
-				return app.commandListAllAccounts()
+				return app.commandListAllAccounts(cmd)
 			}
 		},
 	}
@@ -281,7 +281,7 @@ func (app *CLIApp) getIncomeDataCmd() *cobra.Command {
 			accountName := args[0]
 			mode, _ := cmd.Flags().GetString("mode")
 
-			return app.commandGetIncome(accountName, mode)
+			return app.commandGetIncome(cmd, accountName, mode)
 		},
 	}
 
@@ -297,7 +297,7 @@ func (app *CLIApp) exportDataCmd() *cobra.Command {
 		Short:   "Export an account's transaction data into a .csv file",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandExportData(args)
+			return app.commandExportData(cmd, args)
 		},
 	}
 }
