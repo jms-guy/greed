@@ -35,7 +35,7 @@ func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	params := database.GetAccountParams{
@@ -45,13 +45,13 @@ func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local record: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	txns, err := app.Config.Db.GetTransactions(context.Background(), account.ID)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local records: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	if len(txns) == 0 {
@@ -65,14 +65,14 @@ func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
 	err = os.MkdirAll(exportDirectory, 0o750)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making directory: %w", err), "File error")
-		return nil
+		return err
 	}
 
 	// #nosec G304 - file variables are controlled, no user input
 	file, err := os.Create(exportFile)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error creating export file: %w", err), "File error")
-		return nil
+		return err
 	}
 	defer file.Close()
 
@@ -83,7 +83,7 @@ func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
 	err = writer.Write(headers)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error writing csv headers: %w", err), "File error")
-		return nil
+		return err
 	}
 
 	for _, txn := range txns {
@@ -94,7 +94,7 @@ func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
 		err = writer.Write(toWrite)
 		if err != nil {
 			LogError(app.Config.Db, cmd, fmt.Errorf("error writing csv line: %w", err), "File error")
-			return nil
+			return err
 		}
 	}
 

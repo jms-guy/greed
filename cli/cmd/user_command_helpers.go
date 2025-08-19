@@ -447,18 +447,28 @@ func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
 	}
 
 	if loginRequired {
-		item := itemsToUpdate[0]
 		fmt.Println("One or more of your bank connections require re-authentication.")
-		fmt.Printf("Beginning update for item with ID: %s", item)
-		updateErr := linkUpdateModeFlow(app, &cobra.Command{Use: "auto-update"}, item)
-		if updateErr != nil {
-			return updateErr
+		for _, item := range itemsToUpdate {
+			fmt.Printf("Beginning update for item: %s\n", itemsMap[item])
+			updateErr := linkUpdateModeFlow(app, item)
+			if updateErr != nil {
+				return updateErr
+			}
+			fmt.Printf("Update complete. Beginning sync for item: %s...\n", itemsMap[item])
+			syncErr := app.commandSync(&cobra.Command{Use: "auto-sync"}, []string{itemsMap[item]})
+			if syncErr != nil {
+				continue
+			}
 		}
 	} else if syncRequired {
-		item := itemsToSync[0]
 		fmt.Println("New data is available for one or more accounts.")
-		fmt.Printf("Beginning sync for item with ID: %s")
-
+		for _, item := range itemsToSync {
+			fmt.Printf("Beginning sync for item: %s...\n", itemsMap[item])
+			syncErr := app.commandSync(&cobra.Command{Use: "auto-sync"}, []string{itemsMap[item]})
+			if syncErr != nil {
+				continue
+			}
+		}
 	}
 
 	return nil

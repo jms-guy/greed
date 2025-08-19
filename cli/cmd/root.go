@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/jms-guy/greed/cli/internal/config"
@@ -62,6 +61,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	rootCmd.AddCommand(app.infoCmd())
 	rootCmd.AddCommand(app.exportDataCmd())
 	rootCmd.AddCommand(app.addItemCmd())
+	rootCmd.AddCommand(app.logsCmd())
 
 	return rootCmd
 }
@@ -69,9 +69,8 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 // Executes commands
 func Execute() {
 	app := NewCLIApp()
-
+	//Ugly err handling, LogError function is used inside of command functions
 	if err := app.RootCmd().Execute(); err != nil {
-		fmt.Printf("An error occurred while executing: %s\n", err)
 		return
 	}
 }

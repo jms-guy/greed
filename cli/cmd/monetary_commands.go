@@ -20,7 +20,7 @@ func (app *CLIApp) commandGetIncome(cmd *cobra.Command, accountName, mode string
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	params := database.GetAccountParams{
@@ -30,7 +30,7 @@ func (app *CLIApp) commandGetIncome(cmd *cobra.Command, accountName, mode string
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account record: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	incURL := app.Config.Client.BaseURL + "/api/accounts/" + account.ID + "/transactions/monetary"
@@ -40,20 +40,20 @@ func (app *CLIApp) commandGetIncome(cmd *cobra.Command, accountName, mode string
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var response []models.MonetaryData
 	if err = json.NewDecoder(res.Body).Decode(&response); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	if mode == "graph" {
@@ -63,7 +63,7 @@ func (app *CLIApp) commandGetIncome(cmd *cobra.Command, accountName, mode string
 	tbl, err := tables.MakeTableForMonetaryAggregate(response, accountName)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error building table: %w", err), "Data error")
-		return nil
+		return err
 	}
 	tbl.Print()
 	fmt.Println("")

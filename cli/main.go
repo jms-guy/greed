@@ -7,8 +7,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Make tables nicer
-// Aggregates
 func main() {
 	cmd.Execute()
 }

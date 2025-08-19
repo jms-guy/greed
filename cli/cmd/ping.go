@@ -15,7 +15,7 @@ func (app *CLIApp) commandPing(cmd *cobra.Command) error {
 	resp, err := http.Get(healthURL)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 

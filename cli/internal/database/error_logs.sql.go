@@ -25,3 +25,37 @@ func (q *Queries) CreateErrorLog(ctx context.Context, arg CreateErrorLogParams) 
 	_, err := q.db.ExecContext(ctx, createErrorLog, arg.Timestamp, arg.Command, arg.ErrorMessage)
 	return err
 }
+
+const getLogs = `-- name: GetLogs :many
+SELECT id, timestamp, command, error_message FROM error_logs
+ORDER BY timestamp DESC
+LIMIT 5
+`
+
+func (q *Queries) GetLogs(ctx context.Context) ([]ErrorLog, error) {
+	rows, err := q.db.QueryContext(ctx, getLogs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ErrorLog
+	for rows.Next() {
+		var i ErrorLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.Timestamp,
+			&i.Command,
+			&i.ErrorMessage,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

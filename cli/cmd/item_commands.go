@@ -28,14 +28,14 @@ func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) err
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var itemsResp struct {
@@ -43,7 +43,7 @@ func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) err
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	var itemID string
@@ -66,20 +66,20 @@ func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) err
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var txns []models.Transaction
 	if err = json.NewDecoder(resp.Body).Decode(&txns); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	fmt.Println("Creating local records...")
@@ -88,7 +88,7 @@ func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) err
 		a, err := strconv.ParseFloat(t.Amount, 64)
 		if err != nil {
 			LogError(app.Config.Db, cmd, fmt.Errorf("error converting string value: %w", err), "Data error")
-			return nil
+			return err
 		}
 
 		params := database.CreateTransactionParams{
@@ -105,7 +105,7 @@ func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) err
 		_, err = app.Config.Db.CreateTransaction(context.Background(), params)
 		if err != nil {
 			LogError(app.Config.Db, cmd, fmt.Errorf("error creating transaction record: %w", err), "Local database error")
-			return nil
+			return err
 		}
 
 		fmt.Printf("\r%v", t.Id)
@@ -464,7 +464,7 @@ func (app *CLIApp) commandUpdate(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	err = linkUpdateModeFlow(app, cmd, itemID)
+	err = linkUpdateModeFlow(app, itemID)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error during financial institution re-authentication")
 		return nil

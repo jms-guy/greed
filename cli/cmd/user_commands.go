@@ -27,14 +27,14 @@ func (app *CLIApp) commandRegisterUser(cmd *cobra.Command, args []string) error 
 	password, err := registerPasswordHelper()
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error encountered getting password")
-		return nil
+		return err
 	}
 
 	// Get user email
 	email, err := registerEmailHelper()
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error encountered registering email")
-		return nil
+		return err
 	}
 	if email == "exit" {
 		return nil
@@ -49,21 +49,21 @@ func (app *CLIApp) commandRegisterUser(cmd *cobra.Command, args []string) error 
 	res, err := app.Config.MakeBasicRequest("POST", registerURL, "", reqData)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var user models.User
 
 	if err = json.NewDecoder(res.Body).Decode(&user); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	emailData := models.EmailVerification{
@@ -74,21 +74,21 @@ func (app *CLIApp) commandRegisterUser(cmd *cobra.Command, args []string) error 
 	emailRes, err := app.Config.MakeBasicRequest("POST", sendURL, "", emailData)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer emailRes.Body.Close()
 
 	err = checkResponseStatus(emailRes)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	// Email verification flow
 	verified, err := verifyEmailHelper(app, sendURL, verifyURL, user, emailData)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error encountered verifying email")
-		return nil
+		return err
 	}
 	if !verified {
 		return nil
@@ -107,7 +107,7 @@ func (app *CLIApp) commandRegisterUser(cmd *cobra.Command, args []string) error 
 	_, err = app.Config.Db.CreateUser(context.Background(), params)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error creating user record: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	fmt.Printf("User: %s has been successfully registered!\n", username)
@@ -127,20 +127,20 @@ func (app *CLIApp) commandUserLogin(cmd *cobra.Command, args []string) error {
 	login, err := userLoginHelper(app, username, loginURL)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error logging in")
-		return nil
+		return err
 	}
 
 	// Check user for existing items
 	items, err := userCheckItemsHelper(app, login, itemsURL)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error logging in")
-		return nil
+		return err
 	}
 	if len(items) != 0 {
 		err = checkForWebhookRecords(app, items)
 		if err != nil {
 			LogError(app.Config.Db, cmd, err, "Error contacting server")
-			return nil
+			return err
 		}
 
 		return nil
@@ -151,7 +151,7 @@ func (app *CLIApp) commandUserLogin(cmd *cobra.Command, args []string) error {
 	linked, err := userFirstTimePlaidLinkHelper(app, login, itemsURL)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error linking financial institution")
-		return nil
+		return err
 	}
 	if linked {
 		return nil
@@ -160,7 +160,7 @@ func (app *CLIApp) commandUserLogin(cmd *cobra.Command, args []string) error {
 	err = auth.StoreTokens(login, app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error logging in")
-		return nil
+		return err
 	}
 
 	return nil
@@ -173,7 +173,7 @@ func (app *CLIApp) commandUserLogout(cmd *cobra.Command) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error reading file, could not log out")
-		return nil
+		return err
 	}
 
 	request := models.RefreshRequest{
@@ -183,20 +183,20 @@ func (app *CLIApp) commandUserLogout(cmd *cobra.Command) error {
 	resp, err := app.Config.MakeBasicRequest("POST", logoutURL, "", request)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	err = auth.RemoveCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error logging out")
-		return nil
+		return err
 	}
 
 	fmt.Println("Logged out successfully!")
@@ -283,13 +283,13 @@ func (app *CLIApp) commandVerifyEmail(cmd *cobra.Command) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	user, err := app.Config.Db.GetUser(context.Background(), creds.User.Name)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getting user record: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	if user.IsVerified.Bool {
@@ -305,20 +305,20 @@ func (app *CLIApp) commandVerifyEmail(cmd *cobra.Command) error {
 	sendResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", sendReq)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer sendResp.Body.Close()
 
 	err = checkResponseStatus(sendResp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, sendReq)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 	if code == "" {
 		return nil
@@ -332,14 +332,14 @@ func (app *CLIApp) commandVerifyEmail(cmd *cobra.Command) error {
 	verifyRes, err := app.Config.MakeBasicRequest("POST", verifyURL, "", verifyData)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer verifyRes.Body.Close()
 
 	err = checkResponseStatus(verifyRes)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	verifyParams := database.VerifyEmailParams{
@@ -351,7 +351,7 @@ func (app *CLIApp) commandVerifyEmail(cmd *cobra.Command) error {
 	err = app.Config.Db.VerifyEmail(context.Background(), verifyParams)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Local database error")
-		return nil
+		return err
 	}
 
 	fmt.Printf("User '%s' email '%s' verified successfully\n", user.Name, user.Email)
@@ -366,7 +366,7 @@ func (app *CLIApp) commandUserItems(cmd *cobra.Command) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
@@ -374,14 +374,14 @@ func (app *CLIApp) commandUserItems(cmd *cobra.Command) error {
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	if resp.StatusCode == 200 {
@@ -390,7 +390,7 @@ func (app *CLIApp) commandUserItems(cmd *cobra.Command) error {
 		}
 		if err = json.NewDecoder(resp.Body).Decode(&itemsResponse); err != nil {
 			LogError(app.Config.Db, cmd, err, "Error contacting server")
-			return nil
+			return err
 		}
 
 		if len(itemsResponse.Items) != 0 {
@@ -413,19 +413,19 @@ func (app *CLIApp) commandChangePassword(cmd *cobra.Command) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	pw, err := auth.ReadPassword("Please enter your current password > ")
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting password")
-		return nil
+		return err
 	}
 
 	err = auth.ValidatePasswordHash(creds.User.HashedPassword, pw)
 	if err != nil {
 		fmt.Println("Bad password input")
-		return nil
+		return err
 	}
 
 	password, err := registerPasswordHelper()
@@ -441,20 +441,20 @@ func (app *CLIApp) commandChangePassword(cmd *cobra.Command) error {
 	emailResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer emailResp.Body.Close()
 
 	err = checkResponseStatus(emailResp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	code, err := getEmailCodeHelper(app, creds.User.Email, sendURL, request)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 	if code == "" {
 		return nil
@@ -470,21 +470,21 @@ func (app *CLIApp) commandChangePassword(cmd *cobra.Command) error {
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var updated models.UpdatedPassword
 
 	if err = json.NewDecoder(resp.Body).Decode(&updated); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	params := database.UpdatePasswordParams{
@@ -496,7 +496,7 @@ func (app *CLIApp) commandChangePassword(cmd *cobra.Command) error {
 	err = app.Config.Db.UpdatePassword(context.Background(), params)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Local database error")
-		return nil
+		return err
 	}
 
 	fmt.Println("Password updated successfully")
@@ -513,13 +513,13 @@ func (app *CLIApp) commandResetPassword(cmd *cobra.Command, args []string) error
 	user, err := app.Config.Db.GetUserByEmail(context.Background(), email)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getting user record: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	password, err := registerPasswordHelper()
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error registering password")
-		return nil
+		return err
 	}
 
 	request := models.EmailVerification{
@@ -530,20 +530,20 @@ func (app *CLIApp) commandResetPassword(cmd *cobra.Command, args []string) error
 	emailResp, err := app.Config.MakeBasicRequest("POST", sendURL, "", request)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer emailResp.Body.Close()
 
 	err = checkResponseStatus(emailResp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	code, err := getEmailCodeHelper(app, email, sendURL, request)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 	if code == "" {
 		return nil
@@ -558,21 +558,21 @@ func (app *CLIApp) commandResetPassword(cmd *cobra.Command, args []string) error
 	resetResp, err := app.Config.MakeBasicRequest("POST", resetURL, "", resetReq)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer resetResp.Body.Close()
 
 	err = checkResponseStatus(resetResp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var updated models.UpdatedPassword
 
 	if err = json.NewDecoder(resetResp.Body).Decode(&updated); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	params := database.UpdatePasswordParams{
@@ -584,7 +584,7 @@ func (app *CLIApp) commandResetPassword(cmd *cobra.Command, args []string) error
 	err = app.Config.Db.UpdatePassword(context.Background(), params)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error updating user record: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	fmt.Println("Password successfully reset")

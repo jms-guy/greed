@@ -313,3 +313,15 @@ func (app *CLIApp) addItemCmd() *cobra.Command {
 		},
 	}
 }
+
+func (app *CLIApp) logsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "logs",
+		Aliases: []string{"Logs", "LOGS"},
+		Short:   "View error logs in more depth",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandReadLogs(cmd)
+		},
+	}
+}

@@ -24,14 +24,14 @@ func (app *CLIApp) commandListAccounts(cmd *cobra.Command, args []string) error 
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var itemsResp struct {
@@ -39,7 +39,7 @@ func (app *CLIApp) commandListAccounts(cmd *cobra.Command, args []string) error 
 	}
 	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	var itemID string
@@ -64,20 +64,20 @@ func (app *CLIApp) commandListAccounts(cmd *cobra.Command, args []string) error 
 	})
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 
 	err = checkResponseStatus(resp)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error contacting server")
-		return nil
+		return err
 	}
 
 	var response []models.Account
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return nil
+		return err
 	}
 
 	tbl := tables.MakeAccountsTable(response, itemInst)
@@ -91,13 +91,13 @@ func (app *CLIApp) commandListAllAccounts(cmd *cobra.Command) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	accounts, err := app.Config.Db.GetAllAccounts(context.Background(), creds.User.ID.String())
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getitng local account records: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	tbl := tables.MakeAccountsTableAllItems(accounts)
@@ -113,7 +113,7 @@ func (app *CLIApp) commandAccountInfo(cmd *cobra.Command, args []string) error {
 	creds, err := auth.GetCreds(app.Config.ConfigFP)
 	if err != nil {
 		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return nil
+		return err
 	}
 
 	params := database.GetAccountParams{
@@ -123,7 +123,7 @@ func (app *CLIApp) commandAccountInfo(cmd *cobra.Command, args []string) error {
 	account, err := app.Config.Db.GetAccount(context.Background(), params)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
-		return nil
+		return err
 	}
 
 	tbl := tables.MakeSingleAccountTable(account)
