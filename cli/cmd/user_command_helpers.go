@@ -447,8 +447,14 @@ func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
 	}
 
 	if loginRequired {
+		// Create a unique map of itemID's, so one update will resolve all webhooks for that item
+		uniqueItems := map[string]string{}
+		for _, itemID := range itemsToUpdate {
+			uniqueItems[itemsMap[itemID]] = itemID
+		}
+
 		fmt.Println("One or more of your bank connections require re-authentication.")
-		for _, item := range itemsToUpdate {
+		for _, item := range uniqueItems {
 			fmt.Printf("Beginning update for item: %s\n", itemsMap[item])
 			updateErr := linkUpdateModeFlow(app, item)
 			if updateErr != nil {
@@ -461,8 +467,13 @@ func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
 			}
 		}
 	} else if syncRequired {
+		uniqueItems := map[string]string{}
+		for _, itemID := range itemsToSync {
+			uniqueItems[itemsMap[itemID]] = itemID
+		}
+
 		fmt.Println("New data is available for one or more accounts.")
-		for _, item := range itemsToSync {
+		for _, item := range uniqueItems {
 			fmt.Printf("Beginning sync for item: %s...\n", itemsMap[item])
 			syncErr := app.commandSync(&cobra.Command{Use: "auto-sync"}, []string{itemsMap[item]})
 			if syncErr != nil {

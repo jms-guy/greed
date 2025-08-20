@@ -144,7 +144,7 @@ func (app *CLIApp) fetchCmd() *cobra.Command {
 		Long:    "Retrieves all account and transaction data for item from third party, populating database. Should only be used on a new item, afterwards use sync command",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := app.commandGetAccounts(args)
+			err := app.commandGetAccounts(cmd, args)
 			if err != nil {
 				LogError(app.Config.Db, cmd, err, "Error getting accounts")
 				return nil
@@ -322,6 +322,39 @@ func (app *CLIApp) logsCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.commandReadLogs(cmd)
+		},
+	}
+}
+
+func (app *CLIApp) setDefaultsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "default",
+		Aliases: []string{"Default", "DEFAULT"},
+		Short:   "Sets a default value in config file",
+		Long:    "Specify an item or an account to be used by default as a command argument, allowing user to forgo typing certain argument values (ex. `get transactions (NO ACCOUNT STRING NEEDED HERE)`)",
+	}
+}
+
+func (app *CLIApp) defaultItemCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "item <item-name>",
+		Aliases: []string{"Item", "ITEM"},
+		Short:   "Set a default item to be used in command arguments",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandSetDefaultItem(cmd, args)
+		},
+	}
+}
+
+func (app *CLIApp) defaultAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "account <account-name>",
+		Aliases: []string{"Account", "ACCOUNT"},
+		Short:   "Set a default account to be used in command arguments",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandSetDefaultAccount(cmd, args)
 		},
 	}
 }

@@ -52,6 +52,9 @@
         - Windows: C:\\Users\\user\\Documents\\greed_exports
         - Linux: /home/user/greed_exports
 
+- `logs` 
+    - View in-depth error logs stored in local database
+
 ### Get
 
 The most useful command, it has several subcommands, and many flags.

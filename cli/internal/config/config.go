@@ -24,16 +24,27 @@ func LoadConfig() (*Config, error) {
 
 	client := NewClient(serverAddress)
 
+	//Get user's home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("error finding home directory: %w", err)
 	}
 
+	//Config directory
 	configDir := filepath.Join(homeDir, ".config", "greed")
 	if err := os.MkdirAll(configDir, 0750); err != nil {
 		return nil, fmt.Errorf("error creating config directory: %w", err)
 	}
 
+	//Settings file
+	settingsFile := filepath.Join(configDir, "settings.json")
+	file, err := os.OpenFile(settingsFile, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("error opening settings file: %w", err)
+	}
+	defer file.Close()
+
+	//Local database file
 	localDb := filepath.Join(configDir, "greed.db")
 
 	queries, err := mySQL.OpenLocalDatabase(localDb)
