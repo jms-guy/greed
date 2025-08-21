@@ -17,47 +17,13 @@ import (
 func (app *CLIApp) commandListAccounts(cmd *cobra.Command, args []string) error {
 	itemName := args[0]
 
-	itemsURL := app.Config.Client.BaseURL + "/api/items"
-
-	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
-		return app.Config.MakeBasicRequest("GET", itemsURL, token, nil)
-	})
+	item, err := getItemFromServer(app, itemName)
 	if err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("error making http req: %w", err), "Error contacting server")
-		return err
-	}
-	defer res.Body.Close()
-
-	err = checkResponseStatus(res)
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error contacting server")
+		LogError(app.Config.Db, cmd, err, "Error getting item")
 		return err
 	}
 
-	var itemsResp struct {
-		Items []models.ItemName `json:"items"`
-	}
-	if err = json.NewDecoder(res.Body).Decode(&itemsResp); err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
-		return err
-	}
-
-	var itemID string
-	var itemInst string
-	for _, i := range itemsResp.Items {
-		if i.Nickname == itemName {
-			itemID = i.ItemId
-			itemInst = i.InstitutionName
-			break
-		}
-	}
-
-	if itemID == "" {
-		fmt.Printf("No item found with name: %s\n", itemName)
-		return nil
-	}
-
-	accountsURL := app.Config.Client.BaseURL + "/api/items/" + itemID + "/accounts"
+	accountsURL := app.Config.Client.BaseURL + "/api/items/" + item.ItemId + "/accounts"
 
 	resp, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", accountsURL, token, nil)
@@ -80,7 +46,7 @@ func (app *CLIApp) commandListAccounts(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	tbl := tables.MakeAccountsTable(response, itemInst)
+	tbl := tables.MakeAccountsTable(response, item.InstitutionName)
 	tbl.Print()
 
 	return nil
@@ -108,22 +74,34 @@ func (app *CLIApp) commandListAllAccounts(cmd *cobra.Command) error {
 
 // Lists account information for a given account name
 func (app *CLIApp) commandAccountInfo(cmd *cobra.Command, args []string) error {
-	accountName := args[0]
+	var account database.Account
 
-	creds, err := auth.GetCreds(app.Config.ConfigFP)
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return err
-	}
+	if len(args) == 0 && app.Config.Settings.DefaultAccount.ID == "" {
+		LogError(app.Config.Db, cmd, fmt.Errorf("no account given"), "Missing argument")
+		return nil
 
-	params := database.GetAccountParams{
-		Name:   accountName,
-		UserID: creds.User.ID.String(),
-	}
-	account, err := app.Config.Db.GetAccount(context.Background(), params)
-	if err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
-		return err
+	} else if len(args) == 1 {
+		var err error
+		accountName := args[0]
+
+		creds, err := auth.GetCreds(app.Config.ConfigFP)
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error getting credentials")
+			return err
+		}
+
+		params := database.GetAccountParams{
+			Name:   accountName,
+			UserID: creds.User.ID.String(),
+		}
+		account, err = app.Config.Db.GetAccount(context.Background(), params)
+		if err != nil {
+			LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
+			return err
+		}
+
+	} else {
+		account = app.Config.Settings.DefaultAccount
 	}
 
 	tbl := tables.MakeSingleAccountTable(account)

@@ -14,7 +14,6 @@ type CLIApp struct {
 
 // Initializes a new app struct
 func NewCLIApp() *CLIApp {
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err)
@@ -47,6 +46,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	sdCmd := app.setDefaultsCmd()
 	sdCmd.AddCommand(app.defaultItemCmd())
 	sdCmd.AddCommand(app.defaultAccountCmd())
+	sdCmd.AddCommand(app.clearDefaultsCmd())
 
 	rootCmd.AddCommand(dCmd)
 	rootCmd.AddCommand(gCmd)
@@ -68,13 +68,15 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	rootCmd.AddCommand(app.addItemCmd())
 	rootCmd.AddCommand(app.logsCmd())
 
+	// Error handling is being done by custom LogErrors function in commands
+	rootCmd.SilenceErrors = true
+
 	return rootCmd
 }
 
 // Executes commands
 func Execute() {
 	app := NewCLIApp()
-	//Ugly err handling, LogError function is used inside of command functions
 	if err := app.RootCmd().Execute(); err != nil {
 		return
 	}

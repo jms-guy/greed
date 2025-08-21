@@ -19,12 +19,21 @@ import (
 
 // Fetches all transaction records for accounts attached to given item
 func (app *CLIApp) commandGetTransactions(cmd *cobra.Command, args []string) error {
-	itemName := args[0]
+	var item models.ItemName
+	var err error
+	if len(args) == 0 && app.Config.Settings.DefaultItem.Nickname == "" {
+		LogError(app.Config.Db, cmd, fmt.Errorf("no item given"), "Missing argument")
+		return nil
+	} else if app.Config.Settings.DefaultItem.Nickname != "" {
+		item = app.Config.Settings.DefaultItem
+	} else {
+		itemName := args[0]
 
-	item, err := getItemFromServer(app, itemName)
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error getting item")
-		return err
+		item, err = getItemFromServer(app, itemName)
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error getting item")
+			return nil
+		}
 	}
 
 	txnsURL := app.Config.Client.BaseURL + "/api/items/" + item.ItemId + "/access/transactions"

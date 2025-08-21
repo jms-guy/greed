@@ -195,7 +195,7 @@ func (app *CLIApp) infoCmd() *cobra.Command {
 		Use:     "info <account-name>",
 		Aliases: []string{"Info", "INFO"},
 		Short:   "Lists extended information for a given account",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.commandAccountInfo(cmd, args)
 		},
@@ -355,6 +355,18 @@ func (app *CLIApp) defaultAccountCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.commandSetDefaultAccount(cmd, args)
+		},
+	}
+}
+
+func (app *CLIApp) clearDefaultsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "clear",
+		Aliases: []string{"Clear", "CLEAR"},
+		Short:   "Clears default item/account settings",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandClearDefaults(cmd)
 		},
 	}
 }

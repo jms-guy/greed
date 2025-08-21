@@ -41,7 +41,7 @@ func getItemFromServer(app *CLIApp, itemName string) (models.ItemName, error) {
 	}
 
 	if itemFound.ItemId == "" {
-		return itemFound, fmt.Errorf("No item found")
+		return itemFound, fmt.Errorf("no item found")
 	}
 
 	return itemFound, nil
