@@ -180,7 +180,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 
 ## Changelog
 
-Changelog [here]()
+[Here](https://github.com/jms-guy/greed/blob/main/docs/changelog.md)
 
 ## Usage
 
@@ -218,7 +218,7 @@ greed export "Account Name"
 
 To contribute, clone the repo as described above in **Installation Options**. Please fork the repository and open a pull request to the `main` branch. If you have an issue, please report it [here](https://github.com/jms-guy/greed/issues).
 
-# Known Issues
+### Known Issues
 
 - Balance values are off in credit card tables
 - Only partial support for attaching multiple financial institutions per user
