@@ -13,7 +13,7 @@ import (
 
 // Remove credentials from local machine
 func RemoveCreds(configPath string) error {
-	base, err := getBaseConfigPath(configPath)
+	base, err := GetBaseConfigPath(configPath)
 	if err != nil {
 		return fmt.Errorf("error getting config directory: %w", err)
 	}
@@ -32,7 +32,7 @@ func RemoveCreds(configPath string) error {
 func GetCreds(configPath string) (models.Credentials, error) {
 	var creds models.Credentials
 
-	base, err := getBaseConfigPath(configPath)
+	base, err := GetBaseConfigPath(configPath)
 	if err != nil {
 		return creds, fmt.Errorf("error getting config directory: %w", err)
 	}
@@ -65,7 +65,7 @@ func GetCreds(configPath string) (models.Credentials, error) {
 
 // Store auth tokens in a credentials file
 func StoreTokens(data models.Credentials, configPath string) error {
-	base, err := getBaseConfigPath(configPath)
+	base, err := GetBaseConfigPath(configPath)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func StoreTokens(data models.Credentials, configPath string) error {
 	return enc.Encode(data)
 }
 
-func getBaseConfigPath(path string) (string, error) {
+func GetBaseConfigPath(path string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("error finding home directory: %w", err)

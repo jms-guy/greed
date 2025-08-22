@@ -24,6 +24,13 @@ type Account struct {
 	UserID           string
 }
 
+type ErrorLog struct {
+	ID           int64
+	Timestamp    string
+	Command      string
+	ErrorMessage string
+}
+
 type Transaction struct {
 	ID                      string
 	AccountID               string

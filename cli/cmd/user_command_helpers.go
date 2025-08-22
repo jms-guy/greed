@@ -13,6 +13,7 @@ import (
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
+	"github.com/spf13/cobra"
 )
 
 // Helper for getting password while registering a new user
@@ -391,7 +392,9 @@ Loop:
 }
 
 // Fetches webhook records from server, and searches for actions that user must take to resolve them
-func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemName) error {
+func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
+	webhookURL := app.Config.Client.BaseURL + "/api/items/webhook-records"
+
 	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
 		return app.Config.MakeBasicRequest("GET", webhookURL, token, nil)
 	})
@@ -421,6 +424,8 @@ func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemN
 
 	loginRequired := false
 	syncRequired := false
+	itemsToUpdate := []string{}
+	itemsToSync := []string{}
 
 	for _, record := range webhookRecords {
 		_, found := itemsMap[record.ItemID]
@@ -429,20 +434,52 @@ func checkForWebhookRecords(app *CLIApp, webhookURL string, items []models.ItemN
 		}
 
 		switch record.WebhookCode {
-		case "ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT":
+		case "ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT", "ERROR":
 			loginRequired = true
-		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED":
+			itemsToUpdate = append(itemsToUpdate, record.ItemID)
+		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE":
 			if !loginRequired {
 				syncRequired = true
+				itemsToSync = append(itemsToSync, record.ItemID)
 			}
 		default:
 		}
 	}
 
 	if loginRequired {
-		fmt.Println("One or more of your bank connections require re-authentication. Please use the 'update' command.")
+		// Create a unique map of itemID's, so one update will resolve all webhooks for that item
+		uniqueItems := map[string]string{}
+		for _, itemID := range itemsToUpdate {
+			uniqueItems[itemsMap[itemID]] = itemID
+		}
+
+		fmt.Println("One or more of your bank connections require re-authentication.")
+		for _, item := range uniqueItems {
+			fmt.Printf("Beginning update for item: %s\n", itemsMap[item])
+			updateErr := linkUpdateModeFlow(app, item)
+			if updateErr != nil {
+				return updateErr
+			}
+			fmt.Printf("Update complete. Beginning sync for item: %s...\n", itemsMap[item])
+			syncErr := app.commandSync(&cobra.Command{Use: "auto-sync"}, []string{itemsMap[item]})
+			if syncErr != nil {
+				continue
+			}
+		}
 	} else if syncRequired {
-		fmt.Println("New data is available for one or more accounts. Please use the 'sync <item-name>' command.")
+		uniqueItems := map[string]string{}
+		for _, itemID := range itemsToSync {
+			uniqueItems[itemsMap[itemID]] = itemID
+		}
+
+		fmt.Println("New data is available for one or more accounts.")
+		for _, item := range uniqueItems {
+			fmt.Printf("Beginning sync for item: %s...\n", itemsMap[item])
+			syncErr := app.commandSync(&cobra.Command{Use: "auto-sync"}, []string{itemsMap[item]})
+			if syncErr != nil {
+				continue
+			}
+		}
 	}
 
 	return nil

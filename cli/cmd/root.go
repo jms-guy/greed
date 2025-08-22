@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/jms-guy/greed/cli/internal/config"
 	"github.com/spf13/cobra"
@@ -16,7 +14,6 @@ type CLIApp struct {
 
 // Initializes a new app struct
 func NewCLIApp() *CLIApp {
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %s", err)
@@ -46,8 +43,14 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	gCmd.AddCommand(app.getTransactionsCmd())
 	gCmd.AddCommand(app.getIncomeDataCmd())
 
+	sdCmd := app.setDefaultsCmd()
+	sdCmd.AddCommand(app.defaultItemCmd())
+	sdCmd.AddCommand(app.defaultAccountCmd())
+	sdCmd.AddCommand(app.clearDefaultsCmd())
+
 	rootCmd.AddCommand(dCmd)
 	rootCmd.AddCommand(gCmd)
+	rootCmd.AddCommand(sdCmd)
 	rootCmd.AddCommand(app.pingCmd())
 	rootCmd.AddCommand(app.registerCmd())
 	rootCmd.AddCommand(app.loginCmd())
@@ -63,6 +66,10 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 	rootCmd.AddCommand(app.infoCmd())
 	rootCmd.AddCommand(app.exportDataCmd())
 	rootCmd.AddCommand(app.addItemCmd())
+	rootCmd.AddCommand(app.logsCmd())
+
+	// Error handling is being done by custom LogErrors function in commands
+	rootCmd.SilenceErrors = true
 
 	return rootCmd
 }
@@ -70,9 +77,7 @@ func (app *CLIApp) RootCmd() *cobra.Command {
 // Executes commands
 func Execute() {
 	app := NewCLIApp()
-
 	if err := app.RootCmd().Execute(); err != nil {
-		fmt.Printf("An error occurred while executing: %s\n", err)
-		os.Exit(1)
+		return
 	}
 }

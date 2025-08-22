@@ -1,13 +1,17 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 
+	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	mySQL "github.com/jms-guy/greed/cli/sql"
+	"github.com/jms-guy/greed/models"
 )
 
 // CLI config struct
@@ -16,6 +20,14 @@ type Config struct {
 	Db              *database.Queries // Local database queries
 	ConfigFP        string            // Config file path
 	OperatingSystem string            // Local operating system
+	SettingsFP      string            // Settings filepath
+	Settings        Settings          // Holds settings loaded from config file
+}
+
+// Settings loaded from config file
+type Settings struct {
+	DefaultItem    models.ItemName  `json:"default_item"`
+	DefaultAccount database.Account `json:"default_account"`
 }
 
 // Initializes configuration struct
@@ -24,16 +36,36 @@ func LoadConfig() (*Config, error) {
 
 	client := NewClient(serverAddress)
 
+	// Get user's home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("error finding home directory: %w", err)
 	}
 
+	// Config directory
 	configDir := filepath.Join(homeDir, ".config", "greed")
-	if err := os.MkdirAll(configDir, 0750); err != nil {
+	if err := os.MkdirAll(configDir, 0o750); err != nil {
 		return nil, fmt.Errorf("error creating config directory: %w", err)
 	}
 
+	// Settings
+	settingsFile, err := getSettingsFilePath(configDir)
+	if err != nil {
+		return nil, fmt.Errorf("error determining settings file: %w", err)
+	}
+	// #nosec G304 - file variables are controlled, no user input
+	file, err := os.OpenFile(settingsFile, os.O_RDWR|os.O_CREATE, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("error opening settings file: %w", err)
+	}
+	defer file.Close()
+
+	settings, err := loadSettingsFromFile(settingsFile)
+	if err != nil {
+		return nil, fmt.Errorf("error loading settings from file")
+	}
+
+	// Local database file
 	localDb := filepath.Join(configDir, "greed.db")
 
 	queries, err := mySQL.OpenLocalDatabase(localDb)
@@ -48,7 +80,70 @@ func LoadConfig() (*Config, error) {
 		Db:              queries,
 		ConfigFP:        ".config/greed",
 		OperatingSystem: os,
+		SettingsFP:      settingsFile,
+		Settings:        settings,
 	}
 
 	return &config, nil
+}
+
+// Checks for user credentials file, to obtain correct settings file
+func getSettingsFilePath(configPath string) (string, error) {
+	credentialsFile := filepath.Join(configPath, "credentials.json")
+
+	// Check if user is logged in
+	if _, err := os.Stat(credentialsFile); os.IsNotExist(err) {
+		return filepath.Join(configPath, "settings.json"), nil
+	}
+
+	creds, err := auth.GetCreds(configPath)
+	if err != nil {
+		return "", fmt.Errorf("error reading credentials: %w", err)
+	}
+
+	userID := creds.User.ID
+	settingsFileName := fmt.Sprintf("%s_settings.json", userID)
+	return filepath.Join(configPath, settingsFileName), nil
+}
+
+// Function to load settings from file
+func loadSettingsFromFile(filePath string) (Settings, error) {
+	var settings Settings
+
+	// #nosec G304 - file variables are controlled, no user input
+	file, err := os.Open(filePath)
+	if err != nil {
+		return settings, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&settings)
+	if err != nil {
+		if err == io.EOF {
+			return settings, nil
+		}
+		return settings, fmt.Errorf("error decoding settings file: %w", err)
+	}
+
+	return settings, nil
+}
+
+// Function to save settings to file
+func SaveSettingsToFile(filePath string, settings Settings) error {
+	// #nosec G304 - file variables are controlled, no user input
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "    ")
+
+	if err := encoder.Encode(settings); err != nil {
+		return err
+	}
+
+	return nil
 }

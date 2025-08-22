@@ -9,7 +9,7 @@
 - `login <name>`
     - Create a new user session with the server
 
-- `logout <name>`
+- `logout`
     - Exits current user session
 
 - `delete <user | item> <username_or_item_name>`
@@ -51,6 +51,16 @@
     - Export directory is based on operating system
         - Windows: C:\\Users\\user\\Documents\\greed_exports
         - Linux: /home/user/greed_exports
+
+- `logs` 
+    - View in-depth error logs stored in local database
+
+- `default <account | item | clear> <account_name | item_name>`
+    - Set a default account or item to be used in place of certain command arguments, allowing better user experience
+    - Typing an account or item name in these affected commands will override the default set for a single use
+    - Clear command resets defaults
+        - Ex. `default account "Example Checking Account"`, `default item "Example Item Name"`, `default clear`
+        - Allows for `get transactions --summary` instead of `get transactions "Example Checking Account" --summary`
 
 ### Get
 

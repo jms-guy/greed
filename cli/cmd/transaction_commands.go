@@ -14,27 +14,44 @@ import (
 	"github.com/jms-guy/greed/cli/internal/tables"
 	"github.com/jms-guy/greed/cli/internal/utils"
 	"github.com/jms-guy/greed/models"
+	"github.com/spf13/cobra"
 )
 
 // Get transaction records for given account from the server database.
 // Takes into account optional flags, creating a dynamic query to retrieve and sort the data on.
 // If summary flag is present, overrides most other flags, and returns a transaction summary instead
-func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order string, min, max, limit, pageSize int, summary bool) error {
+func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merchant, category, channel, date, start, end, order string, min, max, limit, pageSize int, summary bool) error {
 	var err error
 	queryString := utils.BuildQueries(merchant, category, channel, date, start, end, min, max, limit, summary)
 
-	creds, err := auth.GetCreds(app.Config.ConfigFP)
-	if err != nil {
-		return fmt.Errorf("error getting credentials: %w", err)
-	}
+	var account database.Account
 
-	params := database.GetAccountParams{
-		Name:   accountName,
-		UserID: creds.User.ID.String(),
-	}
-	account, err := app.Config.Db.GetAccount(context.Background(), params)
-	if err != nil {
-		return fmt.Errorf("error getting local account record: %w", err)
+	if len(args) == 0 && app.Config.Settings.DefaultAccount.ID == "" {
+		LogError(app.Config.Db, cmd, fmt.Errorf("no account given"), "Missing argument")
+		return nil
+
+	} else if len(args) == 1 {
+		var err error
+		accountName := args[0]
+
+		creds, err := auth.GetCreds(app.Config.ConfigFP)
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error getting credentials")
+			return err
+		}
+
+		params := database.GetAccountParams{
+			Name:   accountName,
+			UserID: creds.User.ID.String(),
+		}
+		account, err = app.Config.Db.GetAccount(context.Background(), params)
+		if err != nil {
+			LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
+			return err
+		}
+
+	} else {
+		account = app.Config.Settings.DefaultAccount
 	}
 
 	txnsURL := app.Config.Client.BaseURL + "/api/accounts/" + account.ID + "/transactions"
@@ -46,24 +63,28 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 		return app.Config.MakeBasicRequest("GET", txnsURL, token, nil)
 	})
 	if err != nil {
-		return fmt.Errorf("error making http request: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making http request: %w", err), "Error contacting server")
+		return err
 	}
 	defer res.Body.Close()
 
 	err = checkResponseStatus(res)
 	if err != nil {
+		LogError(app.Config.Db, cmd, err, "Error contacting server")
 		return err
 	}
 
 	if summary {
 		var summaries []models.MerchantSummary
 		if err = json.NewDecoder(res.Body).Decode(&summaries); err != nil {
-			return fmt.Errorf("decoding error: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+			return err
 		}
 
-		err = tables.PaginateSummariesTable(summaries, accountName, merchant, pageSize)
+		err = tables.PaginateSummariesTable(summaries, account.Name, merchant, pageSize)
 		if err != nil {
-			return fmt.Errorf("error creating transactions table: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error creating transactions table: %w", err), "Error drawing table")
+			return err
 		}
 
 		return nil
@@ -71,7 +92,8 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 
 	var txns []models.Transaction
 	if err = json.NewDecoder(res.Body).Decode(&txns); err != nil {
-		return fmt.Errorf("decoding error: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
+		return err
 	}
 
 	currentBalance := account.CurrentBalance.Float64
@@ -97,9 +119,10 @@ func (app *CLIApp) commandGetTxnsAccount(accountName, merchant, category, channe
 		isFiltered = false
 	}
 
-	err = tables.PaginateTransactionsTable(txns, accountName, historicalBalances, pageSize, isFiltered)
+	err = tables.PaginateTransactionsTable(txns, account.Name, historicalBalances, pageSize, isFiltered)
 	if err != nil {
-		return fmt.Errorf("error creating transactions table: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error creating transactions table: %w", err), "Error drawing table")
+		return err
 	}
 
 	return nil

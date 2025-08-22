@@ -7,66 +7,73 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	"github.com/jms-guy/greed/cli/internal/utils"
+	"github.com/spf13/cobra"
 )
 
 // Function gets the export directory determined by operating system, retrieves transaction records from local database,
 // and creates an exported .csv file containing those records
-func (app *CLIApp) commandExportData(args []string) error {
-	accountName := args[0]
+func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
+	var account database.Account
 
-	// Trim quotes included in argument by shell
-	accountName = strings.TrimPrefix(accountName, "'")
-	accountName = strings.TrimSuffix(accountName, "'")
-	accountName = strings.TrimPrefix(accountName, "\"")
-	accountName = strings.TrimSuffix(accountName, "\"")
-	// Input sanitization
-	accountName = strings.ReplaceAll(accountName, "/", "")
-	accountName = strings.ReplaceAll(accountName, "\\", "")
-	accountName = strings.ReplaceAll(accountName, "..", "")
+	if len(args) == 0 && app.Config.Settings.DefaultAccount.ID == "" {
+		LogError(app.Config.Db, cmd, fmt.Errorf("no account given"), "Missing argument")
+		return nil
+
+	} else if len(args) == 1 {
+		var err error
+		accountName := args[0]
+
+		creds, err := auth.GetCreds(app.Config.ConfigFP)
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error getting credentials")
+			return err
+		}
+
+		params := database.GetAccountParams{
+			Name:   accountName,
+			UserID: creds.User.ID.String(),
+		}
+		account, err = app.Config.Db.GetAccount(context.Background(), params)
+		if err != nil {
+			LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
+			return err
+		}
+
+	} else {
+		account = app.Config.Settings.DefaultAccount
+	}
 
 	exportDirectory := app.getExportDirectory()
 
-	creds, err := auth.GetCreds(app.Config.ConfigFP)
-	if err != nil {
-		return fmt.Errorf("error getting credentials: %w", err)
-	}
-
-	params := database.GetAccountParams{
-		Name:   accountName,
-		UserID: creds.User.ID.String(),
-	}
-	account, err := app.Config.Db.GetAccount(context.Background(), params)
-	if err != nil {
-		return fmt.Errorf("error getting local account record: %w", err)
-	}
-
 	txns, err := app.Config.Db.GetTransactions(context.Background(), account.ID)
 	if err != nil {
-		return fmt.Errorf("error getting transaction records: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local records: %w", err), "Local database error")
+		return err
 	}
 
 	if len(txns) == 0 {
-		fmt.Printf("No transaction records found for account %s\n", accountName)
+		fmt.Printf("No transaction records found for account %s\n", account.Name)
 		return nil
 	}
 
-	filename := fmt.Sprintf("%s.csv", accountName)
+	filename := fmt.Sprintf("%s.csv", account.Name)
 	exportFile := filepath.Join(exportDirectory, filename)
 
 	err = os.MkdirAll(exportDirectory, 0o750)
 	if err != nil {
-		return fmt.Errorf("error creating export directory %s: %w", exportDirectory, err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error making directory: %w", err), "File error")
+		return err
 	}
 
 	// #nosec G304 - file variables are controlled, no user input
 	file, err := os.Create(exportFile)
 	if err != nil {
-		return fmt.Errorf("error creating export file: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error creating export file: %w", err), "File error")
+		return err
 	}
 	defer file.Close()
 
@@ -76,7 +83,8 @@ func (app *CLIApp) commandExportData(args []string) error {
 	headers := []string{"Amount", "CurrencyCode", "Date", "Merchant", "Payment Channel", "Category"}
 	err = writer.Write(headers)
 	if err != nil {
-		return fmt.Errorf("error writing CSV headers: %w", err)
+		LogError(app.Config.Db, cmd, fmt.Errorf("error writing csv headers: %w", err), "File error")
+		return err
 	}
 
 	for _, txn := range txns {
@@ -86,7 +94,8 @@ func (app *CLIApp) commandExportData(args []string) error {
 
 		err = writer.Write(toWrite)
 		if err != nil {
-			return fmt.Errorf("error writing CSV line: %w", err)
+			LogError(app.Config.Db, cmd, fmt.Errorf("error writing csv line: %w", err), "File error")
+			return err
 		}
 	}
 

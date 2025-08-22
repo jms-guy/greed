@@ -13,7 +13,7 @@ func (app *CLIApp) pingCmd() *cobra.Command {
 		Short:   "Pings the server, checking connection health",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandPing()
+			return app.commandPing(cmd)
 		},
 	}
 }
@@ -25,7 +25,7 @@ func (app *CLIApp) registerCmd() *cobra.Command {
 		Short:   "Register a new user",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandRegisterUser(args)
+			return app.commandRegisterUser(cmd, args)
 		},
 	}
 }
@@ -37,7 +37,7 @@ func (app *CLIApp) loginCmd() *cobra.Command {
 		Short:   "Login as a user",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUserLogin(args)
+			return app.commandUserLogin(cmd, args)
 		},
 	}
 }
@@ -49,7 +49,7 @@ func (app *CLIApp) logoutCmd() *cobra.Command {
 		Short:   "Logs out of user credentials",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUserLogout()
+			return app.commandUserLogout(cmd)
 		},
 	}
 }
@@ -81,7 +81,7 @@ func (app *CLIApp) deleteItemCmd() *cobra.Command {
 		Short: "Delete an item",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandDeleteItem(args)
+			return app.commandDeleteItem(cmd, args)
 		},
 	}
 }
@@ -94,7 +94,7 @@ func (app *CLIApp) verifyCmd() *cobra.Command {
 		Long:    "Sends a verification code to user's email address",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandVerifyEmail()
+			return app.commandVerifyEmail(cmd)
 		},
 	}
 }
@@ -107,7 +107,7 @@ func (app *CLIApp) itemsCmd() *cobra.Command {
 		Long:    "Lists a user's item records. Items are financial institution connections, with each institution being one item",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUserItems()
+			return app.commandUserItems(cmd)
 		},
 	}
 }
@@ -119,7 +119,7 @@ func (app *CLIApp) changepwCmd() *cobra.Command {
 		Short:   "Updates a user's password",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandChangePassword()
+			return app.commandChangePassword(cmd)
 		},
 	}
 }
@@ -131,7 +131,7 @@ func (app *CLIApp) resetpwCmd() *cobra.Command {
 		Short:   "Resets a user's forgotten password",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandResetPassword(args)
+			return app.commandResetPassword(cmd, args)
 		},
 	}
 }
@@ -144,11 +144,12 @@ func (app *CLIApp) fetchCmd() *cobra.Command {
 		Long:    "Retrieves all account and transaction data for item from third party, populating database. Should only be used on a new item, afterwards use sync command",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := app.commandGetAccounts(args)
+			err := app.commandGetAccounts(cmd, args)
 			if err != nil {
-				return err
+				LogError(app.Config.Db, cmd, err, "Error getting accounts")
+				return nil
 			}
-			return app.commandGetTransactions(args)
+			return app.commandGetTransactions(cmd, args)
 		},
 	}
 }
@@ -160,7 +161,7 @@ func (app *CLIApp) syncCmd() *cobra.Command {
 		Short:   "Updates account and transaction data for an item, providing real-time data",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandSync(args)
+			return app.commandSync(cmd, args)
 		},
 	}
 }
@@ -172,7 +173,7 @@ func (app *CLIApp) updateCmd() *cobra.Command {
 		Short:   "Re-authenticates user's financial institution through Plaid",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandUpdate(args)
+			return app.commandUpdate(cmd, args)
 		},
 	}
 }
@@ -184,7 +185,7 @@ func (app *CLIApp) renameCmd() *cobra.Command {
 		Short:   "Rename an item",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandRenameItem(args)
+			return app.commandRenameItem(cmd, args)
 		},
 	}
 }
@@ -194,9 +195,9 @@ func (app *CLIApp) infoCmd() *cobra.Command {
 		Use:     "info <account-name>",
 		Aliases: []string{"Info", "INFO"},
 		Short:   "Lists extended information for a given account",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandAccountInfo(args)
+			return app.commandAccountInfo(cmd, args)
 		},
 	}
 }
@@ -219,9 +220,9 @@ func (app *CLIApp) getAccountsCmd() *cobra.Command {
 		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 {
-				return app.commandListAccounts(args)
+				return app.commandListAccounts(cmd, args)
 			} else {
-				return app.commandListAllAccounts()
+				return app.commandListAllAccounts(cmd)
 			}
 		},
 	}
@@ -233,9 +234,8 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 		Aliases: []string{"Transactions", "TRANSACTIONS", "txns", "Txns", "TXNS"},
 		Short:   "Returns a list of transactions for a given account",
 		Long:    "Returns transactions for an account, takes many optional flags that are used to build a query string",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			accountName := args[0]
 			merchant, _ := cmd.Flags().GetString("merchant")
 			category, _ := cmd.Flags().GetString("category")
 			channel, _ := cmd.Flags().GetString("channel")
@@ -249,7 +249,7 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 			summary, _ := cmd.Flags().GetBool("summary")
 			pageSize, _ := cmd.Flags().GetInt("pgsize")
 
-			return app.commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order, min, max, limit, pageSize, summary)
+			return app.commandGetTxnsAccount(cmd, args, merchant, category, channel, date, start, end, order, min, max, limit, pageSize, summary)
 		},
 	}
 
@@ -275,12 +275,11 @@ func (app *CLIApp) getIncomeDataCmd() *cobra.Command {
 		Aliases: []string{"Income", "INCOME", "inc", "INC"},
 		Short:   "Returns aggregate income/expenses data for account history",
 		Long:    "Returns aggregate income/expenses data for account history. Can display data in table, or chart mode. To display properly in graph mode, a terminal screen with a height:width of at least 50:210 is required, else the graph will distort.",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			accountName := args[0]
 			mode, _ := cmd.Flags().GetString("mode")
 
-			return app.commandGetIncome(accountName, mode)
+			return app.commandGetIncome(cmd, args, mode)
 		},
 	}
 
@@ -296,7 +295,7 @@ func (app *CLIApp) exportDataCmd() *cobra.Command {
 		Short:   "Export an account's transaction data into a .csv file",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandExportData(args)
+			return app.commandExportData(cmd, args)
 		},
 	}
 }
@@ -308,7 +307,64 @@ func (app *CLIApp) addItemCmd() *cobra.Command {
 		Short:   "Connect a financial institution to your account",
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.commandAddItem()
+			return app.commandAddItem(cmd)
+		},
+	}
+}
+
+func (app *CLIApp) logsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "logs",
+		Aliases: []string{"Logs", "LOGS"},
+		Short:   "View error logs in more depth",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandReadLogs(cmd)
+		},
+	}
+}
+
+func (app *CLIApp) setDefaultsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "default",
+		Aliases: []string{"Default", "DEFAULT"},
+		Short:   "Sets a default value in config file",
+		Long:    "Specify an item or an account to be used by default as a command argument, allowing user to forgo typing certain argument values (ex. `get transactions (NO ACCOUNT STRING NEEDED HERE)`)",
+	}
+}
+
+func (app *CLIApp) defaultItemCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "item <item-name>",
+		Aliases: []string{"Item", "ITEM"},
+		Short:   "Set a default item to be used in command arguments",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandSetDefaultItem(cmd, args)
+		},
+	}
+}
+
+func (app *CLIApp) defaultAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "account <account-name>",
+		Aliases: []string{"Account", "ACCOUNT"},
+		Short:   "Set a default account to be used in command arguments",
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandSetDefaultAccount(cmd, args)
+		},
+	}
+}
+
+func (app *CLIApp) clearDefaultsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "clear",
+		Aliases: []string{"Clear", "CLEAR"},
+		Short:   "Clears default item/account settings",
+		Args:    cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.commandClearDefaults(cmd)
 		},
 	}
 }

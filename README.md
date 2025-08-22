@@ -11,10 +11,12 @@
     - [CLI Features](#cli-features)
 - [System Requirements](#system-requirements)
 - [Installation](#installation-options)
+- [Changelog](#changelog)
 - [Usage](#usage)
 - [Quick Start](#quick-start)
 - [To-Do List](#to-do-list)
 - [Contributing & Issues](#contributing--issues)
+    - [Known Issues](#known-issues)
 
 ## Overview
 
@@ -38,7 +40,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 - [Cobra](https://github.com/spf13/cobra)-based CLI tool
 - [CLI Commands](https://github.com/jms-guy/greed/blob/main/docs/CLI_commands.md)
 - Client SQLite database
-- Allows for registering, logging in/out, and deleting users
+- Auto-update/syncing data upon user login
 - Basic reporting of account information for financial institutions
 - 24 months of account financial history
 - In-depth transaction history reporting 
@@ -176,6 +178,10 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     ./greed --help
     ```
 
+## Changelog
+
+Changelog [here]()
+
 ## Usage
 
 - List of CLI commands found [here](https://github.com/jms-guy/greed/blob/main/docs/CLI_commands.md)
@@ -183,7 +189,6 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     - Register
     - Login
     - Fetch
-    - Update (occasionally required after first fetch)
 - Help can be found with the command:
 ```bash
 greed --help
@@ -208,8 +213,12 @@ greed export "Account Name"
 - Recurring transaction detection
 - Custom transaction tags and filtering
     - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)
-- Web client
 
 ## Contributing & Issues
 
 To contribute, clone the repo as described above in **Installation Options**. Please fork the repository and open a pull request to the `main` branch. If you have an issue, please report it [here](https://github.com/jms-guy/greed/issues).
+
+# Known Issues
+
+- Balance values are off in credit card tables
+- Only partial support for attaching multiple financial institutions per user
