@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
 	mySQL "github.com/jms-guy/greed/cli/sql"
 	"github.com/jms-guy/greed/models"
@@ -48,8 +49,12 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Settings
-	settingsFile := filepath.Join(configDir, "settings.json")
-	file, err := os.OpenFile(settingsFile, os.O_RDWR|os.O_CREATE, 0o644)
+	settingsFile, err := getSettingsFilePath(configDir)
+	if err != nil {
+		return nil, fmt.Errorf("error determining settings file: %w", err)
+	}
+	// #nosec G304 - file variables are controlled, no user input
+	file, err := os.OpenFile(settingsFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("error opening settings file: %w", err)
 	}
@@ -82,10 +87,30 @@ func LoadConfig() (*Config, error) {
 	return &config, nil
 }
 
+// Checks for user credentials file, to obtain correct settings file
+func getSettingsFilePath(configPath string) (string, error) {
+	credentialsFile := filepath.Join(configPath, "credentials.json")
+
+	// Check if user is logged in
+	if _, err := os.Stat(credentialsFile); os.IsNotExist(err) {
+		return filepath.Join(configPath, "settings.json"), nil
+	}
+
+	creds, err := auth.GetCreds(configPath)
+	if err != nil {
+		return "", fmt.Errorf("error reading credentials: %w", err)
+	}
+
+	userID := creds.User.ID
+	settingsFileName := fmt.Sprintf("%s_settings.json", userID)
+	return filepath.Join(configPath, settingsFileName), nil
+}
+
 // Function to load settings from file
 func loadSettingsFromFile(filePath string) (Settings, error) {
 	var settings Settings
 
+	// #nosec G304 - file variables are controlled, no user input
 	file, err := os.Open(filePath)
 	if err != nil {
 		return settings, err
@@ -106,7 +131,8 @@ func loadSettingsFromFile(filePath string) (Settings, error) {
 
 // Function to save settings to file
 func SaveSettingsToFile(filePath string, settings Settings) error {
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	// #nosec G304 - file variables are controlled, no user input
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}

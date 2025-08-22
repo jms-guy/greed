@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/jms-guy/greed/cli/internal/auth"
 	"github.com/jms-guy/greed/cli/internal/database"
@@ -18,35 +17,37 @@ import (
 // Function gets the export directory determined by operating system, retrieves transaction records from local database,
 // and creates an exported .csv file containing those records
 func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
-	accountName := args[0]
+	var account database.Account
 
-	// Trim quotes included in argument by shell
-	accountName = strings.TrimPrefix(accountName, "'")
-	accountName = strings.TrimSuffix(accountName, "'")
-	accountName = strings.TrimPrefix(accountName, "\"")
-	accountName = strings.TrimSuffix(accountName, "\"")
-	// Input sanitization
-	accountName = strings.ReplaceAll(accountName, "/", "")
-	accountName = strings.ReplaceAll(accountName, "\\", "")
-	accountName = strings.ReplaceAll(accountName, "..", "")
+	if len(args) == 0 && app.Config.Settings.DefaultAccount.ID == "" {
+		LogError(app.Config.Db, cmd, fmt.Errorf("no account given"), "Missing argument")
+		return nil
+
+	} else if len(args) == 1 {
+		var err error
+		accountName := args[0]
+
+		creds, err := auth.GetCreds(app.Config.ConfigFP)
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error getting credentials")
+			return err
+		}
+
+		params := database.GetAccountParams{
+			Name:   accountName,
+			UserID: creds.User.ID.String(),
+		}
+		account, err = app.Config.Db.GetAccount(context.Background(), params)
+		if err != nil {
+			LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
+			return err
+		}
+
+	} else {
+		account = app.Config.Settings.DefaultAccount
+	}
 
 	exportDirectory := app.getExportDirectory()
-
-	creds, err := auth.GetCreds(app.Config.ConfigFP)
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return err
-	}
-
-	params := database.GetAccountParams{
-		Name:   accountName,
-		UserID: creds.User.ID.String(),
-	}
-	account, err := app.Config.Db.GetAccount(context.Background(), params)
-	if err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local record: %w", err), "Local database error")
-		return err
-	}
 
 	txns, err := app.Config.Db.GetTransactions(context.Background(), account.ID)
 	if err != nil {
@@ -55,11 +56,11 @@ func (app *CLIApp) commandExportData(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(txns) == 0 {
-		fmt.Printf("No transaction records found for account %s\n", accountName)
+		fmt.Printf("No transaction records found for account %s\n", account.Name)
 		return nil
 	}
 
-	filename := fmt.Sprintf("%s.csv", accountName)
+	filename := fmt.Sprintf("%s.csv", account.Name)
 	exportFile := filepath.Join(exportDirectory, filename)
 
 	err = os.MkdirAll(exportDirectory, 0o750)

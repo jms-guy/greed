@@ -234,9 +234,8 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 		Aliases: []string{"Transactions", "TRANSACTIONS", "txns", "Txns", "TXNS"},
 		Short:   "Returns a list of transactions for a given account",
 		Long:    "Returns transactions for an account, takes many optional flags that are used to build a query string",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			accountName := args[0]
 			merchant, _ := cmd.Flags().GetString("merchant")
 			category, _ := cmd.Flags().GetString("category")
 			channel, _ := cmd.Flags().GetString("channel")
@@ -250,7 +249,7 @@ func (app *CLIApp) getTransactionsCmd() *cobra.Command {
 			summary, _ := cmd.Flags().GetBool("summary")
 			pageSize, _ := cmd.Flags().GetInt("pgsize")
 
-			return app.commandGetTxnsAccount(accountName, merchant, category, channel, date, start, end, order, min, max, limit, pageSize, summary)
+			return app.commandGetTxnsAccount(cmd, args, merchant, category, channel, date, start, end, order, min, max, limit, pageSize, summary)
 		},
 	}
 
@@ -276,12 +275,11 @@ func (app *CLIApp) getIncomeDataCmd() *cobra.Command {
 		Aliases: []string{"Income", "INCOME", "inc", "INC"},
 		Short:   "Returns aggregate income/expenses data for account history",
 		Long:    "Returns aggregate income/expenses data for account history. Can display data in table, or chart mode. To display properly in graph mode, a terminal screen with a height:width of at least 50:210 is required, else the graph will distort.",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			accountName := args[0]
 			mode, _ := cmd.Flags().GetString("mode")
 
-			return app.commandGetIncome(cmd, accountName, mode)
+			return app.commandGetIncome(cmd, args, mode)
 		},
 	}
 

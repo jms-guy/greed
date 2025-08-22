@@ -16,21 +16,35 @@ import (
 
 // Gets an account's income/expense data through querying server database transaction data.
 // Displays data in a visual format based on flag value passed through mode
-func (app *CLIApp) commandGetIncome(cmd *cobra.Command, accountName, mode string) error {
-	creds, err := auth.GetCreds(app.Config.ConfigFP)
-	if err != nil {
-		LogError(app.Config.Db, cmd, err, "Error getting credentials")
-		return err
-	}
+func (app *CLIApp) commandGetIncome(cmd *cobra.Command, args []string, mode string) error {
+	var account database.Account
 
-	params := database.GetAccountParams{
-		Name:   accountName,
-		UserID: creds.User.ID.String(),
-	}
-	account, err := app.Config.Db.GetAccount(context.Background(), params)
-	if err != nil {
-		LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account record: %w", err), "Local database error")
-		return err
+	if len(args) == 0 && app.Config.Settings.DefaultAccount.ID == "" {
+		LogError(app.Config.Db, cmd, fmt.Errorf("no account given"), "Missing argument")
+		return nil
+
+	} else if len(args) == 1 {
+		var err error
+		accountName := args[0]
+
+		creds, err := auth.GetCreds(app.Config.ConfigFP)
+		if err != nil {
+			LogError(app.Config.Db, cmd, err, "Error getting credentials")
+			return err
+		}
+
+		params := database.GetAccountParams{
+			Name:   accountName,
+			UserID: creds.User.ID.String(),
+		}
+		account, err = app.Config.Db.GetAccount(context.Background(), params)
+		if err != nil {
+			LogError(app.Config.Db, cmd, fmt.Errorf("error getting local account: %w", err), "Local database error")
+			return err
+		}
+
+	} else {
+		account = app.Config.Settings.DefaultAccount
 	}
 
 	incURL := app.Config.Client.BaseURL + "/api/accounts/" + account.ID + "/transactions/monetary"
@@ -60,7 +74,7 @@ func (app *CLIApp) commandGetIncome(cmd *cobra.Command, accountName, mode string
 		charts.MakeIncomeChart(response)
 	}
 
-	tbl, err := tables.MakeTableForMonetaryAggregate(response, accountName)
+	tbl, err := tables.MakeTableForMonetaryAggregate(response, account.Name)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error building table: %w", err), "Data error")
 		return err
