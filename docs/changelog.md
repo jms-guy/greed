@@ -6,19 +6,16 @@ All notable changes to this project will be documented in this file.
 ## [v1.0.0] - 2025-08-22
 
 ### Added
-- CLI
-    - Local error logging + new logs command to view recent errors.
-    - Automatic item update/sync after login.
-    - Persisted defaults: set/clear default item and account.
+- CLI: Local error logging with `logs` command
+- CLI: Automatic item sync after login
+- CLI: Persisted defaults for items/accounts
 
 ### Changed
-- CLI
-    - Standardized, user-friendly error messages with detailed errors stored locally.
-    - Certain command arguments can now be ommitted, if default values have been set in settings.
+- CLI: Standardized user-friendly error messages
+- CLI: Optional command arguments when defaults set
 
 ### Fixed
-- CLI
-    - More reliable webhook checking during user login.
+- CLI: Improved webhook reliability during login
 
 
 ## [v1.0.0-beta-3] - 2025-08-16

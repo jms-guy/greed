@@ -220,5 +220,5 @@ To contribute, clone the repo as described above in **Installation Options**. Pl
 
 ### Known Issues
 
-- Balance values are off in credit card tables
+- Balance values are off in credit card tables, uses calculations for getting historical balances of a debit account
 - Only partial support for attaching multiple financial institutions per user
