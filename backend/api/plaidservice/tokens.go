@@ -2,14 +2,14 @@ package plaidservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jms-guy/greed/models"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
-/*
-//Sandbox access token generation
-func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
+// Sandbox access token generation
+func (p *Service) GetSandboxToken(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
 	sandboxPublicTokenResp, _, err := p.Client.PlaidApi.SandboxPublicTokenCreate(ctx).SandboxPublicTokenCreateRequest(
 		*plaid.NewSandboxPublicTokenCreateRequest(
 			"ins_109508",
@@ -24,7 +24,7 @@ func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.Item
 	}
 	exchangePublicTokenResp, _, err := p.Client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
 		*plaid.NewItemPublicTokenExchangeRequest(sandboxPublicTokenResp.GetPublicToken()),
-	  ).Execute()
+	).Execute()
 	if err != nil {
 		if apiErr, ok := err.(plaid.GenericOpenAPIError); ok {
 			fmt.Println("Plaid error body:", string(apiErr.Body()))
@@ -34,8 +34,8 @@ func GetSandboxToken(p.Client *plaid.APIClient, ctx context.Context) (plaid.Item
 
 	return exchangePublicTokenResp, nil
 }
-*/
-//Requests Plaid API for a Link token for p.Client use
+
+// Requests Plaid API for a Link token for p.Client use
 func (p *Service) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
 	user := plaid.LinkTokenCreateRequestUser{
 		ClientUserId: userID,

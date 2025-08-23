@@ -57,9 +57,9 @@ func registerEmailHelper() (string, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var email string
 
-	fmt.Println(" < Please enter a valid email address for your account. > ")
-	fmt.Println(" < Email verification will be used for resetting your password, and recovering your account in case of a forgotten password. > ")
-	fmt.Println(" < Type 'exit' to cancel > ")
+	fmt.Println(" > Please enter a valid email address for your account. ")
+	fmt.Println(" > Email verification will be used for resetting your password, and recovering your account in case of a forgotten password. ")
+	fmt.Println(" > Type 'exit' to cancel ")
 	for {
 		fmt.Print(" > ")
 		scanner.Scan()
@@ -90,15 +90,15 @@ func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models
 	scanner := bufio.NewScanner(os.Stdin)
 	var code string
 
-	fmt.Println(" < An email with a verification code has been sent to user's email. Please type in the code to continue > ")
-	fmt.Println(" < Type 'exit' to cancel, or 'resend' to try again if no email has been received > ")
+	fmt.Println(" > An email with a verification code has been sent to user's email. Please type in the code to continue ")
+	fmt.Println(" > Type 'exit' to cancel, 'resend' to try again if no email has been received, or 'continue' to continue with an unverified email ")
 	for {
 		fmt.Print(" > ")
 		scanner.Scan()
 		code = scanner.Text()
 
 		if len(code) == 0 {
-			fmt.Println(" < Please enter the verification code provided within the email below. > ")
+			fmt.Println(" > Please enter the verification code provided within the email below. ")
 			continue
 		}
 
@@ -118,7 +118,9 @@ func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models
 				return "", err
 			}
 
-			fmt.Printf(" < Another verification code has been sent to email: %s > \n", userEmail)
+			fmt.Println(" > Please note, that some email providers (such as Outlook) may decline to accept emails from my domain.")
+			fmt.Println(" > If you are running into this issue, please try a Gmail account if possible, or continue unverified.")
+			fmt.Printf(" > Another verification code has been sent to email: %s \n", userEmail)
 			continue
 		}
 		break
@@ -129,9 +131,7 @@ func getEmailCodeHelper(app *CLIApp, userEmail, sendURL string, emailData models
 
 // Helper for performing email verification flow in registering a new user
 func verifyEmailHelper(app *CLIApp, sendURL, verifyURL string, user models.User, emailData models.EmailVerification) (bool, error) {
-	fmt.Println(" < It can take up to a couple of minutes for the email to be received > ")
-	fmt.Println(" < Or you can type 'continue' to continue without a verified email address. > ")
-	fmt.Println(" < Please note, if your address has not been verified, you will be unable to change your password, or recover your account in case the password has been forgotten. > ")
+	fmt.Println(" > It can take a couple of minutes for the email to be received ")
 
 	code, err := getEmailCodeHelper(app, user.Email, sendURL, emailData)
 	if err != nil {

@@ -590,3 +590,37 @@ func (app *CLIApp) commandResetPassword(cmd *cobra.Command, args []string) error
 	fmt.Println("Password successfully reset")
 	return nil
 }
+
+// Command function used for testing, to get Plaid sandbox data
+func (app *CLIApp) commandTestUserLogin(cmd *cobra.Command, args []string) error {
+	username := args[0]
+
+	loginURL := app.Config.Client.BaseURL + "/api/auth/login"
+
+	// Get user credentials
+	login, err := userLoginHelper(app, username, loginURL)
+	if err != nil {
+		LogError(app.Config.Db, cmd, err, "Error logging in")
+		return err
+	}
+
+	sandboxURL := app.Config.Client.BaseURL + "/admin/sandbox"
+	sandboxRes, err := app.Config.MakeBasicRequest("POST", sandboxURL, login.AccessToken, nil)
+	if err != nil {
+		return fmt.Errorf("error making request: %w", err)
+	}
+	defer sandboxRes.Body.Close()
+
+	err = checkResponseStatus(sandboxRes)
+	if err != nil {
+		return err
+	}
+
+	err = auth.StoreTokens(login, app.Config.ConfigFP)
+	if err != nil {
+		LogError(app.Config.Db, cmd, err, "Error logging in")
+		return err
+	}
+
+	return nil
+}
