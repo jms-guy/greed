@@ -61,14 +61,14 @@ Since this app utilizes paid Plaid functions, and is not intended for widespread
 Below are some quick demonstrations of some core features:
 
 ### 1. User Registration
-![Registering with GREED](https://github.com/jms-guy/greed/tree/main/docs/gifs/greed_register.gif)
+![Registering with GREED](https://github.com/jms-guy/greed/blob/main/docs/gifs/greed_register.gif)
 
 ### 2. Syncing Your Accounts
-![Syncing Process](https://github.com/jms-guy/greed/tree/main/docs/gifs/greed_sync.gif)
+![Syncing Process](https://github.com/jms-guy/greed/blob/main/docs/gifs/greed_sync.gif)
 
 ### 3. Viewing Transactions & Summary Reports
 *Standard Transaction View:*
-![Get Transactions](https://github.com/jms-guy/greed/tree/main/docs/gifs/greed_transactions.gif)
+![Get Transactions](https://github.com/jms-guy/greed/blob/main/docs/gifs/greed_transactions.gif)
 
 ## System Requirements
 - No dependencies for binary installation
