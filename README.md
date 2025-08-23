@@ -9,8 +9,9 @@
 - [Overview](#overview)
     - [Server Features](#server-features)
     - [CLI Features](#cli-features)
+- [Demo](#demo)
 - [System Requirements](#system-requirements)
-- [Installation](#installation-options)
+- [Installation Options](#installation-options)
 - [Changelog](#changelog)
 - [Usage](#usage)
 - [Quick Start](#quick-start)
@@ -22,7 +23,7 @@
 
 Greed is a financial application written almost entirely in Golang, used to view/track data easily across financial institutions/accounts. It utilizes the third-party API [Plaid](https://plaid.com) to connect your account with your financial institutions, and obtain your account and transaction history. This data can then be viewed in a user friendly format, which can be used to track past expenditures and plan future ones.
 
-Since this app utilizes paid Plaid functions, users are restricted in a 'demo' mode, in the number of calls they can make to certain server endpoints, specifically those that talk to Plaid. 
+Since this app utilizes paid Plaid functions, and is not intended for widespread use, users are restricted in a 'demo' mode, in the number of calls they can make to certain server endpoints, specifically those that talk to Plaid. Users are limited to 5 calls to update/sync their financial data.
 
 ### Server Features
 
@@ -54,6 +55,20 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
     - View Income vs. Expenses per account
     - Viewable in tables and graphs
 - Export data into a CSV file
+
+## Demo
+
+Below are some quick demonstrations of some core features:
+
+### 1. User Registration
+![Registering with GREED](https://github.com/jms-guy/greed/tree/main/docs/gifs/greed_register.gif)
+
+### 2. Syncing Your Accounts
+![Syncing Process](https://github.com/jms-guy/greed/tree/main/docs/gifs/greed_sync.gif)
+
+### 3. Viewing Transactions & Summary Reports
+*Standard Transaction View:*
+![Get Transactions](https://github.com/jms-guy/greed/tree/main/docs/gifs/greed_transactions.gif)
 
 ## System Requirements
 - No dependencies for binary installation
@@ -180,7 +195,7 @@ Since this app utilizes paid Plaid functions, users are restricted in a 'demo' m
 
 ## Changelog
 
-[Here](https://github.com/jms-guy/greed/blob/main/docs/changelog.md)
+See the [Changelog](https://github.com/jms-guy/greed/blob/main/docs/changelog.md)
 
 ## Usage
 

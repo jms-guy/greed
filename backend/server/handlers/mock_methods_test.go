@@ -513,6 +513,13 @@ func (m *mockMailService) SendMail(mailreq *sgrid.Mail) error {
 	return nil
 }
 
+func (p *mockPlaidService) GetSandboxToken(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
+	if p.GetSandboxTokenFunc != nil {
+		return p.GetSandboxTokenFunc(ctx)
+	}
+	return plaid.ItemPublicTokenExchangeResponse{}, nil
+}
+
 func (p *mockPlaidService) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
 	if p.GetLinkTokenFunc != nil {
 		return p.GetLinkTokenFunc(ctx, userID, webhookURL)

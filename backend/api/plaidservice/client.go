@@ -13,6 +13,7 @@ type Service struct {
 
 // Plaid interface
 type PlaidService interface {
+	GetSandboxToken(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error)
 	GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error)
 	GetLinkTokenForUpdateMode(ctx context.Context, userID, accessToken, webhookURL string) (string, error)
 	GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error)
@@ -31,7 +32,7 @@ func NewPlaidService(clientID, secret string) *Service {
 	config := plaid.NewConfiguration()
 	config.AddDefaultHeader("PLAID-CLIENT-ID", clientID)
 	config.AddDefaultHeader("PLAID-SECRET", secret)
-	config.UseEnvironment(plaid.Production)
+	config.UseEnvironment(plaid.Sandbox)
 	client := plaid.NewAPIClient(config)
 	return &Service{Client: client}
 }

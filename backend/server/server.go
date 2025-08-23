@@ -166,10 +166,10 @@ func Run() error {
 	// Dev operations
 	r.Group(func(r chi.Router) {
 		r.Use(app.DevAuthMiddleware)
-		r.Get("/admin/users", app.HandlerGetListOfUsers) // Get list of users
-		// r.With(app.AuthMiddleware).Post("/admin/sandbox", app.HandlerGetSandboxToken)		//Plaid sandbox flow
+		r.Get("/admin/users", app.HandlerGetListOfUsers)                              // Get list of users
+		r.With(app.AuthMiddleware).Post("/admin/sandbox", app.HandlerGetSandboxToken) //Plaid sandbox flow
 
-		r.Route("/admin/reset", func(r chi.Router) { // Methods reset the respective database tables
+		r.Route("/admin/reset", func(r chi.Router) { // Routes reset the respective database tables
 			r.Post("/users", app.HandlerResetUsers)
 			r.Post("/items", app.HandlerResetItems)
 			r.Post("/accounts", app.HandlerResetAccounts)

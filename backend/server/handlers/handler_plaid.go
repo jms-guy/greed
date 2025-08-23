@@ -14,8 +14,6 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
-/*
-// Unused
 func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userIDValue := ctx.Value(userIDKey)
@@ -25,13 +23,13 @@ func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	accessToken, err := plaidservice.GetSandboxToken(app.PClient, ctx)
+	accessToken, err := app.PService.GetSandboxToken(ctx)
 	if err != nil {
 		app.respondWithError(w, 500, "Service error", fmt.Errorf("error getting sandbox token: %w", err))
 		return
 	}
 
-	encryptedAccessToken, err := encrypt.EncryptAccessToken([]byte(accessToken.AccessToken), app.Config.AESKey)
+	encryptedAccessToken, err := app.Encryptor.EncryptAccessToken([]byte(accessToken.AccessToken), app.Config.AESKey)
 	if err != nil {
 		app.respondWithError(w, 500, "Error encrypting access token", err)
 		return
@@ -42,11 +40,11 @@ func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Requ
 	cursor := sql.NullString{String: "", Valid: true}
 
 	params := database.CreateItemParams{
-		ID: accessToken.ItemId,
-		UserID: id,
-		AccessToken: encryptedAccessToken,
-		InstitutionName: "Plaid Banking",
-		Nickname: nickName,
+		ID:                    accessToken.ItemId,
+		UserID:                id,
+		AccessToken:           encryptedAccessToken,
+		InstitutionName:       "Plaid Banking",
+		Nickname:              nickName,
 		TransactionSyncCursor: cursor,
 	}
 
@@ -58,8 +56,8 @@ func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Requ
 
 	app.respondWithJSON(w, 201, "Item created")
 }
-*/
-//Endpoint gets a Link token from Plaid and serves it to the client
+
+// Endpoint gets a Link token from Plaid and serves it to the client
 func (app *AppServer) HandlerGetLinkToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
