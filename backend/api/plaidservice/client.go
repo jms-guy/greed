@@ -32,7 +32,7 @@ func NewPlaidService(clientID, secret string) *Service {
 	config := plaid.NewConfiguration()
 	config.AddDefaultHeader("PLAID-CLIENT-ID", clientID)
 	config.AddDefaultHeader("PLAID-SECRET", secret)
-	config.UseEnvironment(plaid.Sandbox)
+	config.UseEnvironment(plaid.Production)
 	client := plaid.NewAPIClient(config)
 	return &Service{Client: client}
 }
