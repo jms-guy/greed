@@ -23,7 +23,7 @@ func (app *AppServer) HandlerGetSandboxToken(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	accessToken, err := app.PService.GetSandboxToken(ctx)
+	accessToken, err := app.PSandbox.GetSandboxToken(ctx)
 	if err != nil {
 		app.respondWithError(w, 500, "Service error", fmt.Errorf("error getting sandbox token: %w", err))
 		return

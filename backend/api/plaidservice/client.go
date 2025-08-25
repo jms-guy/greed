@@ -28,11 +28,21 @@ type PlaidService interface {
 }
 
 // Creates a new APIClient for Plaid requests
-func NewPlaidService(clientID, secret string) *Service {
+func NewPlaidProductionService(clientID, secret string) *Service {
 	config := plaid.NewConfiguration()
 	config.AddDefaultHeader("PLAID-CLIENT-ID", clientID)
 	config.AddDefaultHeader("PLAID-SECRET", secret)
 	config.UseEnvironment(plaid.Production)
+	client := plaid.NewAPIClient(config)
+	return &Service{Client: client}
+}
+
+// Creates a API Client for Plaid sandbox use
+func NewPlaidSandboxService(clientID, secret string) *Service {
+	config := plaid.NewConfiguration()
+	config.AddDefaultHeader("PLAID-CLIENT-ID", clientID)
+	config.AddDefaultHeader("PLAID-SECRET", secret)
+	config.UseEnvironment(plaid.Sandbox)
 	client := plaid.NewAPIClient(config)
 	return &Service{Client: client}
 }

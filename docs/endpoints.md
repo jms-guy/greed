@@ -7,6 +7,7 @@ API endpoints are grouped by operation types
 
 | Endpoint | Http Method | Request JSON Struct | Response JSON Struct | Description |
 | :----:  | :----:  | :----:  | :----:  | :----:  |
+| `/api/health` | `GET` | | | Returns a basic server ping, alerting client of server status |
 | `/register` | `POST` | [UserDetails](https://github.com/jms-guy/greed/blob/main/models/request.go#L22) | [User](https://github.com/jms-guy/greed/blob/main/models/response.go#L90) | Creates a new user record |
 | `/login` | `POST` | [UserDetails](https://github.com/jms-guy/greed/blob/main/models/request.go#L22) | [Credentials](https://github.com/jms-guy/greed/blob/main/models/response.go#L81) | Creates a "session" for a user |
 | `/logout` | `POST` | [RefreshRequest](https://github.com/jms-guy/greed/blob/main/models/request.go#L18) | | Revokes a user's session |

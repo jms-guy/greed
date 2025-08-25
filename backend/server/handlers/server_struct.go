@@ -3,17 +3,20 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"os"
 
 	kitlog "github.com/go-kit/log"
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
 	"github.com/jms-guy/greed/backend/internal/auth"
+	auth_pkg "github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/backend/internal/encrypt"
 	"github.com/jms-guy/greed/backend/internal/limiter"
 	"github.com/jms-guy/greed/backend/internal/utils"
+	"github.com/joho/godotenv"
 
 	"github.com/plaid/plaid-go/v36/plaid"
 )
@@ -28,9 +31,95 @@ type AppServer struct {
 	SgMail     sgrid.MailService         // SendGrid mail service
 	Limiter    *limiter.IPRateLimiter    // Rate limiter
 	PService   plaidservice.PlaidService // Client for Plaid integration
+	PSandbox   plaidservice.PlaidService // Client for Plaid sandbox testing use
 	TxnUpdater TxnUpdater                // Used for Db transactions
 	Encryptor  encrypt.EncryptorService  // Used for encryption and decryption methods
 	Querier    utils.QueryService        // Used for parsing URL queries
+}
+
+// Creates a new AppServer struct with all necessary fields
+func NewAppServer() (*AppServer, error) {
+	app := &AppServer{}
+	// Main logging struct
+	kitLogger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
+
+	// Load the .env file
+	_ = godotenv.Load(".env")
+	_ = godotenv.Load("../.env")
+	_ = godotenv.Load("../../.env")
+
+	config, err := config.LoadConfig()
+	if err != nil {
+		_ = kitLogger.Log(
+			"level", "error",
+			"msg", "failed to load application configuration",
+			"err", err,
+		)
+		return app, err
+	}
+
+	// Open the database connection
+	var db *sql.DB
+	var dbQueries *database.Queries
+	if config.DatabaseURL == "unset" {
+		_ = kitLogger.Log(
+			"level", "warning",
+			"msg", "database URL not set, starting with no database connection",
+		)
+	} else {
+		db, err = sql.Open("postgres", config.DatabaseURL)
+		if err != nil {
+			_ = kitLogger.Log(
+				"level", "error",
+				"msg", "failed to open database connection",
+				"err", err,
+			)
+			return app, err
+		}
+
+		dbQueries = database.New(db)
+	}
+
+	// Auth service interface
+	authService := &auth_pkg.Service{}
+
+	// TxnUpdater interface
+	updater := NewDBTransactionUpdater(db, dbQueries)
+
+	// Encryptor interface
+	encryptor := encrypt.NewEncryptor()
+
+	// Querier interface
+	querier := utils.NewQueryService()
+
+	// Create mail service instance
+	mailService := sgrid.NewSGMailService(kitLogger)
+
+	// Create Plaid client
+	plaidServiceStruct := plaidservice.NewPlaidProductionService(config.PlaidClientID, config.PlaidSecret)
+
+	plaidSandboxStruct := plaidservice.NewPlaidSandboxService(config.PlaidClientID, config.PlaidSbSecret)
+
+	// Create rate limiter
+	limiter := limiter.NewIPRateLimiter()
+
+	// Initialize the server struct
+	app = &AppServer{
+		Db:         dbQueries,
+		Auth:       authService,
+		Database:   db,
+		Config:     config,
+		Logger:     kitLogger,
+		SgMail:     mailService,
+		Limiter:    limiter,
+		PService:   plaidServiceStruct,
+		PSandbox:   plaidSandboxStruct,
+		TxnUpdater: updater,
+		Encryptor:  encryptor,
+		Querier:    querier,
+	}
+
+	return app, nil
 }
 
 // Interfaces created as placeholders in the server struct, so that mock services may be created in testing that can replace actual services
