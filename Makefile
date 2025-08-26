@@ -1,0 +1,3 @@
+test:
+	./reset_test_db.sh
+	go test ./... 

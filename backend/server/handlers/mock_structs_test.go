@@ -130,6 +130,7 @@ type mockPlaidService struct {
 		added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error)
 	GetWebhookVerificationKeyFunc func(ctx context.Context, keyID string) (plaid.JWKPublicKey, error)
 	RemoveItemFunc                func(ctx context.Context, accessToken string) error
+	GetRecurringFunc              func(ctx context.Context, accessToken string) (plaid.TransactionsRecurringGetResponse, error)
 }
 
 // Test TxnUpdater service

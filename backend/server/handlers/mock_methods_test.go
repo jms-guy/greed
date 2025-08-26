@@ -592,6 +592,13 @@ func (p *mockPlaidService) RemoveItem(ctx context.Context, accessToken string) e
 	return nil
 }
 
+func (p *mockPlaidService) GetRecurring(ctx context.Context, accessToken string) (plaid.TransactionsRecurringGetResponse, error) {
+	if p.GetRecurringFunc != nil {
+		return p.GetRecurringFunc(ctx, accessToken)
+	}
+	return plaid.TransactionsRecurringGetResponse{}, nil
+}
+
 func (t *mockTxnUpdaterService) ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error {
 	if t.ExpireDelegationFunc != nil {
 		return t.ExpireDelegationFunc(ctx, tokenHash, token)

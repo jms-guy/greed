@@ -25,6 +25,7 @@ type PlaidService interface {
 		added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error)
 	GetWebhookVerificationKey(ctx context.Context, keyID string) (plaid.JWKPublicKey, error)
 	RemoveItem(ctx context.Context, accessToken string) error
+	GetRecurring(ctx context.Context, accessToken string) (plaid.TransactionsRecurringGetResponse, error)
 }
 
 // Creates a new APIClient for Plaid requests

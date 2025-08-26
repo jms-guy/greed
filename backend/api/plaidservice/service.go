@@ -108,3 +108,19 @@ func (p *Service) RemoveItem(ctx context.Context, accessToken string) error {
 
 	return nil
 }
+
+// Gets recurring transaction data from Plaid
+func (p *Service) GetRecurring(ctx context.Context, accessToken string) (plaid.TransactionsRecurringGetResponse, error) {
+	yes := true
+	options := plaid.TransactionsRecurringGetRequest{
+		Options: &plaid.TransactionsRecurringGetRequestOptions{IncludePersonalFinanceCategory: &yes}}
+
+	request := plaid.NewTransactionsRecurringGetRequest(accessToken)
+	request.SetOptions(*options.Options)
+	response, _, err := p.Client.PlaidApi.TransactionsRecurringGet(ctx).TransactionsRecurringGetRequest(*request).Execute()
+	if err != nil {
+		return plaid.TransactionsRecurringGetResponse{}, err
+	}
+
+	return response, nil
+}

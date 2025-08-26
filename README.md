@@ -224,7 +224,6 @@ greed export "Account Name"
 
 ## To-Do List
 
-- CLI tests + integration tests
 - Recurring transaction detection
 - Custom transaction tags and filtering
     - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)
@@ -237,3 +236,4 @@ To contribute, clone the repo as described above in **Installation Options**. Pl
 
 - Balance values are off in credit card tables, uses calculations for getting historical balances of a debit account
 - Only partial support for attaching multiple financial institutions per user
+- Powershell will crash viewing paginated transaction tables
