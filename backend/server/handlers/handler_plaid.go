@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/internal/database"
 	"github.com/jms-guy/greed/models"
+	"github.com/lib/pq"
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
@@ -319,6 +322,18 @@ func (app *AppServer) HandlerSyncTransactions(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	recurring, err := app.PService.GetRecurring(ctx, accessToken)
+	if err != nil {
+		app.respondWithError(w, 500, "Service error", fmt.Errorf("error getting recurring transaction data: %w", err))
+		return
+	}
+
+	err = app.tagRecurringTransactions(ctx, recurring)
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", err)
+		return
+	}
+
 	item, err := app.Db.GetItemByID(ctx, itemID)
 	if err != nil {
 		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting item item record: %w", err))
@@ -417,4 +432,60 @@ func (app *AppServer) HandlerUpdateBalances(w http.ResponseWriter, r *http.Reque
 	}
 
 	app.respondWithJSON(w, 200, responseAccounts)
+}
+
+// Takes Plaid recurring transaction streams and tags the necessary transactions for user perusing
+func (app *AppServer) tagRecurringTransactions(ctx context.Context, recurring plaid.TransactionsRecurringGetResponse) error {
+	if err := app.processStreams(ctx, recurring.InflowStreams, "in"); err != nil {
+		return err
+	}
+	if err := app.processStreams(ctx, recurring.OutflowStreams, "out"); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Processes Plaid's recurring stream slices, creating proper database records
+func (app *AppServer) processStreams(ctx context.Context, streams []plaid.TransactionStream, streamType string) error {
+	for _, stream := range streams {
+		params := database.CreateStreamParams{
+			ID:                stream.StreamId,
+			AccountID:         stream.AccountId,
+			Description:       stream.Description,
+			MerchantName:      sql.NullString{String: stream.GetMerchantName(), Valid: true},
+			Frequency:         string(stream.Frequency),
+			IsActive:          stream.IsActive,
+			PredictedNextDate: sql.NullString{String: stream.GetPredictedNextDate(), Valid: true},
+			StreamType:        streamType,
+		}
+		err := app.Db.CreateStream(ctx, params)
+		if err != nil {
+			var pqErr *pq.Error
+			if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+				// Transaction already linked to this stream, skip
+				continue
+			} else {
+				return fmt.Errorf("error creating recurring stream record: %w", err)
+			}
+		}
+
+		for _, transactionID := range stream.TransactionIds {
+			params := database.CreateTransactionToStreamRecordParams{
+				TransactionID: transactionID,
+				StreamID:      stream.StreamId,
+			}
+			err := app.Db.CreateTransactionToStreamRecord(ctx, params)
+			if err != nil {
+				var pqErr *pq.Error
+				if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+					// Transaction already linked to this stream, skip
+					continue
+				} else {
+					return fmt.Errorf("error creating transaction-to-stream record: %w", err)
+				}
+			}
+		}
+	}
+
+	return nil
 }

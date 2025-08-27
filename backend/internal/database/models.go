@@ -59,6 +59,18 @@ type PlaidWebhookRecord struct {
 	ProcessedAt sql.NullTime
 }
 
+type RecurringStream struct {
+	ID                string
+	AccountID         string
+	Description       string
+	MerchantName      sql.NullString
+	Frequency         string
+	IsActive          bool
+	PredictedNextDate sql.NullString
+	StreamType        string
+	CreatedAt         sql.NullTime
+}
+
 type RefreshToken struct {
 	ID           uuid.UUID
 	HashedToken  string
@@ -88,6 +100,11 @@ type TransactionTag struct {
 	Name      string
 	UserID    uuid.UUID
 	CreatedAt time.Time
+}
+
+type TransactionsToStream struct {
+	TransactionID string
+	StreamID      string
 }
 
 type TransactionsToTag struct {

@@ -113,7 +113,8 @@ func (p *Service) RemoveItem(ctx context.Context, accessToken string) error {
 func (p *Service) GetRecurring(ctx context.Context, accessToken string) (plaid.TransactionsRecurringGetResponse, error) {
 	yes := true
 	options := plaid.TransactionsRecurringGetRequest{
-		Options: &plaid.TransactionsRecurringGetRequestOptions{IncludePersonalFinanceCategory: &yes}}
+		Options: &plaid.TransactionsRecurringGetRequestOptions{IncludePersonalFinanceCategory: &yes},
+	}
 
 	request := plaid.NewTransactionsRecurringGetRequest(accessToken)
 	request.SetOptions(*options.Options)

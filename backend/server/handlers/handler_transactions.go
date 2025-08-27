@@ -286,3 +286,60 @@ func (app *AppServer) HandlerDeleteTransactionsForAccount(w http.ResponseWriter,
 
 	app.respondWithJSON(w, 200, "Transactions deleted successfully")
 }
+
+// Handler gets recurring transaction data for a single account
+func (app *AppServer) HandlerGetRecurringData(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	accValue := ctx.Value(accountKey)
+	acc, ok := accValue.(database.Account)
+	if !ok {
+		app.respondWithError(w, 400, "Bad account in context", nil)
+		return
+	}
+
+	var recurringStreams []models.RecurringStream
+	var streamConnections []models.TransactionsToStream
+
+	streams, err := app.Db.GetStreamsForAcc(ctx, acc.ID) // Get recurring streams for account
+	if err != nil {
+		app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting recurring stream data: %w", err))
+		return
+	}
+
+	for _, stream := range streams {
+		newStream := models.RecurringStream{
+			ID:                stream.ID,
+			AccountID:         stream.AccountID,
+			Description:       stream.Description,
+			MerchantName:      stream.MerchantName.String,
+			Frequency:         stream.Frequency,
+			IsActive:          stream.IsActive,
+			PredictedNextDate: stream.PredictedNextDate.String,
+			StreamType:        stream.StreamType,
+		}
+
+		recurringStreams = append(recurringStreams, newStream) // Append each stream into return struct
+
+		connections, err := app.Db.GetTransactionsToStreamConnections(ctx, stream.ID) // Get connections for each stream
+		if err != nil {                                                               // Strict error check, loosen in future
+			app.respondWithError(w, 500, "Database error", fmt.Errorf("error getting transaction-to-stream record: %w", err))
+			return
+		}
+
+		for _, c := range connections {
+			newConnection := models.TransactionsToStream{
+				TransactionID: c.TransactionID,
+				StreamID:      c.StreamID,
+			}
+
+			streamConnections = append(streamConnections, newConnection) // Append the connections into return struct
+		}
+	}
+
+	recurringData := models.RecurringData{
+		Streams:     recurringStreams,
+		Connections: streamConnections,
+	}
+
+	app.respondWithJSON(w, 200, recurringData)
+}

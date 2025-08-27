@@ -114,3 +114,24 @@ type WebhookRecord struct {
 	UserID      uuid.UUID `json:"user_id"`
 	CreatedAt   string    `json:"created_at"`
 }
+
+type RecurringData struct {
+	Streams     []RecurringStream      `json:"streams"`
+	Connections []TransactionsToStream `json:"connections"`
+}
+
+type RecurringStream struct {
+	ID                string `json:"id"`
+	AccountID         string `json:"account_id"`
+	Description       string `json:"description"`
+	MerchantName      string `json:"merchant_name"`
+	Frequency         string `json:"frequency"`
+	IsActive          bool   `json:"is_active"`
+	PredictedNextDate string `json:"predicted_next_date"`
+	StreamType        string `json:"stream_type"`
+}
+
+type TransactionsToStream struct {
+	TransactionID string `json:"transaction_id"`
+	StreamID      string `json:"stream_id"`
+}
