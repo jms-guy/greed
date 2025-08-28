@@ -26,6 +26,7 @@ func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merc
 
 	var account database.Account
 
+	// Get account to use in command
 	if len(args) == 0 && app.Config.Settings.DefaultAccount.ID == "" {
 		LogError(app.Config.Db, cmd, fmt.Errorf("no account given"), "Missing argument")
 		return nil
@@ -54,6 +55,7 @@ func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merc
 		account = app.Config.Settings.DefaultAccount
 	}
 
+	// Get queried transactions from server
 	txnsURL := app.Config.Client.BaseURL + "/api/accounts/" + account.ID + "/transactions"
 	if queryString != "?" {
 		txnsURL = txnsURL + queryString
@@ -74,6 +76,7 @@ func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merc
 		return err
 	}
 
+	// If summary flag is present, decode into summary struct and print table
 	if summary {
 		var summaries []models.MerchantSummary
 		if err = json.NewDecoder(res.Body).Decode(&summaries); err != nil {
@@ -90,6 +93,7 @@ func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merc
 		return nil
 	}
 
+	// Else decode into regular transaction struct, calculate balance and determine filters
 	var txns []models.Transaction
 	if err = json.NewDecoder(res.Body).Decode(&txns); err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("decoding err: %w", err), "Error contacting server")
@@ -100,6 +104,13 @@ func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merc
 	var historicalBalances []float64
 
 	runningBalance := currentBalance
+
+	// Get recurring transaction data
+	recurring, err := app.GetRecurringData(account.ID)
+	if err != nil {
+		LogError(app.Config.Db, cmd, err, "Error getting transaction data")
+		return err
+	}
 
 	for _, txn := range txns {
 
@@ -119,11 +130,38 @@ func (app *CLIApp) commandGetTxnsAccount(cmd *cobra.Command, args []string, merc
 		isFiltered = false
 	}
 
-	err = tables.PaginateTransactionsTable(txns, account.Name, historicalBalances, pageSize, isFiltered)
+	// Draw paginated transactions table
+	err = tables.PaginateTransactionsTable(txns, account.Name, historicalBalances, pageSize, isFiltered, recurring)
 	if err != nil {
 		LogError(app.Config.Db, cmd, fmt.Errorf("error creating transactions table: %w", err), "Error drawing table")
 		return err
 	}
 
 	return nil
+}
+
+// Function gets recurring transaction data from server for account
+func (app *CLIApp) GetRecurringData(accountID string) (models.RecurringData, error) {
+	var recurringData models.RecurringData
+
+	recurringURL := app.Config.Client.BaseURL + "/api/accounts/" + accountID + "/transactions/recurring"
+
+	res, err := DoWithAutoRefresh(app, func(token string) (*http.Response, error) {
+		return app.Config.MakeBasicRequest("GET", recurringURL, token, nil)
+	})
+	if err != nil {
+		return recurringData, fmt.Errorf("error making http request: %w", err)
+	}
+	defer res.Body.Close()
+
+	err = checkResponseStatus(res)
+	if err != nil {
+		return recurringData, err
+	}
+
+	if err = json.NewDecoder(res.Body).Decode(&recurringData); err != nil {
+		return recurringData, fmt.Errorf("decoding err: %w", err)
+	}
+
+	return recurringData, nil
 }

@@ -57,7 +57,7 @@ API endpoints are grouped by operation types
 | `/{account-id}/transactions` | `DELETE` | | | Delete all transaction records for account |
 | `/{account-id}/transactions/monetary` | `GET` | | [MonetaryData](https://github.com/jms-guy/greed/blob/main/models/response.go#L101) | Get monetary data for history of account |
 | `/{account-id}/transactions/monetary/{year}-{month}` | `GET` | | [MonetaryData](https://github.com/jms-guy/greed/blob/main/models/response.go#L101) | Get monetary data for given month |
-| `/recurring` | `GET` | | [TO BE ADDED]() | Gets relevant data for an account's recurring transaction streams |
+| `/recurring` | `GET` | | [RecurringData](https://github.com/jms-guy/greed/blob/main/models/response.go#L118) | Gets relevant data for an account's recurring transaction streams |
 
 
 ### Plaid Link Redirects

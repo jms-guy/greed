@@ -424,7 +424,7 @@ func (m *mockDatabaseService) ProcessWebhookRecordsByType(ctx context.Context, a
 
 func (m *mockDatabaseService) CreateTransactionToTagRecord(ctx context.Context, arg database.CreateTransactionToTagRecordParams) error {
 	if m.CreateTransactionToTagRecordFunc != nil {
-		return m.CreateTransactionToTagRecord(ctx, arg)
+		return m.CreateTransactionToTagRecordFunc(ctx, arg)
 	}
 	return nil
 }
@@ -438,28 +438,28 @@ func (m *mockDatabaseService) GetWebhookRecords(ctx context.Context, userID uuid
 
 func (m *mockDatabaseService) CreateStream(ctx context.Context, arg database.CreateStreamParams) error {
 	if m.CreateStreamFunc != nil {
-		return m.CreateStream(ctx, arg)
+		return m.CreateStreamFunc(ctx, arg)
 	}
 	return nil
 }
 
 func (m *mockDatabaseService) CreateTransactionToStreamRecord(ctx context.Context, arg database.CreateTransactionToStreamRecordParams) error {
 	if m.CreateTransactionToStreamRecordFunc != nil {
-		return m.CreateTransactionToStreamRecord(ctx, arg)
+		return m.CreateTransactionToStreamRecordFunc(ctx, arg)
 	}
 	return nil
 }
 
 func (m *mockDatabaseService) GetStreamsForAcc(ctx context.Context, accountID string) ([]database.RecurringStream, error) {
 	if m.GetStreamsForAccFunc != nil {
-		return m.GetStreamsForAcc(ctx, accountID)
+		return m.GetStreamsForAccFunc(ctx, accountID)
 	}
 	return []database.RecurringStream{}, nil
 }
 
 func (m *mockDatabaseService) GetTransactionsToStreamConnections(ctx context.Context, streamID string) ([]database.TransactionsToStream, error) {
 	if m.GetTransactionsToStreamConnectionsFunc != nil {
-		return m.GetTransactionsToStreamConnections(ctx, streamID)
+		return m.GetTransactionsToStreamConnectionsFunc(ctx, streamID)
 	}
 	return []database.TransactionsToStream{}, nil
 }

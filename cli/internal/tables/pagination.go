@@ -11,7 +11,7 @@ import (
 
 // Takes slice of transaction records, and paginates the results into a table, displaying a base number of 20 transaction records at a time.
 // Listens for pgUp/pgDown key presses to view through record pages
-func PaginateTransactionsTable(txns []models.Transaction, accountName string, balances []float64, pageSize int, isFiltered bool) error {
+func PaginateTransactionsTable(txns []models.Transaction, accountName string, balances []float64, pageSize int, isFiltered bool, recurring models.RecurringData) error {
 	if len(txns) == 0 {
 		return fmt.Errorf("no results to display")
 	}
@@ -52,7 +52,7 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 			displayBalances = balances[startIndex:endIndex]
 		}
 
-		CreateTable(screen, displayItems, accountName, displayBalances, isFiltered)
+		CreateTable(screen, displayItems, accountName, displayBalances, isFiltered, recurring)
 		screen.Show()
 
 		event := screen.PollEvent()
@@ -78,7 +78,18 @@ func PaginateTransactionsTable(txns []models.Transaction, accountName string, ba
 }
 
 // Draws a table of transaction data onto the tcell screen
-func CreateTable(screen tcell.Screen, displayItems []models.Transaction, accountName string, balances []float64, isFiltered bool) {
+func CreateTable(screen tcell.Screen, displayItems []models.Transaction, accountName string, balances []float64, isFiltered bool, recurring models.RecurringData) {
+	// Maps for recurring lookup
+	connectionMap := make(map[string]string)
+	for _, c := range recurring.Connections {
+		connectionMap[c.TransactionID] = c.StreamID
+	}
+
+	streamMap := make(map[string]models.RecurringStream)
+	for _, s := range recurring.Streams {
+		streamMap[s.ID] = s
+	}
+
 	// Define tcell screen styles and variables to create table
 	headerStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen).Underline(true)
 	columnStyle := tcell.StyleDefault.Foreground(tcell.ColorYellow)
@@ -87,11 +98,11 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 	var columnWidths []int
 
 	if isFiltered {
-		columnHeaders = []string{"Account", "Date", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code"}
-		columnWidths = []int{10, 12, 10, 20, 15, 15, 10}
+		columnHeaders = []string{"Account", "Date", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code", "Recurring"}
+		columnWidths = []int{10, 12, 10, 20, 15, 15, 10, 15}
 	} else {
-		columnHeaders = []string{"Account", "Date", "Balance", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code"}
-		columnWidths = []int{10, 12, 10, 10, 20, 15, 15, 10}
+		columnHeaders = []string{"Account", "Date", "Balance", "Amount", "Merchant Name", "Payment Channel", "Category", "Currency Code", "Recurring"}
+		columnWidths = []int{10, 12, 10, 10, 20, 15, 15, 10, 15}
 	}
 	columnPadding := 5
 
@@ -191,6 +202,29 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 		for _, r := range fmt.Sprintf("%-*s", 10, currencyStr) {
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
+		}
+
+		// Recurring transaction lookup
+		if streamID, exists := connectionMap[txn.Id]; exists {
+			if stream, streamExists := streamMap[streamID]; streamExists {
+				recString := "recurring " + stream.StreamType
+				for _, r := range fmt.Sprintf("%-*s", 15, recString) {
+					screen.SetContent(currentX, currentY, r, nil, columnStyle)
+					currentX++
+				}
+			} else {
+				recString := "no"
+				for _, r := range fmt.Sprintf("%-*s", 15, recString) {
+					screen.SetContent(currentX, currentY, r, nil, columnStyle)
+					currentX++
+				}
+			}
+		} else {
+			recString := "no"
+			for _, r := range fmt.Sprintf("%-*s", 15, recString) {
+				screen.SetContent(currentX, currentY, r, nil, columnStyle)
+				currentX++
+			}
 		}
 
 		currentY++

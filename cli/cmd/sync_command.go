@@ -53,7 +53,7 @@ func (app *CLIApp) commandSync(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	webhookCodes := []string{"TRANSACTIONS_UPDATES_AVAILABLE", "TRANSACTIONS_REMOVED", "DEFAULT_UPDATE", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE"}
+	webhookCodes := []string{"TRANSACTIONS_UPDATES_AVAILABLE", "TRANSACTIONS_REMOVED", "DEFAULT_UPDATE", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE", "RECURRING_TRANSACTIONS_UPDATE"}
 
 	for _, code := range webhookCodes {
 		err = processWebhookRecords(app, itemID, code, "TRANSACTIONS")

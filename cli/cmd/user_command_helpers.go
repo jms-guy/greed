@@ -437,7 +437,7 @@ func checkForWebhookRecords(app *CLIApp, items []models.ItemName) error {
 		case "ITEM_LOGIN_REQUIRED", "ITEM_ERROR", "ITEM_BAD_STATE", "NEW_ACCOUNTS_AVAILABLE", "PENDING_DISCONNECT", "ERROR":
 			loginRequired = true
 			itemsToUpdate = append(itemsToUpdate, record.ItemID)
-		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE":
+		case "TRANSACTIONS_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "TRANSACTIONS_REMOVED", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "SYNC_UPDATES_AVAILABLE", "RECURRING_TRANSACTIONS_UPDATE":
 			if !loginRequired {
 				syncRequired = true
 				itemsToSync = append(itemsToSync, record.ItemID)

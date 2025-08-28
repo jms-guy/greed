@@ -118,6 +118,7 @@ type WebhookRecord struct {
 type RecurringData struct {
 	Streams     []RecurringStream      `json:"streams"`
 	Connections []TransactionsToStream `json:"connections"`
+	Summary     StreamSummary          `json:"summary"`
 }
 
 type RecurringStream struct {
@@ -134,4 +135,10 @@ type RecurringStream struct {
 type TransactionsToStream struct {
 	TransactionID string `json:"transaction_id"`
 	StreamID      string `json:"stream_id"`
+}
+
+type StreamSummary struct {
+	TotalStreams    int `json:"total_streams"`
+	ActiveStreams   int `json:"active_streams"`
+	InactiveStreams int `json:"inactive_streams"`
 }
