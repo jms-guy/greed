@@ -32,7 +32,8 @@ type Settings struct {
 
 // Initializes configuration struct
 func LoadConfig() (*Config, error) {
-	serverAddress := "https://greed-614554014047.us-central1.run.app"
+	//serverAddress := "https://greed-614554014047.us-central1.run.app"
+	serverAddress := "http://localhost:3333"
 
 	client := NewClient(serverAddress)
 

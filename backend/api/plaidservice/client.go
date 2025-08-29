@@ -14,6 +14,7 @@ type Service struct {
 // Plaid interface
 type PlaidService interface {
 	GetSandboxToken(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error)
+	CreateSandboxTokenWithCustomUser(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error)
 	GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error)
 	GetLinkTokenForUpdateMode(ctx context.Context, userID, accessToken, webhookURL string) (string, error)
 	GetAccessToken(ctx context.Context, publicToken string) (models.AccessResponse, error)

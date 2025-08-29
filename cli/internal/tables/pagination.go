@@ -203,6 +203,7 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 			screen.SetContent(currentX, currentY, r, nil, columnStyle)
 			currentX++
 		}
+		currentX += columnPadding
 
 		// Recurring transaction lookup
 		if streamID, exists := connectionMap[txn.Id]; exists {
@@ -213,14 +214,14 @@ func CreateTable(screen tcell.Screen, displayItems []models.Transaction, account
 					currentX++
 				}
 			} else {
-				recString := "no"
+				recString := ""
 				for _, r := range fmt.Sprintf("%-*s", 15, recString) {
 					screen.SetContent(currentX, currentY, r, nil, columnStyle)
 					currentX++
 				}
 			}
 		} else {
-			recString := "no"
+			recString := ""
 			for _, r := range fmt.Sprintf("%-*s", 15, recString) {
 				screen.SetContent(currentX, currentY, r, nil, columnStyle)
 				currentX++

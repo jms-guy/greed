@@ -123,15 +123,16 @@ type mockMailService struct {
 
 // Test Plaid service
 type mockPlaidService struct {
-	GetSandboxTokenFunc           func(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error)
-	GetLinkTokenFunc              func(ctx context.Context, userID, webhookURL string) (string, error)
-	GetLinkTokenForUpdateModeFunc func(ctx context.Context, userID, accessToken, webhookURL string) (string, error)
-	GetAccessTokenFunc            func(ctx context.Context, publicToken string) (models.AccessResponse, error)
-	InvalidateAccessTokenFunc     func(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error)
-	GetAccountsFunc               func(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)
-	GetItemInstitutionFunc        func(ctx context.Context, accessToken string) (string, error)
-	GetBalancesFunc               func(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error)
-	GetTransactionsFunc           func(ctx context.Context, accessToken, cursor string) (
+	GetSandboxTokenFunc                  func(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error)
+	CreateSandboxTokenWithCustomUserFunc func(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error)
+	GetLinkTokenFunc                     func(ctx context.Context, userID, webhookURL string) (string, error)
+	GetLinkTokenForUpdateModeFunc        func(ctx context.Context, userID, accessToken, webhookURL string) (string, error)
+	GetAccessTokenFunc                   func(ctx context.Context, publicToken string) (models.AccessResponse, error)
+	InvalidateAccessTokenFunc            func(ctx context.Context, accessToken models.AccessResponse) (models.AccessResponse, error)
+	GetAccountsFunc                      func(ctx context.Context, accessToken string) ([]plaid.AccountBase, string, error)
+	GetItemInstitutionFunc               func(ctx context.Context, accessToken string) (string, error)
+	GetBalancesFunc                      func(ctx context.Context, accessToken string) (plaid.AccountsGetResponse, string, error)
+	GetTransactionsFunc                  func(ctx context.Context, accessToken, cursor string) (
 		added, modified []plaid.Transaction, removed []plaid.RemovedTransaction, nextCursor, reqID string, err error)
 	GetWebhookVerificationKeyFunc func(ctx context.Context, keyID string) (plaid.JWKPublicKey, error)
 	RemoveItemFunc                func(ctx context.Context, accessToken string) error

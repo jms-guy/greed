@@ -30,7 +30,6 @@ type AppServer struct {
 	SgMail     sgrid.MailService         // SendGrid mail service
 	Limiter    *limiter.IPRateLimiter    // Rate limiter
 	PService   plaidservice.PlaidService // Client for Plaid integration
-	PSandbox   plaidservice.PlaidService // Client for Plaid sandbox testing use
 	TxnUpdater TxnUpdater                // Used for Db transactions
 	Encryptor  encrypt.EncryptorService  // Used for encryption and decryption methods
 	Querier    utils.QueryService        // Used for parsing URL queries
@@ -95,9 +94,7 @@ func NewAppServer() (*AppServer, error) {
 	mailService := sgrid.NewSGMailService(kitLogger)
 
 	// Create Plaid client
-	plaidServiceStruct := plaidservice.NewPlaidProductionService(config.PlaidClientID, config.PlaidSecret)
-
-	plaidSandboxStruct := plaidservice.NewPlaidSandboxService(config.PlaidClientID, config.PlaidSbSecret)
+	plaidServiceStruct := plaidservice.NewPlaidSandboxService(config.PlaidClientID, config.PlaidSbSecret)
 
 	// Create rate limiter
 	limiter := limiter.NewIPRateLimiter()
@@ -112,7 +109,6 @@ func NewAppServer() (*AppServer, error) {
 		SgMail:     mailService,
 		Limiter:    limiter,
 		PService:   plaidServiceStruct,
-		PSandbox:   plaidSandboxStruct,
 		TxnUpdater: updater,
 		Encryptor:  encryptor,
 		Querier:    querier,

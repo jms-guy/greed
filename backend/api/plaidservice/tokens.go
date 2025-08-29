@@ -8,11 +8,10 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
-func (p *Service) createSandboxTokenWithCustomUser(institutionID string) (plaid.ItemPublicTokenExchangeResponse, error) {
-	ctx := context.Background()
+func (p *Service) CreateSandboxTokenWithCustomUser(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
 
 	request := plaid.NewSandboxPublicTokenCreateRequest(
-		institutionID,
+		"ins_109508",
 		[]plaid.Products{plaid.PRODUCTS_TRANSACTIONS},
 	)
 
