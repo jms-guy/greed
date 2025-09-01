@@ -9,7 +9,6 @@ import (
 )
 
 func (p *Service) CreateSandboxTokenWithCustomUser(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
-
 	request := plaid.NewSandboxPublicTokenCreateRequest(
 		"ins_109508",
 		[]plaid.Products{plaid.PRODUCTS_TRANSACTIONS},
@@ -43,7 +42,6 @@ func (p *Service) CreateSandboxTokenWithCustomUser(ctx context.Context) (plaid.I
 
 // Sandbox access token generation
 func (p *Service) GetSandboxToken(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
-
 	sandboxPublicTokenResp, _, err := p.Client.PlaidApi.SandboxPublicTokenCreate(ctx).SandboxPublicTokenCreateRequest(
 		*plaid.NewSandboxPublicTokenCreateRequest(
 			"ins_109508",
