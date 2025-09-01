@@ -39,7 +39,7 @@ func (app *CLIApp) loginCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			user := args[0]
-			if strings.Contains(user, "test") {
+			if strings.HasPrefix(user, "test") {
 				return app.commandTestUserLogin(cmd, args)
 			}
 			return app.commandUserLogin(cmd, args)
