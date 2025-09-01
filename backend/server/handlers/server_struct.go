@@ -94,7 +94,7 @@ func NewAppServer() (*AppServer, error) {
 	mailService := sgrid.NewSGMailService(kitLogger)
 
 	// Create Plaid client
-	plaidServiceStruct := plaidservice.NewPlaidSandboxService(config.PlaidClientID, config.PlaidSbSecret)
+	plaidServiceStruct := plaidservice.NewPlaidProductionService(config.PlaidClientID, config.PlaidSecret)
 
 	// Create rate limiter
 	limiter := limiter.NewIPRateLimiter()
