@@ -8,6 +8,38 @@ import (
 	"github.com/plaid/plaid-go/v36/plaid"
 )
 
+func (p *Service) CreateSandboxTokenWithCustomUser(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
+	request := plaid.NewSandboxPublicTokenCreateRequest(
+		"ins_109508",
+		[]plaid.Products{plaid.PRODUCTS_TRANSACTIONS},
+	)
+
+	opt := plaid.NewSandboxPublicTokenCreateRequestOptions()
+	opt.SetOverrideUsername("user_transactions_dynamic")
+	opt.SetOverridePassword("password")
+
+	request.SetOptions(*opt)
+
+	resp, _, err := p.Client.PlaidApi.SandboxPublicTokenCreate(ctx).
+		SandboxPublicTokenCreateRequest(*request).
+		Execute()
+	if err != nil {
+		return plaid.ItemPublicTokenExchangeResponse{}, err
+	}
+
+	exchangePublicTokenResp, _, err := p.Client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(
+		*plaid.NewItemPublicTokenExchangeRequest(resp.GetPublicToken()),
+	).Execute()
+	if err != nil {
+		if apiErr, ok := err.(plaid.GenericOpenAPIError); ok {
+			fmt.Println("Plaid error body:", string(apiErr.Body()))
+		}
+		return plaid.ItemPublicTokenExchangeResponse{}, err
+	}
+
+	return exchangePublicTokenResp, nil
+}
+
 // Sandbox access token generation
 func (p *Service) GetSandboxToken(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
 	sandboxPublicTokenResp, _, err := p.Client.PlaidApi.SandboxPublicTokenCreate(ctx).SandboxPublicTokenCreateRequest(

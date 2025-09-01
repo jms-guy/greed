@@ -46,6 +46,7 @@ Since this app utilizes paid Plaid functions, and is not intended for widespread
 - 24 months of account financial history
 - In-depth transaction history reporting 
     - Utilizing paginated tables in terminal
+    - Recurring transaction detection
     - Extensive sorting through amount, date, merchant, etc.
     - Allows summary reporting as well
         - ex. All transactions summed, showing count and total amount for each merchant, for each month
@@ -224,10 +225,10 @@ greed export "Account Name"
 
 ## To-Do List
 
-- CLI tests + integration tests
-- Recurring transaction detection
 - Custom transaction tags and filtering
     - Tag certain merchants/transactions with custom labels (fixed expense, variable expense, tax-deductible, vacation fund, etc.)
+- Give recurring transaction data it's own table using CLI
+- Integrate end-to-end server test into back-end CI workflow
 
 ## Contributing & Issues
 
@@ -236,4 +237,4 @@ To contribute, clone the repo as described above in **Installation Options**. Pl
 ### Known Issues
 
 - Balance values are off in credit card tables, uses calculations for getting historical balances of a debit account
-- Only partial support for attaching multiple financial institutions per user
+- Powershell will crash viewing paginated transaction tables

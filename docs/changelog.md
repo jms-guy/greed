@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [v1.0.2] - 2025-09-01
+### Added
+- Server: Recurring transactions now supported: recurring data synced, stored, and exposed to client
+- Server: Added endpoint unit tests for recurring data endpoint
+- Server: Added end-to-end integration test, from user registration -> plaid interaction -> user logout
+- CLI: Client now shows a Recurring column in the transactions table and fetches recurring data
+- CLI: Client processes recurring webhook updates
+- Docs: Added API documentation for recurring data endpoint
+
+### Changed
+- README: Updated known issues, removed completed TODO
+
 ## [v1.0.1] - 2025-08-22
 
 ### Added

@@ -807,3 +807,122 @@ func TestHandlerDeleteTransactionsForAccount(t *testing.T) {
 		})
 	}
 }
+
+func TestHandlerGetRecurringData(t *testing.T) {
+	tests := []struct {
+		name             string
+		accountInContext any
+		pathParams       map[string]string
+		requestBody      string
+		mockDb           *mockDatabaseService
+		expectedStatus   int
+		expectedBody     any
+	}{
+		{
+			name:             "should successfully get recurring data for account",
+			accountInContext: database.Account{ID: testAccountID},
+			pathParams:       map[string]string{"account-id": testAccountID},
+			mockDb: &mockDatabaseService{
+				GetStreamsForAccFunc: func(ctx context.Context, accountID string) ([]database.RecurringStream, error) {
+					return []database.RecurringStream{}, nil
+				},
+				GetTransactionsToStreamConnectionsFunc: func(ctx context.Context, streamID string) ([]database.TransactionsToStream, error) {
+					return []database.TransactionsToStream{}, nil
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   models.RecurringData{},
+		},
+		{
+			name:       "should fail with bad account in context",
+			pathParams: map[string]string{"account-id": testAccountID},
+			mockDb: &mockDatabaseService{
+				GetStreamsForAccFunc: func(ctx context.Context, accountID string) ([]database.RecurringStream, error) {
+					return []database.RecurringStream{}, nil
+				},
+				GetTransactionsToStreamConnectionsFunc: func(ctx context.Context, streamID string) ([]database.TransactionsToStream, error) {
+					return []database.TransactionsToStream{}, nil
+				},
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Bad account in context",
+		},
+		{
+			name:             "should err on getting streams",
+			accountInContext: database.Account{ID: testAccountID},
+			pathParams:       map[string]string{"account-id": testAccountID},
+			mockDb: &mockDatabaseService{
+				GetStreamsForAccFunc: func(ctx context.Context, accountID string) ([]database.RecurringStream, error) {
+					return []database.RecurringStream{}, fmt.Errorf("mock error")
+				},
+				GetTransactionsToStreamConnectionsFunc: func(ctx context.Context, streamID string) ([]database.TransactionsToStream, error) {
+					return []database.TransactionsToStream{}, nil
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
+		{
+			name:             "should err on getting transactions to stream connections",
+			accountInContext: database.Account{ID: testAccountID},
+			pathParams:       map[string]string{"account-id": testAccountID},
+			mockDb: &mockDatabaseService{
+				GetStreamsForAccFunc: func(ctx context.Context, accountID string) ([]database.RecurringStream, error) {
+					return []database.RecurringStream{{ID: "testID"}}, nil
+				},
+				GetTransactionsToStreamConnectionsFunc: func(ctx context.Context, streamID string) ([]database.TransactionsToStream, error) {
+					return []database.TransactionsToStream{}, fmt.Errorf("mock error")
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "Database error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reqURL := fmt.Sprintf("/api/accounts/%s/transactions/recurring", tt.pathParams["account-id"])
+
+			req := httptest.NewRequest("GET", reqURL, bytes.NewBufferString(tt.requestBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("account-id", tt.pathParams["account-id"])
+
+			ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+			ctx = context.WithValue(ctx, handlers.GetAccountKey(), tt.accountInContext)
+			req = req.WithContext(ctx)
+
+			rr := httptest.NewRecorder()
+
+			mockApp := &handlers.AppServer{
+				Db:     tt.mockDb,
+				Logger: kitlog.NewNopLogger(),
+			}
+
+			mockApp.HandlerGetRecurringData(rr, req)
+
+			// --- Assertions ---
+			if status := rr.Code; status != tt.expectedStatus {
+				t.Errorf("handler returned wrong status code: got %v want %v. Body: %s", status, tt.expectedStatus, rr.Body.String())
+			}
+
+			switch expected := tt.expectedBody.(type) {
+			case models.RecurringData:
+				var actual models.RecurringData
+				if err := json.Unmarshal(rr.Body.Bytes(), &actual); err != nil {
+					t.Fatalf("Failed to unmarshal response body to models.RecurringData: %v, Body: %s", err, rr.Body.String())
+				}
+				if !reflect.DeepEqual(actual, expected) {
+					t.Errorf("handler returned unexpected merchant summaries: got %+v want %+v", actual, expected)
+				}
+			case string:
+				if !strings.Contains(rr.Body.String(), expected) {
+					t.Errorf("handler returned unexpected body: got %s want body to contain %s", rr.Body.String(), expected)
+				}
+			default:
+				t.Fatalf("Unsupported expectedBody type: %T", expected)
+			}
+		})
+	}
+}

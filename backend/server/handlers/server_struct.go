@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jms-guy/greed/backend/api/plaidservice"
 	"github.com/jms-guy/greed/backend/api/sgrid"
-	"github.com/jms-guy/greed/backend/internal/auth"
 	auth_pkg "github.com/jms-guy/greed/backend/internal/auth"
 	"github.com/jms-guy/greed/backend/internal/config"
 	"github.com/jms-guy/greed/backend/internal/database"
@@ -24,14 +23,13 @@ import (
 // Holds state of important server structs
 type AppServer struct {
 	Db         GreedDatabase             // SQLC generated database queries
-	Auth       auth.AuthService          // Auth service interface
+	Auth       auth_pkg.AuthService      // Auth service interface
 	Database   *sql.DB                   // Raw database connection
 	Config     *config.Config            // Environment variables configured from .env file
 	Logger     kitlog.Logger             // Logging interface
 	SgMail     sgrid.MailService         // SendGrid mail service
 	Limiter    *limiter.IPRateLimiter    // Rate limiter
 	PService   plaidservice.PlaidService // Client for Plaid integration
-	PSandbox   plaidservice.PlaidService // Client for Plaid sandbox testing use
 	TxnUpdater TxnUpdater                // Used for Db transactions
 	Encryptor  encrypt.EncryptorService  // Used for encryption and decryption methods
 	Querier    utils.QueryService        // Used for parsing URL queries
@@ -98,8 +96,6 @@ func NewAppServer() (*AppServer, error) {
 	// Create Plaid client
 	plaidServiceStruct := plaidservice.NewPlaidProductionService(config.PlaidClientID, config.PlaidSecret)
 
-	plaidSandboxStruct := plaidservice.NewPlaidSandboxService(config.PlaidClientID, config.PlaidSbSecret)
-
 	// Create rate limiter
 	limiter := limiter.NewIPRateLimiter()
 
@@ -113,7 +109,6 @@ func NewAppServer() (*AppServer, error) {
 		SgMail:     mailService,
 		Limiter:    limiter,
 		PService:   plaidServiceStruct,
-		PSandbox:   plaidSandboxStruct,
 		TxnUpdater: updater,
 		Encryptor:  encryptor,
 		Querier:    querier,
@@ -184,6 +179,11 @@ type GreedDatabase interface {
 	CreatePlaidWebhookRecord(ctx context.Context, arg database.CreatePlaidWebhookRecordParams) (database.PlaidWebhookRecord, error)
 	ProcessWebhookRecordsByType(ctx context.Context, arg database.ProcessWebhookRecordsByTypeParams) error
 	GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error)
+	CreateStream(ctx context.Context, arg database.CreateStreamParams) error
+	CreateTransactionToStreamRecord(ctx context.Context, arg database.CreateTransactionToStreamRecordParams) error
+	CreateTransactionToTagRecord(ctx context.Context, arg database.CreateTransactionToTagRecordParams) error
+	GetStreamsForAcc(ctx context.Context, accountID string) ([]database.RecurringStream, error)
+	GetTransactionsToStreamConnections(ctx context.Context, streamID string) ([]database.TransactionsToStream, error)
 	WithTx(tx *sql.Tx) *database.Queries
 }
 

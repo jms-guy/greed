@@ -9,7 +9,7 @@ import (
 )
 
 func Run() error {
-	//Create new AppServer struct
+	// Create new AppServer struct
 	app, err := handlers.NewAppServer()
 	if err != nil {
 		return err

@@ -422,11 +422,46 @@ func (m *mockDatabaseService) ProcessWebhookRecordsByType(ctx context.Context, a
 	return nil
 }
 
+func (m *mockDatabaseService) CreateTransactionToTagRecord(ctx context.Context, arg database.CreateTransactionToTagRecordParams) error {
+	if m.CreateTransactionToTagRecordFunc != nil {
+		return m.CreateTransactionToTagRecordFunc(ctx, arg)
+	}
+	return nil
+}
+
 func (m *mockDatabaseService) GetWebhookRecords(ctx context.Context, userID uuid.UUID) ([]database.PlaidWebhookRecord, error) {
 	if m.GetWebhookRecordsFunc != nil {
 		return m.GetWebhookRecordsFunc(ctx, userID)
 	}
 	return []database.PlaidWebhookRecord{}, nil
+}
+
+func (m *mockDatabaseService) CreateStream(ctx context.Context, arg database.CreateStreamParams) error {
+	if m.CreateStreamFunc != nil {
+		return m.CreateStreamFunc(ctx, arg)
+	}
+	return nil
+}
+
+func (m *mockDatabaseService) CreateTransactionToStreamRecord(ctx context.Context, arg database.CreateTransactionToStreamRecordParams) error {
+	if m.CreateTransactionToStreamRecordFunc != nil {
+		return m.CreateTransactionToStreamRecordFunc(ctx, arg)
+	}
+	return nil
+}
+
+func (m *mockDatabaseService) GetStreamsForAcc(ctx context.Context, accountID string) ([]database.RecurringStream, error) {
+	if m.GetStreamsForAccFunc != nil {
+		return m.GetStreamsForAccFunc(ctx, accountID)
+	}
+	return []database.RecurringStream{}, nil
+}
+
+func (m *mockDatabaseService) GetTransactionsToStreamConnections(ctx context.Context, streamID string) ([]database.TransactionsToStream, error) {
+	if m.GetTransactionsToStreamConnectionsFunc != nil {
+		return m.GetTransactionsToStreamConnectionsFunc(ctx, streamID)
+	}
+	return []database.TransactionsToStream{}, nil
 }
 
 func (m *mockAuthService) EmailValidation(email string) bool {
@@ -520,6 +555,13 @@ func (p *mockPlaidService) GetSandboxToken(ctx context.Context) (plaid.ItemPubli
 	return plaid.ItemPublicTokenExchangeResponse{}, nil
 }
 
+func (p *mockPlaidService) CreateSandboxTokenWithCustomUser(ctx context.Context) (plaid.ItemPublicTokenExchangeResponse, error) {
+	if p.CreateSandboxTokenWithCustomUserFunc != nil {
+		return p.CreateSandboxTokenWithCustomUserFunc(ctx)
+	}
+	return plaid.ItemPublicTokenExchangeResponse{}, nil
+}
+
 func (p *mockPlaidService) GetLinkToken(ctx context.Context, userID, webhookURL string) (string, error) {
 	if p.GetLinkTokenFunc != nil {
 		return p.GetLinkTokenFunc(ctx, userID, webhookURL)
@@ -590,6 +632,13 @@ func (p *mockPlaidService) RemoveItem(ctx context.Context, accessToken string) e
 		return p.RemoveItemFunc(ctx, accessToken)
 	}
 	return nil
+}
+
+func (p *mockPlaidService) GetRecurring(ctx context.Context, accessToken string) (plaid.TransactionsRecurringGetResponse, error) {
+	if p.GetRecurringFunc != nil {
+		return p.GetRecurringFunc(ctx, accessToken)
+	}
+	return plaid.TransactionsRecurringGetResponse{}, nil
 }
 
 func (t *mockTxnUpdaterService) ExpireDelegation(ctx context.Context, tokenHash string, token database.RefreshToken) error {

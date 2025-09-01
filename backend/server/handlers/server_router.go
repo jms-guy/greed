@@ -144,6 +144,7 @@ func (app *AppServer) Router() http.Handler {
 				// Monetary reporting - for credit/debit type accounts
 				r.Get("/monetary", app.HandlerGetMonetaryData)                        // Get monetary data for history of account
 				r.Get("/monetary/{year}-{month}", app.HandlerGetMonetaryDataForMonth) // Get monetary data for given month
+				r.Get("/recurring", app.HandlerGetRecurringData)                      // Gets relevant data for an account's recurring transaction streams
 			})
 		})
 	})

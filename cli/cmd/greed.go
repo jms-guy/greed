@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"math"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,8 @@ func (app *CLIApp) loginCmd() *cobra.Command {
 		Short:   "Login as a user",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "test" {
+			user := args[0]
+			if strings.HasPrefix(user, "test") {
 				return app.commandTestUserLogin(cmd, args)
 			}
 			return app.commandUserLogin(cmd, args)
