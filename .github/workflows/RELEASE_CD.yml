@@ -39,6 +39,6 @@ jobs:
         files: |
           cli/greed-cli-windows-amd64.exe
           cli/greed-cli-linux-amd64
-          cli/checksums.txt  # Don't forget to include this!
+          cli/checksums.txt 
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
