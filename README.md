@@ -25,6 +25,8 @@ Greed is a financial application written almost entirely in Golang, used to view
 
 Since this app utilizes paid Plaid functions, and is not intended for widespread use, users are restricted in a 'demo' mode, in the number of calls they can make to certain server endpoints, specifically those that talk to Plaid. Users are limited to 5 calls to update/sync their financial data.
 
+Cloud server currently offline.
+
 ### Server Features
 
 - RESTful API
